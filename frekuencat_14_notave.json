@@ -1,0 +1,133 @@
+{
+  "burimi": "Frekuencat e dhena nga perdoruesi per çifteline e tij",
+  "shenim": "Keto jane vlerat reference per njohjen me mikrofon, jo frekuenca te konfirmuara te skedareve audio. Matja reale varet nga instrumenti dhe mikrofoni.",
+  "notat": [
+    {
+      "nota": 1,
+      "tasti": "Q",
+      "frekuenca_hz": 329,
+      "pozicioni": "Perdja 1",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 314,
+      "maksimum_hz": 344
+    },
+    {
+      "nota": 2,
+      "tasti": "W",
+      "frekuenca_hz": 358,
+      "pozicioni": "Perdja 2",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 343,
+      "maksimum_hz": 373
+    },
+    {
+      "nota": 3,
+      "tasti": "E",
+      "frekuenca_hz": 389,
+      "pozicioni": "Perdja 3",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 374,
+      "maksimum_hz": 404
+    },
+    {
+      "nota": 4,
+      "tasti": "R",
+      "frekuenca_hz": 440,
+      "pozicioni": "Perdja 4",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 425,
+      "maksimum_hz": 455
+    },
+    {
+      "nota": 5,
+      "tasti": "T",
+      "frekuenca_hz": 477,
+      "pozicioni": "Perdja 5",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 462,
+      "maksimum_hz": 492
+    },
+    {
+      "nota": 6,
+      "tasti": "Y",
+      "frekuenca_hz": 521,
+      "pozicioni": "Perdja 6",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 506,
+      "maksimum_hz": 536
+    },
+    {
+      "nota": 7,
+      "tasti": "U",
+      "frekuenca_hz": 587,
+      "pozicioni": "Perdja 7",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 572,
+      "maksimum_hz": 602
+    },
+    {
+      "nota": 8,
+      "tasti": "I",
+      "frekuenca_hz": 660,
+      "pozicioni": "Perdja 8",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 645,
+      "maksimum_hz": 675
+    },
+    {
+      "nota": 9,
+      "tasti": "O",
+      "frekuenca_hz": 719,
+      "pozicioni": "Perdja 9",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 704,
+      "maksimum_hz": 734
+    },
+    {
+      "nota": 10,
+      "tasti": "P",
+      "frekuenca_hz": 784,
+      "pozicioni": "Perdja 10",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 769,
+      "maksimum_hz": 799
+    },
+    {
+      "nota": 11,
+      "tasti": "A",
+      "frekuenca_hz": 880,
+      "pozicioni": "Perdja 11",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 865,
+      "maksimum_hz": 895
+    },
+    {
+      "nota": 12,
+      "tasti": "S",
+      "frekuenca_hz": 960,
+      "pozicioni": "Perdja 12",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 945,
+      "maksimum_hz": 975
+    },
+    {
+      "nota": 13,
+      "tasti": "D",
+      "frekuenca_hz": 1050,
+      "pozicioni": "Perdja 13",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 1035,
+      "maksimum_hz": 1065
+    },
+    {
+      "nota": 14,
+      "tasti": "F",
+      "frekuenca_hz": 292,
+      "pozicioni": "Teli i hapur te kupa",
+      "burimi": "Vlerat e dhena nga perdoruesi",
+      "minimum_hz": 277,
+      "maksimum_hz": 307
+    }
+  ],
+  "toleranca_hz": 15
+}

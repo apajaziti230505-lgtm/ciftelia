@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Çiftelia ime — 14 notat nga iPhone</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div class="eyebrow">INSTRUMENT TRADICIONAL SHQIPTAR</div>
+      <h1>Çiftelia <span>Interaktive</span></h1>
+      <p>Dy tela · 13 perde · 14 nota audio (QWERTYUIOPASDF) · shqiponjë dykrenare</p>
+    </header>
+
+    <section class="controls" aria-label="Kontrollet e këngëve">
+      <label for="zgjidhKengen">Zgjidh melodinë</label>
+      <select id="zgjidhKengen">
+        <option value="kenga1">Melodi 1 — provë e shpejtë</option>
+        <option value="kenga2">Melodi 2 — provë</option>
+      </select>
+      <button type="button" id="recordPlus" class="record-plus" aria-label="Nis regjistrimin e këngës së re" aria-pressed="false" title="+ Nis regjistrimin / ■ Ndalo (pa ruajtur)">＋</button>
+      <button type="button" id="playButton" onclick="luajKengen()">▶ Luaj</button>
+      <button type="button" id="saveSongButton" class="save-song" disabled title="Ruaj këngën e regjistruar vetëm kur e zgjedh ti">💾 Ruaj</button>
+      <button type="button" id="deleteSongButton" class="delete-song" disabled title="Fshi këngën e zgjedhur nga aplikacioni">🗑 Fshi</button>
+      <button type="button" class="stop" onclick="ndaloKengen()">■ Ndalo</button>
+      <label for="soundMode">Tingulli</label>
+      <select id="soundMode" aria-label="Zgjidh regjistrimin">
+        <option value="full">I plotë (nga iPhone)</option>
+        <option value="crisp">I shkurtër (nga iPhone)</option>
+      </select>
+      <label for="volume">Volumi <span id="volumeLabel">80%</span></label>
+      <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volumi">
+      <label class="folder-save-option"><input type="checkbox" id="saveToFolder"> Ruaj edhe në dosje (JSON/WAV)</label>
+    </section>
+
+
+    <section class="mic-panel" aria-label="Regjistrimi me mikrofon i telit të poshtëm">
+      <div class="mic-heading">
+        <div>
+          <strong>🎙 Njohja e notave me mikrofon</strong>
+          <p>Luaj vetëm telin e poshtëm. Q–D = 13 perdet (329–1050 Hz); F = teli i hapur (292 Hz). Çdo notë pranohet brenda ±15 Hz. Regjistrohen goditjet dhe intervalet mes tyre në milisekonda. Pas ndalimit krijohet një këngë provë; shtyp Ruaj vetëm nëse dëshiron ta mbash.</p>
+        </div>
+        <button id="micButton" type="button" class="mic-button" aria-pressed="false">🎙 Nis mikrofonin</button>
+      </div>
+      <div class="mic-options">
+        <label for="micSensitivity">Ndjeshmëria e goditjeve</label>
+        <input id="micSensitivity" type="range" min="1" max="10" value="5" aria-label="Ndjeshmëria e mikrofonit">
+        <span id="micSensitivityLabel">5/10</span>
+        <span class="mic-help">Toleranca është ±15 Hz për çdo notë. Nëse humbet goditje, rrite ndjeshmërinë; nëse njeh goditje të rreme, ule.</span>
+      </div>
+      <div class="mic-stats">
+        <div><small>Nota e njohur sipas Hz të tua</small><strong id="micNote">—</strong></div>
+        <div><small>Frekuenca e dëgjuar</small><strong id="micHz">— Hz</strong></div>
+        <div><small>Koha nga nota e mëparshme</small><strong id="micDelta">— ms</strong></div>
+        <div><small>Nota të njohura / goditje</small><strong id="micCount">0</strong></div>
+      </div>
+      <p id="micStatus" class="mic-status" role="status">Përdor Chrome/Edge me Live Server (localhost) dhe lejo mikrofonin. Prefero një dhomë të qetë.</p>
+      <p class="mic-help">Nëse del <strong>?</strong>, pas ndalimit kliko te goditja dhe cakto notën manualisht. Koha e goditjes ruhet.</p>
+      <div class="mic-events" id="micEvents" aria-label="Goditjet; klikoni çdo notë për ta korrigjuar pas ndalimit"></div>
+      <div class="mic-links"><a href="frekuencat_14_notave.csv" download>Shkarko 14 frekuencat me tolerancë ±15 Hz (CSV)</a> · <span>F = 292 Hz, Q = 329 Hz, D = 1050 Hz</span></div>
+    </section>
+
+    <section class="instrument-panel" aria-label="Simuluesi i çiftelisë">
+      <div class="instrument-scroll">
+        <svg id="ciftelia" viewBox="0 0 1450 465" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Çifteli tradicionale e vizatuar me SVG: bisht i gjatë e i hollë, 13 perde, dy tela dhe kupë në formë dardhe me shqiponjë dykrenare.">
+          <defs>
+            <linearGradient id="cupWood" x1="0" x2="0.75" y1="0" y2="1">
+              <stop offset="0" stop-color="#f8d99b" />
+              <stop offset="0.22" stop-color="#e6ad63" />
+              <stop offset="0.58" stop-color="#bd7334" />
+              <stop offset="1" stop-color="#71370d" />
+            </linearGradient>
+            <radialGradient id="cupFace" cx="38%" cy="28%" r="80%">
+              <stop offset="0" stop-color="#f6d79e" />
+              <stop offset="0.49" stop-color="#d39b56" />
+              <stop offset="0.84" stop-color="#aa602c" />
+              <stop offset="1" stop-color="#824314" />
+            </radialGradient>
+            <linearGradient id="neckWood" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#9c5725" />
+              <stop offset="0.16" stop-color="#e7ae65" />
+              <stop offset="0.53" stop-color="#bd793c" />
+              <stop offset="0.84" stop-color="#7e431d" />
+              <stop offset="1" stop-color="#4b230e" />
+            </linearGradient>
+            <linearGradient id="fingerWood" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#50321f" />
+              <stop offset="0.5" stop-color="#301e16" />
+              <stop offset="1" stop-color="#563624" />
+            </linearGradient>
+            <linearGradient id="pegWood" x1="0" x2="1">
+              <stop offset="0" stop-color="#3d2113" />
+              <stop offset="0.55" stop-color="#a96c38" />
+              <stop offset="1" stop-color="#422211" />
+            </linearGradient>
+            <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#fffef6" />
+              <stop offset="0.42" stop-color="#dbe2e7" />
+              <stop offset="1" stop-color="#7a838b" />
+            </linearGradient>
+            <filter id="shadow" x="-20%" y="-30%" width="150%" height="180%">
+              <feDropShadow dx="6" dy="12" stdDeviation="10" flood-color="#000" flood-opacity="0.40"/>
+            </filter>
+            <filter id="glow" x="-160%" y="-160%" width="420%" height="420%">
+              <feGaussianBlur stdDeviation="6" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <pattern id="grain" width="110" height="60" patternUnits="userSpaceOnUse">
+              <path d="M0 12 Q28 6 57 13 T110 8 M-5 43 Q34 32 63 42 T117 38" fill="none" stroke="#622b13" stroke-width="0.9" opacity="0.16"/>
+            </pattern>
+            <clipPath id="cupClip">
+              <path d="M997 202 C1044 199 1060 154 1128 125 C1230 72 1325 98 1388 163 C1455 228 1405 324 1316 356 C1194 404 1068 337 1028 273 C1017 258 1004 256 997 252 Z"/>
+            </clipPath>
+          </defs>
+
+          <!-- KUPA: formë e ngushtë te bashkimi me bishtin, e gjerë në fund -->
+          <g filter="url(#shadow)">
+            <path d="M997 202 C1044 199 1060 154 1128 125 C1230 72 1325 98 1388 163 C1455 228 1405 324 1316 356 C1194 404 1068 337 1028 273 C1017 258 1004 256 997 252 Z"
+                  fill="url(#cupWood)" stroke="#3e1d0b" stroke-width="14" stroke-linejoin="round"/>
+            <path d="M1009 210 C1051 205 1080 158 1135 138 C1230 88 1321 109 1377 172 C1430 231 1390 310 1308 344 C1195 385 1080 327 1039 269 C1028 249 1020 245 1009 244 Z"
+                  fill="url(#cupFace)" stroke="#7d4118" stroke-width="3"/>
+            <path d="M1009 210 C1051 205 1080 158 1135 138 C1230 88 1321 109 1377 172 C1430 231 1390 310 1308 344 C1195 385 1080 327 1039 269 C1028 249 1020 245 1009 244 Z"
+                  fill="url(#grain)" opacity="0.65"/>
+            <path d="M1047 202 C1093 181 1112 148 1174 131" fill="none" stroke="#ffe5ac" stroke-width="3" opacity="0.38" stroke-linecap="round"/>
+            <path d="M1117 316 Q1215 372 1315 335" fill="none" stroke="#693313" stroke-width="2" opacity="0.30"/>
+          </g>
+
+          <!-- Dekor në kupë -->
+          <g transform="translate(1155 227)">
+            <circle r="31" fill="#965522" stroke="#5a2b11" stroke-width="5"/>
+            <circle r="25" fill="#e0aa62" stroke="#f4d294" stroke-width="1.8"/>
+            <circle r="21" fill="#25130b" stroke="#643516" stroke-width="4"/>
+            <circle r="13" fill="#130c08"/>
+            <g stroke="#a56a39" stroke-width="1.6">
+              <path d="M0 -29V-24 M0 24V29 M-29 0H-24 M24 0H29 M-21 -21L-17 -17 M21 21L17 17 M21 -21L17 -17 M-21 21L-17 17"/>
+            </g>
+          </g>
+
+          <!-- Shqiponjë dykrenare, e gdhendur në trupin e kupës -->
+          <g transform="translate(1237 162) scale(1.17)" fill="#3a1b0d" stroke="#2b160c" stroke-width="0.4" opacity="0.95" aria-label="Shqiponja dykrenare">
+            <!-- Dy kokat dhe dy krahët simetrikë -->
+            <g id="halfEagle">
+              <path d="M50 45 L39 34 L33 27 L28 24 L24 26 L18 24 L24 19 L18 16 L24 12 L30 15 L32 10 L37 14 L37 22 L43 27 L49 34Z"/>
+              <path d="M48 43 C38 37 27 37 17 31 L8 23 L13 37 L2 33 L11 44 L0 44 L13 53 L3 57 L17 61 L7 67 L23 67 L14 75 L31 68 L27 79 L39 69 L48 62Z"/>
+              <path d="M46 64 L42 80 L34 84 L29 81 L30 88 L22 90 L32 92 L34 98 L40 91 L46 89 L50 73Z"/>
+              <circle cx="29" cy="19" r="1.8" fill="#d8ac6d" stroke="none"/>
+              <path d="M13 43 L37 49 M13 55L36 55 M21 65L39 61" fill="none" stroke="#d6a164" stroke-width="1.1" opacity="0.6"/>
+            </g>
+            <use href="#halfEagle" transform="translate(100 0) scale(-1 1)"/>
+            <path d="M45 39 Q50 33 55 39 L60 69 Q55 77 50 83 Q45 77 40 69Z"/>
+            <path d="M50 76 L42 90 L48 87 L50 99 L52 87 L58 90Z"/>
+          </g>
+
+          <!-- KOKA e instrumentit me dy kunja -->
+          <g filter="url(#shadow)">
+            <path d="M66 196 Q46 198 38 212 L36 240 Q41 259 62 261 L185 254 L185 205Z"
+                  fill="url(#neckWood)" stroke="#4d250e" stroke-width="6"/>
+            <path d="M50 213 Q77 199 169 211" fill="none" stroke="#f8d499" stroke-width="3" opacity="0.4"/>
+            <path d="M87 207 L85 174 Q82 163 93 161 Q105 161 103 172 L101 207Z" fill="url(#pegWood)" stroke="#44200c" stroke-width="3"/>
+            <path d="M146 209 L145 179 Q142 170 152 169 Q164 170 162 181 L160 210Z" fill="url(#pegWood)" stroke="#44200c" stroke-width="3"/>
+            <ellipse cx="94" cy="164" rx="15" ry="7" fill="#87502b" stroke="#3c200d" stroke-width="2"/>
+            <ellipse cx="153" cy="171" rx="15" ry="7" fill="#87502b" stroke="#3c200d" stroke-width="2"/>
+            <circle cx="93" cy="220" r="7" fill="#3a2114" stroke="#d5a25c" stroke-width="2"/>
+            <circle cx="155" cy="239" r="7" fill="#3a2114" stroke="#d5a25c" stroke-width="2"/>
+          </g>
+
+          <!-- BISHTI: i gjatë, i hollë dhe i integruar me kupën -->
+          <g>
+            <path d="M176 201 C425 200 723 202 1009 196 Q1029 200 1038 211 L1040 253 Q1028 266 1010 260 C728 259 422 260 176 260 Z"
+                  fill="url(#neckWood)" stroke="#4b230d" stroke-width="6"/>
+            <path d="M189 208 C472 209 763 208 1018 207 L1018 251 C762 253 469 252 189 253 Z"
+                  fill="url(#fingerWood)" stroke="#b87c45" stroke-width="2.6"/>
+            <path d="M190 211 L1017 210" stroke="#c68a52" stroke-width="1.6" opacity="0.75"/>
+            <path d="M190 251 L1017 249" stroke="#e1ae72" stroke-width="1.6" opacity="0.6"/>
+            <rect x="195" y="209" width="5" height="44" rx="1.5" fill="url(#metal)"/>
+          </g>
+
+          <!-- 13 perdet dhe numrat shtohen me JavaScript -->
+          <g id="fret-layer"></g>
+
+          <!-- TELAT: vazhdojnë pa ndërprerje nga koka deri te kupa -->
+          <g id="strings" stroke-linecap="round" pointer-events="none">
+            <path d="M91 220 L1378 220" stroke="#2d1a0d" stroke-width="4" opacity="0.6"/>
+            <path d="M91 219 L1378 219" stroke="url(#metal)" stroke-width="2.2"/>
+            <path d="M153 239 L1378 241" stroke="#24140c" stroke-width="4" opacity="0.55"/>
+            <path d="M153 238 L1378 240" stroke="url(#metal)" stroke-width="2.3"/>
+          </g>
+
+          <!-- Ura dhe kapësja e telave në kupë -->
+          <g>
+            <path d="M1314 206 Q1324 201 1330 208 L1330 252 Q1323 258 1314 252Z" fill="#5b2d12" stroke="#28160c" stroke-width="2.5"/>
+            <path d="M1320 209 L1320 249" stroke="#e4ba78" stroke-width="2"/>
+            <path d="M1381 204 Q1393 210 1390 228 L1389 246 L1374 248 L1374 208Z" fill="#45200f" stroke="#231309" stroke-width="3"/>
+            <circle cx="1380" cy="220" r="3" fill="#bd8948"/>
+            <circle cx="1380" cy="240" r="3" fill="#bd8948"/>
+          </g>
+
+          <!-- Dritat e notave aktive dhe zonat e klikimit -->
+          <g id="highlights" pointer-events="none"></g>
+          <g id="hit-zones"></g>
+        </svg>
+      </div>
+    </section>
+
+    <section class="keyboard-panel" aria-label="Tastiera për 14 nota">
+      <div class="keyboard-heading">
+        <strong>14 notat e çiftelisë</strong>
+        <span>Shtyp tastet në kompjuter ose kliko mbi to · Nota 14 (F) = tel i hapur te kupa</span>
+      </div>
+      <div id="note-keyboard" class="note-keyboard"></div>
+    </section>
+
+    <p class="saving-explain">Pasi ndalon regjistrimin, dëgjoje me <strong>▶ Luaj</strong>. Vetëm <strong>💾 Ruaj</strong> e ruan në listë; <strong>🗑 Fshi</strong> e heq. Nëse aktivizon “Ruaj edhe në dosje”, shfletuesi të kërkon të zgjedhësh dosjen e projektit. Këngët e ruajtura në listë mbeten në këtë shfletues pas rifreskimit.</p>
+    <div class="footer-row">
+      <p id="status" aria-live="polite">Shtyp Q W E R T Y U I O P A S D F, ose kliko te notat.</p>
+      <span class="key">Tinguj nga regjistrimi iPhone · 14 nota · 13 perde Q-D + teli i hapur F</span>
+    </div>
+  </main>
+  <script src="script.js"></script>
+  <script src="mic.js"></script>
+</body>
+</html>
