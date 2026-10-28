@@ -1,0 +1,11 @@
+ÇIFTELIA - Mikrofon, notat e pasigurta dhe ritmi
+
+1. Hape index.html me Live Server në VS Code (localhost).
+2. Nise mikrofonin dhe luaj vetëm telin e poshtëm. Toleranca për nota është ±15 Hz.
+3. Ndalo mikrofonin. Do të shohësh sa goditje u njohën (p.sh. 12/15).
+4. Kliko mbi çdo ? në rreshtin e goditjeve për të vendosur notën Q-W-E-R-T-Y-U-I-O-P-A-S-D-F.
+   Mund të korrigjosh edhe një notë të identifikuar gabim. Kohët e goditjeve nuk ndryshojnë.
+5. Kliko Luaj dhe pastaj Ruaj, nëse melodia është e saktë. Fshi e heq provën ose këngën.
+
+Njohja nuk mund të jetë gjithmonë 100% me një mikrofon real. Nuk e shpikim notën kur
+frekuenca është e paqartë; lejojmë korrigjimin para ruajtjes.

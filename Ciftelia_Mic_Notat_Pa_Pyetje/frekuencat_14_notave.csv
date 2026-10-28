@@ -1,0 +1,15 @@
+﻿nota,tasti,frekuenca_hz,pozicioni,burimi,minimum_hz,maksimum_hz,toleranca_hz
+1,Q,329,Perdja 1,Vlerat e dhena nga perdoruesi,314,344,±15
+2,W,358,Perdja 2,Vlerat e dhena nga perdoruesi,343,373,±15
+3,E,389,Perdja 3,Vlerat e dhena nga perdoruesi,374,404,±15
+4,R,440,Perdja 4,Vlerat e dhena nga perdoruesi,425,455,±15
+5,T,477,Perdja 5,Vlerat e dhena nga perdoruesi,462,492,±15
+6,Y,521,Perdja 6,Vlerat e dhena nga perdoruesi,506,536,±15
+7,U,587,Perdja 7,Vlerat e dhena nga perdoruesi,572,602,±15
+8,I,660,Perdja 8,Vlerat e dhena nga perdoruesi,645,675,±15
+9,O,719,Perdja 9,Vlerat e dhena nga perdoruesi,704,734,±15
+10,P,784,Perdja 10,Vlerat e dhena nga perdoruesi,769,799,±15
+11,A,880,Perdja 11,Vlerat e dhena nga perdoruesi,865,895,±15
+12,S,960,Perdja 12,Vlerat e dhena nga perdoruesi,945,975,±15
+13,D,1050,Perdja 13,Vlerat e dhena nga perdoruesi,1035,1065,±15
+14,F,292,Teli i hapur te kupa,Vlerat e dhena nga perdoruesi,277,307,±15
