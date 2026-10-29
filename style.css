@@ -270,3 +270,14 @@ button.stop:hover { background: #44566c; }
  .toolbar-sound .folder-save-option { width:auto; }
  .instrument-panel { padding:8px 5px; }
 }
+
+/* Tregon versionin aktiv kur një shfletues ka ende kopjen e vjetër. */
+.header .release-version {
+  display: inline-block;
+  margin: 10px 0 14px;
+  padding: 4px 10px;
+  border: 1px solid #4b6075;
+  border-radius: 999px;
+  color: #e7b371;
+  font-size: 12px;
+}

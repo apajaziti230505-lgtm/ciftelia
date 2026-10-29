@@ -549,7 +549,7 @@ async function micStart() {
     micWorkletNode = null;
     if (micContext.audioWorklet && window.AudioWorkletNode) {
       try {
-        await micContext.audioWorklet.addModule('mic-onset-worklet.js');
+        await micContext.audioWorklet.addModule('mic-onset-worklet.js?v=20261029-2');
         micWorkletNode = new AudioWorkletNode(micContext, 'ciftelia-onset');
         micWorkletNode.port.onmessage = event => {
           if (event.data?.type === 'onset') {
