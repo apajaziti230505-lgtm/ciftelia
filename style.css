@@ -226,3 +226,47 @@ button.stop:hover { background: #44566c; }
   background: #4a302d;
   border-color: #c98866;
 }
+
+
+/* Komandat direkt tek instrumenti */
+.instrument-panel { padding: 13px 12px 17px; }
+.instrument-toolbar {
+  position: relative; z-index: 2;
+  display: flex; align-items: center; flex-wrap: wrap; justify-content: center;
+  gap: 12px; margin: 4px 4px 8px; padding: 14px;
+  border: 1px solid #576477; border-radius: 15px;
+  background: rgba(9, 23, 38, .82);
+}
+.instrument-toolbar label { font-size: 12px; font-weight: 750; color: #f0d5aa; }
+.toolbar-song, .toolbar-actions, .toolbar-sound { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px; }
+.toolbar-song { flex: 1 1 215px; }
+.toolbar-song select { min-width: 150px; flex: 1; max-width: 300px; }
+.toolbar-actions { flex: 2 1 490px; }
+.toolbar-actions button { white-space:nowrap; }
+.toolbar-sound { width: 100%; gap: 9px 13px; border-top: 1px solid #34475b; padding-top: 12px; }
+.toolbar-sound #soundMode { min-width: 150px; }
+.toolbar-sound #volume { width: 150px; }
+.play-song { background:#d9ac69; }
+.instrument-toolbar .mic-button { min-width: 150px; }
+.instrument-toolbar button:disabled { opacity:.48; cursor:not-allowed; transform:none; }
+.mic-filters { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; border:1px solid #415769; border-radius:12px; padding:12px; margin:15px 0 8px; }
+.mic-filters legend { padding:0 8px; font-size:14px; font-weight:800; color:#eed0a0; }
+.mic-filters .filter-item { display:flex; gap:10px; align-items:flex-start; cursor:pointer; min-height:58px; border:1px solid #354b5c; border-radius:10px; padding:10px; background:#102235; }
+.filter-item input { accent-color:#dba866; width:18px; height:18px; flex-shrink:0; margin:2px 0; }
+.filter-item span { display:flex; flex-direction:column; gap:5px; }
+.filter-item strong { color:#f8e3c3; font-size:12px; }
+.filter-item small { color:#adc3cf; line-height:1.35; font-size:11px; }
+.mic-filter-help { color:#a8bbc7; font-size:11px; line-height:1.55; margin:5px 3px 12px; }
+.mic-filters input:disabled { opacity:.45; }
+@media(max-width:750px) {
+ .instrument-toolbar { gap:10px; padding:11px; }
+ .toolbar-song { flex-basis:100%; }
+ .toolbar-song select { max-width:none; }
+ .toolbar-actions { flex-basis:100%; }
+ .toolbar-actions button { flex:1 1 80px; min-width:0; padding:10px 9px; }
+ .instrument-toolbar .mic-button { flex:1 1 100%; }
+ .toolbar-sound { gap:10px; }
+ .toolbar-sound #volume { width:140px; }
+ .toolbar-sound .folder-save-option { width:auto; }
+ .instrument-panel { padding:8px 5px; }
+}

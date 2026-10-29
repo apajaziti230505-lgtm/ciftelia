@@ -1,0 +1,14 @@
+ÇIFTELIA - RREGULLIM I ZËRIT PËR iPHONE / GITHUB PAGES
+
+1. Nxirre ZIP-in në një dosje.
+2. Hap https://github.com/apajaziti230505-lgtm/ciftelia
+3. Ngarko DIREKT në rrënjën e repository-t skedarët index.html, script.js, mic.js,
+   mic-onset-worklet.js, style.css dhe dosjen assets.
+4. Pasi të publikohen, provo faqen në Safari dhe prek ▶ Luaj.
+5. Mikrofoni nuk nxjerr tingull gjatë regjistrimit për të shmangur jehonën.
+   Shtyp Ndalo mikrofonin dhe më pas ▶ Luaj që të dëgjosh këngën.
+6. WAV mund të qëndrojnë në rrënjë si tani ose në assets/audio:
+   script.js kontrollon të dy vendet.
+
+Nëse kënga e regjistruar ka 0 nota të njohura, nuk ka çfarë të luhet;
+shiko numrin e notave dhe korrigjo ato me ? pas regjistrimit.

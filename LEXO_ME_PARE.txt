@@ -1,11 +1,19 @@
-ÇIFTELIA - Mikrofon, notat e pasigurta dhe ritmi
+ÇIFTELIA — KËNGËT DHE FILTRAT E MIKROFONIT
 
-1. Hape index.html me Live Server në VS Code (localhost).
-2. Nise mikrofonin dhe luaj vetëm telin e poshtëm. Toleranca për nota është ±15 Hz.
-3. Ndalo mikrofonin. Do të shohësh sa goditje u njohën (p.sh. 12/15).
-4. Kliko mbi çdo ? në rreshtin e goditjeve për të vendosur notën Q-W-E-R-T-Y-U-I-O-P-A-S-D-F.
-   Mund të korrigjosh edhe një notë të identifikuar gabim. Kohët e goditjeve nuk ndryshojnë.
-5. Kliko Luaj dhe pastaj Ruaj, nëse melodia është e saktë. Fshi e heq provën ose këngën.
+1. Për GitHub Pages ngarko PËRMBAJTJEN e kësaj dosjeje në rrënjën e repository-t:
+   index.html, style.css, script.js, mic.js, mic-onset-worklet.js, assets/audio/*.
+2. Hape faqen në HTTPS ose lokalisht me Live Server nga VS Code.
+3. Luaj notat Q W E R T Y U I O P A S D (13 perde); F = teli i hapur 292 Hz.
+4. Komandat Luaj, Ndalo, Ruaj, Fshi, + dhe Mikrofon janë mbi çifteli.
+5. Shtyp mikrofonin, luaj vetëm telin e poshtëm dhe ndalo. Provon këngën me Luaj.
+6. Ruaj vetëm kur të pëlqen; Fshi për ta hedhur poshtë.
+7. Low Cut 80 Hz aktiv. Voice Filter/Noise Suppression/Echo Cancellation/Auto Gain OFF.
+   Filtrat e sistemit ndryshohen PARA nisjes së mikrofonit.
+8. Këngët ruhen lokalisht në shfletues. Për eksportim në dosje zgjidh opsionin
+   "Eksporto edhe në dosje" në Chrome/Edge desktop; Safari mund të mos e mbështesë.
+9. Mikrofoni NUK dëgjohet në altoparlant gjatë regjistrimit (parandalim i jehonës).
+   Pas regjistrimit shtyp Luaj për të dëgjuar notat e njohura.
+10. Gjurmimi i ritmit dhe njohja nga mikrofoni varen nga mikrofoni/zhurma;
+    nota e pasigurt mund të korrigjohet manualisht para ruajtjes.
 
-Njohja nuk mund të jetë gjithmonë 100% me një mikrofon real. Nuk e shpikim notën kur
-frekuenca është e paqartë; lejojmë korrigjimin para ruajtjes.
+Ruaj një kopje të ZIP-it: GitHub Pages nuk është databazë këngësh.

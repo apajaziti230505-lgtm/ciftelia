@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Çiftelia ime — 14 notat nga iPhone</title>
+  <title>Çiftelia ime — Mikrofon, filtra dhe këngë</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,55 +14,31 @@
       <p>Dy tela · 13 perde · 14 nota audio (QWERTYUIOPASDF) · shqiponjë dykrenare</p>
     </header>
 
-    <section class="controls" aria-label="Kontrollet e këngëve">
-      <label for="zgjidhKengen">Zgjidh melodinë</label>
-      <select id="zgjidhKengen">
-        <option value="kenga1">Melodi 1 — provë e shpejtë</option>
-        <option value="kenga2">Melodi 2 — provë</option>
-      </select>
-      <button type="button" id="recordPlus" class="record-plus" aria-label="Nis regjistrimin e këngës së re" aria-pressed="false" title="+ Nis regjistrimin / ■ Ndalo (pa ruajtur)">＋</button>
-      <button type="button" id="playButton" onclick="luajKengen()">▶ Luaj</button>
-      <button type="button" id="saveSongButton" class="save-song" disabled title="Ruaj këngën e regjistruar vetëm kur e zgjedh ti">💾 Ruaj</button>
-      <button type="button" id="deleteSongButton" class="delete-song" disabled title="Fshi këngën e zgjedhur nga aplikacioni">🗑 Fshi</button>
-      <button type="button" class="stop" onclick="ndaloKengen()">■ Ndalo</button>
-      <label for="soundMode">Tingulli</label>
-      <select id="soundMode" aria-label="Zgjidh regjistrimin">
-        <option value="full">I plotë (nga iPhone)</option>
-        <option value="crisp">I shkurtër (nga iPhone)</option>
-      </select>
-      <label for="volume">Volumi <span id="volumeLabel">80%</span></label>
-      <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volumi">
-      <label class="folder-save-option"><input type="checkbox" id="saveToFolder"> Ruaj edhe në dosje (JSON/WAV)</label>
-    </section>
-
-
-    <section class="mic-panel" aria-label="Regjistrimi me mikrofon i telit të poshtëm">
-      <div class="mic-heading">
-        <div>
-          <strong>🎙 Njohja e notave me mikrofon</strong>
-          <p>Luaj vetëm telin e poshtëm. Q–D = 13 perdet (329–1050 Hz); F = teli i hapur (292 Hz). Çdo notë pranohet brenda ±15 Hz. Regjistrohen goditjet dhe intervalet mes tyre në milisekonda. Pas ndalimit krijohet një këngë provë; shtyp Ruaj vetëm nëse dëshiron ta mbash.</p>
-        </div>
-        <button id="micButton" type="button" class="mic-button" aria-pressed="false">🎙 Nis mikrofonin</button>
-      </div>
-      <div class="mic-options">
-        <label for="micSensitivity">Ndjeshmëria e goditjeve</label>
-        <input id="micSensitivity" type="range" min="1" max="10" value="5" aria-label="Ndjeshmëria e mikrofonit">
-        <span id="micSensitivityLabel">5/10</span>
-        <span class="mic-help">Toleranca është ±15 Hz për çdo notë. Nëse humbet goditje, rrite ndjeshmërinë; nëse njeh goditje të rreme, ule.</span>
-      </div>
-      <div class="mic-stats">
-        <div><small>Nota e njohur sipas Hz të tua</small><strong id="micNote">—</strong></div>
-        <div><small>Frekuenca e dëgjuar</small><strong id="micHz">— Hz</strong></div>
-        <div><small>Koha nga nota e mëparshme</small><strong id="micDelta">— ms</strong></div>
-        <div><small>Nota të njohura / goditje</small><strong id="micCount">0</strong></div>
-      </div>
-      <p id="micStatus" class="mic-status" role="status">Përdor Chrome/Edge me Live Server (localhost) dhe lejo mikrofonin. Prefero një dhomë të qetë.</p>
-      <p class="mic-help">Nëse del <strong>?</strong>, pas ndalimit kliko te goditja dhe cakto notën manualisht. Koha e goditjes ruhet.</p>
-      <div class="mic-events" id="micEvents" aria-label="Goditjet; klikoni çdo notë për ta korrigjuar pas ndalimit"></div>
-      <div class="mic-links"><a href="frekuencat_14_notave.csv" download>Shkarko 14 frekuencat me tolerancë ±15 Hz (CSV)</a> · <span>F = 292 Hz, Q = 329 Hz, D = 1050 Hz</span></div>
-    </section>
-
     <section class="instrument-panel" aria-label="Simuluesi i çiftelisë">
+      <div class="instrument-toolbar" aria-label="Komandat e çiftelisë">
+        <div class="toolbar-song">
+          <label for="zgjidhKengen">Kënga</label>
+          <select id="zgjidhKengen">
+            <option value="kenga1">Melodi 1 — provë e shpejtë</option>
+            <option value="kenga2">Melodi 2 — provë</option>
+          </select>
+        </div>
+        <div class="toolbar-actions">
+          <button type="button" id="recordPlus" class="record-plus" aria-label="Nis regjistrimin e këngës së re" aria-pressed="false" title="Regjistro këngë të re me tastierë">＋</button>
+          <button type="button" id="playButton" class="play-song" onclick="luajKengen()">▶ Luaj</button>
+          <button type="button" id="stopButton" class="stop" onclick="ndaloGjithcka()">■ Ndalo</button>
+          <button type="button" id="saveSongButton" class="save-song" disabled title="Ruaj këngën provë vetëm nëse e zgjedh ti">💾 Ruaj</button>
+          <button type="button" id="deleteSongButton" class="delete-song" disabled title="Fshi këngën e zgjedhur">🗑 Fshi</button>
+          <button type="button" id="micButton" class="mic-button" aria-pressed="false">🎙 Nis mikrofonin</button>
+        </div>
+        <div class="toolbar-sound">
+          <label for="soundMode">Tingulli</label>
+          <select id="soundMode" aria-label="Zgjidh llojin e tingullit"><option value="full">I plotë (iPhone)</option><option value="crisp">I shkurtër</option></select>
+          <label for="volume">Volumi <span id="volumeLabel">80%</span></label>
+          <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volumi">
+          <label class="folder-save-option"><input type="checkbox" id="saveToFolder"> Eksporto edhe në dosje</label>
+        </div>
+      </div>
       <div class="instrument-scroll">
         <svg id="ciftelia" viewBox="0 0 1450 465" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Çifteli tradicionale e vizatuar me SVG: bisht i gjatë e i hollë, 13 perde, dy tela dhe kupë në formë dardhe me shqiponjë dykrenare.">
           <defs>
@@ -204,6 +180,40 @@
       </div>
     </section>
 
+    <section class="mic-panel" aria-label="Regjistrimi me mikrofon i telit të poshtëm">
+      <div class="mic-heading">
+        <div>
+          <strong>🎙 Njohja e notave me mikrofon</strong>
+          <p>Luaj vetëm telin e poshtëm. Q–D = 13 perdet (329–1050 Hz); F = teli i hapur (292 Hz). Çdo notë pranohet brenda ±15 Hz. Regjistrohen goditjet dhe intervalet mes tyre në milisekonda. Pas ndalimit krijohet një këngë provë; shtyp Ruaj vetëm nëse dëshiron ta mbash.</p>
+        </div>
+      </div>
+      <div class="mic-options">
+        <label for="micSensitivity">Ndjeshmëria e goditjeve</label>
+        <input id="micSensitivity" type="range" min="1" max="10" value="5" aria-label="Ndjeshmëria e mikrofonit">
+        <span id="micSensitivityLabel">5/10</span>
+        <span class="mic-help">Toleranca është ±15 Hz për çdo notë. Nëse humbet goditje, rrite ndjeshmërinë; nëse njeh goditje të rreme, ule.</span>
+      </div>
+      <fieldset class="mic-filters" aria-label="Filtrat për njohjen e notave">
+        <legend>Filtrat e mikrofonit</legend>
+        <label class="filter-item"><input type="checkbox" id="lowCut80" checked> <span><strong>Low Cut 80 Hz</strong><small>Heq zhurmat nën 80 Hz · rekomandohet</small></span></label>
+        <label class="filter-item"><input type="checkbox" id="voiceFilter"> <span><strong>Voice Filter</strong><small>170–1800 Hz · provo vetëm nëse ka zhurmë</small></span></label>
+        <label class="filter-item"><input type="checkbox" id="micNoiseSuppression"> <span><strong>Noise Suppression</strong><small>Filtri i sistemit · mund t’i fshehë notat e dobëta</small></span></label>
+        <label class="filter-item"><input type="checkbox" id="micEchoCancellation"> <span><strong>Echo Cancellation</strong><small>Rekomandohet OFF kur luan çifteli</small></span></label>
+        <label class="filter-item"><input type="checkbox" id="micAutoGain"> <span><strong>Auto Gain</strong><small>OFF për amplitudë më të qëndrueshme</small></span></label>
+      </fieldset>
+      <p class="mic-filter-help">Low Cut dhe Voice Filter ndryshojnë menjëherë. Për tri opsionet e sistemit duhet ta ndalosh dhe rinisësh mikrofonin. iPhone mund të mos i zbatojë të gjitha opsionet.</p>
+      <div class="mic-stats">
+        <div><small>Nota e njohur sipas Hz të tua</small><strong id="micNote">—</strong></div>
+        <div><small>Frekuenca e dëgjuar</small><strong id="micHz">— Hz</strong></div>
+        <div><small>Koha nga nota e mëparshme</small><strong id="micDelta">— ms</strong></div>
+        <div><small>Nota të njohura / goditje</small><strong id="micCount">0</strong></div>
+      </div>
+      <p id="micStatus" class="mic-status" role="status">Në Safari aktivizo lejen e mikrofonit. Gjatë regjistrimit tingulli nuk transmetohet në altoparlant për të shmangur jehonën; pasi të ndalosh, shtyp ▶ Luaj te çiftelia.</p>
+      <p class="mic-help">Nëse del <strong>?</strong>, pas ndalimit kliko te goditja dhe cakto notën manualisht. Koha e goditjes ruhet.</p>
+      <div class="mic-events" id="micEvents" aria-label="Goditjet; klikoni çdo notë për ta korrigjuar pas ndalimit"></div>
+      <div class="mic-links"><a href="frekuencat_14_notave.csv" download>Shkarko 14 frekuencat me tolerancë ±15 Hz (CSV)</a> · <span>F = 292 Hz, Q = 329 Hz, D = 1050 Hz</span></div>
+    </section>
+
     <section class="keyboard-panel" aria-label="Tastiera për 14 nota">
       <div class="keyboard-heading">
         <strong>14 notat e çiftelisë</strong>
@@ -212,7 +222,7 @@
       <div id="note-keyboard" class="note-keyboard"></div>
     </section>
 
-    <p class="saving-explain">Pasi ndalon regjistrimin, dëgjoje me <strong>▶ Luaj</strong>. Vetëm <strong>💾 Ruaj</strong> e ruan në listë; <strong>🗑 Fshi</strong> e heq. Nëse aktivizon “Ruaj edhe në dosje”, shfletuesi të kërkon të zgjedhësh dosjen e projektit. Këngët e ruajtura në listë mbeten në këtë shfletues pas rifreskimit.</p>
+    <p class="saving-explain">Pasi ndalon regjistrimin, dëgjoje me <strong>▶ Luaj</strong> mbi çifteli. Vetëm <strong>💾 Ruaj</strong> e ruan në listë; <strong>🗑 Fshi</strong> e heq. Nëse aktivizon “Ruaj edhe në dosje”, shfletuesi të kërkon të zgjedhësh dosjen e projektit. Këngët e ruajtura në listë mbeten në këtë shfletues pas rifreskimit.</p>
     <div class="footer-row">
       <p id="status" aria-live="polite">Shtyp Q W E R T Y U I O P A S D F, ose kliko te notat.</p>
       <span class="key">Tinguj nga regjistrimi iPhone · 14 nota · 13 perde Q-D + teli i hapur F</span>

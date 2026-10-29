@@ -162,6 +162,24 @@ function aktivizoNotat(notes) {
     }
 }
 
+// Tingujt mund të jenë në rrënjën e GitHub-it OSE te assets/audio.
+// Ky kërkim shmang gabimin 404 kur luhet një këngë në iPhone.
+function audioPaths(filename) {
+    return [`./${filename}`, `./assets/audio/${filename}`];
+}
+
+async function merrBufferAudio(context, filename) {
+    let lastError = null;
+    for (const path of audioPaths(filename)) {
+        try {
+            const response = await fetch(path, { cache: "no-cache" });
+            if (!response.ok) throw new Error(`${response.status} ${path}`);
+            return await context.decodeAudioData(await response.arrayBuffer());
+        } catch (error) { lastError = error; }
+    }
+    throw new Error(`Nuk u gjet tingulli ${filename} në dosjen kryesore ose assets/audio (${lastError?.message || 'gabim'}).`);
+}
+
 function tingulliPerNoten(string, noteNumber) {
     if (!Number.isInteger(noteNumber) || noteNumber < 1 || noteNumber > NUM_NOTES) return null;
     // NOTAT E NXJERRA NGA VIDEOJA: nota1-Q ... nota14-F.
@@ -169,7 +187,7 @@ function tingulliPerNoten(string, noteNumber) {
     // Për telin shoqërues përdoret i njëjti regjistrim derisa të kemi
     // regjistrime të veçanta të atij teli.
     const emri = `nota${noteNumber}` + (soundMode === "crisp" ? "_shkurt" : "");
-    return { src: `assets/audio/${emri}.wav`, playbackRate: 1 };
+    return { src: `./${emri}.wav`, playbackRate: 1 };
 }
 
 function tingull(note) {
@@ -185,19 +203,31 @@ function tingull(note) {
     const info = tingulliPerNoten(note.string, note.noteNumber);
     if (!info) return;
 
-    const player = new Audio(info.src);
-    player.preload = "auto";
-    player.playbackRate = info.playbackRate;
-    player.volume = volume;
-    activeAudio.add(player);
-
-    const cleanup = () => activeAudio.delete(player);
-    player.addEventListener("ended", cleanup, { once: true });
-    player.addEventListener("error", cleanup, { once: true });
-    player.play().catch(() => {
-        cleanup();
-        status.textContent = "Audio nuk u luajt. Hape projektin me Live Server në VS Code.";
-    });
+    const filename = info.src.split('/').pop();
+    const paths = audioPaths(filename);
+    let currentIndex = 0;
+    let player = null;
+    function provoSkedarin() {
+        const currentPath = paths[currentIndex];
+        player = new Audio(currentPath);
+        player.preload = "auto";
+        player.playbackRate = info.playbackRate;
+        player.volume = volume;
+        activeAudio.add(player);
+        let handled = false;
+        const fail = () => {
+            if (handled) return;
+            handled = true;
+            activeAudio.delete(player);
+            player.pause();
+            if (++currentIndex < paths.length) provoSkedarin();
+            else status.textContent = `Tingulli ${filename} nuk u hap. Kontrollo skedarët WAV në GitHub.`;
+        };
+        player.addEventListener("ended", () => activeAudio.delete(player), { once: true });
+        player.addEventListener("error", fail, { once: true });
+        player.play().catch(fail);
+    }
+    provoSkedarin();
 }
 
 function ndaloAudioTePlanifikuar() {
@@ -207,9 +237,8 @@ function ndaloAudioTePlanifikuar() {
         try { source.disconnect(); } catch (_) { }
     }
     songAudioSources = [];
-    const ctx = songAudioContext;
-    songAudioContext = null;
-    if (ctx) void ctx.close().catch(() => {});
+    // Mbaje AudioContext të hapur për Safari në iPhone.
+    // Mbyllja dhe rikrijimi pas çdo klikimi mund ta lërë suspended.
 }
 
 function ndaloKengen() {
@@ -225,6 +254,13 @@ function ndaloKengen() {
     highlights.replaceChildren();
     document.querySelectorAll(".note-key.is-playing").forEach(el => el.classList.remove("is-playing"));
     status.textContent = "Ndaluar. Shtyp Q W E R T Y U I O P A S D F për notat 1-14.";
+}
+
+// Ndalo luajtjen dhe, kur ka regjistrim aktiv, përfundo atë pa e ruajtur automatikisht.
+function ndaloGjithcka() {
+    ndaloKengen();
+    if (recording) void perfundoRegjistrimin();
+    if (typeof micIsRecording !== 'undefined' && micIsRecording && typeof micStop === 'function') void micStop();
 }
 
 function luajNoten(string, noteNumber) {
@@ -301,19 +337,22 @@ async function luajKengen() {
     // setTimeout përdoret vetëm për dritat vizuale, jo për tingujt.
     let context;
     try {
-        context = new (window.AudioContext || window.webkitAudioContext)();
+        const AudioAPI = window.AudioContext || window.webkitAudioContext;
+        if (!AudioAPI) throw new Error('Ky shfletues nuk e mbështet Web Audio.');
+        context = songAudioContext && songAudioContext.state !== 'closed'
+            ? songAudioContext : new AudioAPI();
         songAudioContext = context;
+        // Thirret menjëherë nga klikimi real në ▶ Luaj (iOS Safari).
         await context.resume();
+        if (context.state !== 'running') throw new Error('Safari nuk e aktivizoi audion. Prek ▶ Luaj edhe një herë.');
         const files = [...new Set(notes.map(note => note.noteNumber))];
         const bufferMap = new Map();
         await Promise.all(files.map(async noteNumber => {
             const cacheKey = `${mode}_${noteNumber}`;
             let buffer = songBufferCache.get(cacheKey);
             if (!buffer) {
-                const src = `assets/audio/nota${noteNumber}${mode === 'crisp' ? '_shkurt' : ''}.wav`;
-                const res = await fetch(src);
-                if (!res.ok) throw new Error('Mungon ' + src);
-                buffer = await context.decodeAudioData(await res.arrayBuffer());
+                const file = `nota${noteNumber}${mode === 'crisp' ? '_shkurt' : ''}.wav`;
+                buffer = await merrBufferAudio(context, file);
                 songBufferCache.set(cacheKey, buffer);
             }
             bufferMap.set(noteNumber, buffer);
@@ -374,17 +413,29 @@ async function luajKengen() {
                 if (fallbackId !== songPlaybackId) return;
                 aktivizoNotat(group);
                 for (const note of group) {
-                    const player = new Audio(`assets/audio/nota${note.noteNumber}${modeSuffix}.wav`);
-                    player.volume = volume;
-                    activeAudio.add(player);
-                    const cleanup = () => activeAudio.delete(player);
-                    player.addEventListener('ended', cleanup, {once:true});
-                    player.addEventListener('error', cleanup, {once:true});
-                    void player.play().catch(err => {
-                        cleanup();
-                        audioFailed = true;
-                        status.textContent = `Nuk u hap skedari audio: ${err.message}`;
-                    });
+                    const filename = `nota${note.noteNumber}${modeSuffix}.wav`;
+                    const paths = audioPaths(filename);
+                    const playFallback = i => {
+                        if (i >= paths.length) {
+                            audioFailed = true;
+                            status.textContent = `Nuk gjendet ${filename}; kontrollo skedarët e GitHub-it.`;
+                            return;
+                        }
+                        const player = new Audio(paths[i]);
+                        player.volume = volume;
+                        activeAudio.add(player);
+                        let failed = false;
+                        const fail = () => {
+                            if (failed) return;
+                            failed = true;
+                            activeAudio.delete(player);
+                            playFallback(i + 1);
+                        };
+                        player.addEventListener('ended', () => activeAudio.delete(player), {once:true});
+                        player.addEventListener('error', fail, {once:true});
+                        player.play().catch(fail);
+                    };
+                    playFallback(0);
                 }
             }, time));
         }
@@ -521,10 +572,8 @@ async function audioNgaNotat(notes, mode, gainValue) {
     const buffers = new Map();
     try {
         for (const noteNumber of [...new Set(notes.map(n => n.noteNumber))]) {
-            const file = `assets/audio/nota${noteNumber}${mode === "crisp" ? "_shkurt" : ""}.wav`;
-            const response = await fetch(file);
-            if (!response.ok) throw new Error(`Nuk gjendet ${file}`);
-            buffers.set(noteNumber, await context.decodeAudioData(await response.arrayBuffer()));
+            const file = `nota${noteNumber}${mode === "crisp" ? "_shkurt" : ""}.wav`;
+            buffers.set(noteNumber, await merrBufferAudio(context, file));
         }
     } finally {
         await context.close();

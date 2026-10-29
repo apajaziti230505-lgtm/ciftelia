@@ -27,6 +27,12 @@ const micHz = document.getElementById("micHz");
 const micDelta = document.getElementById("micDelta");
 const micCount = document.getElementById("micCount");
 const micEvents = document.getElementById("micEvents");
+// Filtrat e mikrofonit: Low Cut 80 Hz aktiv nga fillimi.
+const micLowCutControl = document.getElementById("lowCut80");
+const micVoiceFilterControl = document.getElementById("voiceFilter");
+const micNoiseControl = document.getElementById("micNoiseSuppression");
+const micEchoControl = document.getElementById("micEchoCancellation");
+const micGainControl = document.getElementById("micAutoGain");
 
 const MIC_LIMIT_MS = 3 * 60 * 1000;
 let micIsRecording = false;
@@ -37,6 +43,9 @@ let micPitchAnalyser = null;
 let micEnergyAnalyser = null;
 let micSource = null;
 let micHighpass = null;
+let micVoiceHighpass = null;
+let micVoiceLowpass = null;
+let micSilentGain = null;
 let micFrameID = 0;
 let micStartContextTime = 0;
 let micLastOnsetTimeMs = -9999;
@@ -64,6 +73,21 @@ micSensitivity.addEventListener("input", () => {
   micSensitivityLabel.textContent = `${micSensitivity.value}/10`;
   micWorkletNode?.port.postMessage({ sensitivity: Number(micSensitivity.value) });
 });
+
+function micUpdateFilterSettings() {
+  if (!micContext) return;
+  const now = micContext.currentTime;
+  if (micHighpass) micHighpass.frequency.setTargetAtTime(micLowCutControl.checked ? 80 : 10, now, .012);
+  // Voice Filter opsional: kufizo spektrin, ruaj frekuencat themelore 292–1050 Hz.
+  if (micVoiceHighpass) micVoiceHighpass.frequency.setTargetAtTime(micVoiceFilterControl.checked ? 170 : 10, now, .012);
+  if (micVoiceLowpass) micVoiceLowpass.frequency.setTargetAtTime(micVoiceFilterControl.checked ? 1800 : 18000, now, .012);
+}
+for (const input of [micLowCutControl, micVoiceFilterControl]) {
+  input.addEventListener('change', micUpdateFilterSettings);
+}
+function micDisableSystemControls(disabled) {
+  for (const input of [micNoiseControl, micEchoControl, micGainControl]) input.disabled = disabled;
+}
 
 function micRMS(values) {
   let sum = 0;
@@ -466,19 +490,41 @@ async function micStart() {
   }
   if (draftSong && !confirm("Ke një këngë provë të paregjistruar. Ta hedhim poshtë për të filluar një tjetër?")) return;
   if (draftSong) hiqDraftin();
+  ndaloKengen(); // Shmang njohjen e zërit që luhet nga vetë telefoni.
   micButton.disabled = true;
   micStatus.textContent = "Po kërkohet vetëm leja e mikrofonit...";
   try {
+    // Safari: AudioContext duhet krijuar/aktivizuar GJATË prekjes së butonit,
+    // jo pas kërkesës asinkrone për lejen e mikrofonit.
+    const AudioAPI = window.AudioContext || window.webkitAudioContext;
+    if (!AudioAPI) throw new Error('Web Audio nuk mbështetet nga ky shfletues.');
+    micContext = new AudioAPI();
+    const resumeRequest = micContext.resume();
     micStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      audio: {
+        echoCancellation: micEchoControl.checked,
+        noiseSuppression: micNoiseControl.checked,
+        autoGainControl: micGainControl.checked,
+        channelCount: { ideal: 1 }
+      },
       video: false
     });
-    micContext = new (window.AudioContext || window.webkitAudioContext)();
-    await micContext.resume();
+    await resumeRequest;
+    if (micContext.state !== 'running') await micContext.resume();
+    if (micContext.state !== 'running') throw new Error('AudioContext është pezulluar në Safari. Prek sërish mikrofonin.');
     micSource = micContext.createMediaStreamSource(micStream);
     micHighpass = micContext.createBiquadFilter();
     micHighpass.type = "highpass";
-    micHighpass.frequency.value = 100;
+    micHighpass.frequency.value = micLowCutControl.checked ? 80 : 10;
+    micHighpass.Q.value = 0.707;
+    micVoiceHighpass = micContext.createBiquadFilter();
+    micVoiceHighpass.type = "highpass";
+    micVoiceHighpass.frequency.value = micVoiceFilterControl.checked ? 170 : 10;
+    micVoiceHighpass.Q.value = 0.707;
+    micVoiceLowpass = micContext.createBiquadFilter();
+    micVoiceLowpass.type = "lowpass";
+    micVoiceLowpass.frequency.value = micVoiceFilterControl.checked ? 1800 : 18000;
+    micVoiceLowpass.Q.value = 0.707;
     micPitchAnalyser = micContext.createAnalyser();
     micPitchAnalyser.fftSize = 4096;
     micPitchAnalyser.smoothingTimeConstant = 0.16;
@@ -486,8 +532,16 @@ async function micStart() {
     micEnergyAnalyser.fftSize = 512;
     micEnergyAnalyser.smoothingTimeConstant = 0;
     micSource.connect(micHighpass);
-    micHighpass.connect(micPitchAnalyser);
-    micHighpass.connect(micEnergyAnalyser);
+    micHighpass.connect(micVoiceHighpass);
+    micVoiceHighpass.connect(micVoiceLowpass);
+    micVoiceLowpass.connect(micPitchAnalyser);
+    micVoiceLowpass.connect(micEnergyAnalyser);
+    // Pa këtë lidhje disa versione të iOS Safari nuk e përpunojnë
+    // analizuesin në sfond. Gain 0: asnjë jehonë në altoparlant.
+    micSilentGain = micContext.createGain();
+    micSilentGain.gain.value = 0;
+    micEnergyAnalyser.connect(micSilentGain);
+    micSilentGain.connect(micContext.destination);
     // AudioWorklet mat fillimin e goditjes në blloqe 128 samplesh,
     // në vend të requestAnimationFrame (që mund të vonohet nga ekrani).
     // Dalja e worklet është HESHTJE, jo sinjali i mikrofonit.
@@ -503,7 +557,7 @@ async function micStart() {
           }
         };
         micWorkletNode.port.postMessage({ sensitivity: Number(micSensitivity.value) });
-        micHighpass.connect(micWorkletNode);
+        micVoiceLowpass.connect(micWorkletNode);
         micWorkletNode.connect(micContext.destination);
         micUseWorklet = true;
       } catch (error) { console.warn('AudioWorklet s’u ngarkua: përdoret detektimi rezervë.', error); }
@@ -539,14 +593,17 @@ async function micStart() {
     micDelta.textContent = "— ms";
     micEvents.replaceChildren();
     micIsRecording = true;
+    micDisableSystemControls(true);
     micSetButton(true);
-    micStatus.textContent = "● Mikrofoni aktiv: krahasim ±15 Hz, disa lexime për çdo goditje. Luaj vetëm telin e poshtëm.";
+    micStatus.textContent = "● Mikrofoni po dëgjon. Gjatë regjistrimit nuk del zë nga telefoni (shmang jehonën). Pas ndalimit shtyp ▶ Luaj.";
     micFrameID = requestAnimationFrame(micFrame);
   } catch (error) {
     console.error("Mikrofoni nuk u hap:", error);
     micStatus.textContent = `Nuk u hap mikrofoni: ${error.message || "Leja u refuzua"}.`;
     if (micStream) micStream.getTracks().forEach(t => t.stop());
     micStream = null;
+    if (micSilentGain) { micSilentGain.disconnect(); micSilentGain = null; }
+    micDisableSystemControls(false);
     if (micContext) await micContext.close().catch(() => {});
     micContext = null;
   } finally {
@@ -624,9 +681,13 @@ async function micStop() {
   if (micWorkletNode) { micWorkletNode.port.onmessage = null; micWorkletNode.disconnect(); micWorkletNode = null; }
   // Ruaje llojin e matjes deri pas eksportimit.
   if (micHighpass) micHighpass.disconnect();
+  if (micVoiceHighpass) micVoiceHighpass.disconnect();
+  if (micVoiceLowpass) micVoiceLowpass.disconnect();
+  micHighpass = micVoiceHighpass = micVoiceLowpass = null;
   if (micContext) await micContext.close().catch(() => {});
   micContext = null;
   micSetButton(false);
+  micDisableSystemControls(false);
   micButton.disabled = true;
   try {
     await micSave(events, originalAudio);
