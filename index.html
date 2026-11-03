@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="app-version" content="20261029-2">
   <title>Çiftelia ime — Mikrofon, filtra dhe këngë</title>
-  <link rel="stylesheet" href="style.css?v=20261029-2">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="studio.css">
 </head>
 <body>
   <main class="app">
@@ -13,8 +13,69 @@
       <div class="eyebrow">INSTRUMENT TRADICIONAL SHQIPTAR</div>
       <h1>Çiftelia <span>Interaktive</span></h1>
       <p>Dy tela · 13 perde · 14 nota audio (QWERTYUIOPASDF) · shqiponjë dykrenare</p>
-      <p class="release-version">Versioni 29.10.2026 · 02</p>
     </header>
+
+
+    <section class="studio-panel" aria-label="Studio profesional me tablaturë që lëviz">
+      <div class="studio-header">
+        <div>
+          <div class="studio-kicker"><span class="studio-live-dot"></span> ÇIFTELIA STUDIO · PRACTICE MODE</div>
+          <h2>Shiko notat. Ndiq ritmin. Luaj.</h2>
+          <p>Si programi i kitarës në video: drita në perde dhe tablaturë që ndjek kohën e melodisë.</p>
+        </div>
+        <div class="studio-current">
+          <span>NOTA AKTUALE</span>
+          <strong id="studioCurrentNote">—</strong>
+          <small id="studioCurrentHz">13 perde + teli i hapur F</small>
+        </div>
+      </div>
+      <div class="studio-grid">
+        <div class="studio-video-panel">
+          <div class="studio-card-header"><span>VIDEO REFERENCË</span><span class="studio-small-dot"></span></div>
+          <div class="studio-video-frame">
+            <div class="studio-video-empty" id="studioVideoEmpty">
+              <div class="studio-video-glyph" aria-hidden="true">▶</div>
+              <strong>Luaj bashkë me videon</strong>
+              <span>Ngarko një video tënden të çiftelisë (opsionale)</span>
+            </div>
+            <video id="studioVideo" controls playsinline preload="metadata" hidden aria-label="Video për ushtrim"></video>
+          </div>
+          <div class="studio-video-controls">
+            <label class="studio-upload" for="studioVideoUpload">＋ Shto video</label>
+            <input id="studioVideoUpload" type="file" accept="video/mp4,video/quicktime,video/webm,video/*" hidden>
+            <button type="button" id="studioRemoveVideo" class="studio-quiet" disabled>Hiq</button>
+          </div>
+          <label class="studio-check"><input type="checkbox" id="studioSyncVideo" checked> Nise videon kur luhet kënga</label>
+          <p class="studio-caption">Videoja mbetet në pajisjen tënde. Sinkronizimi nis nga sekonda 0; përputhja me notat kërkon një video të regjistruar në të njëjtin ritëm.</p>
+        </div>
+        <div class="studio-performance">
+          <div class="studio-card-header"><span>HARTA E NOTAVE · DY TELA</span><span id="studioPlayState" class="studio-playstate">GATI</span></div>
+          <div class="studio-board-scroll">
+            <div class="studio-board">
+              <div id="studioNeck" class="studio-neck" aria-label="13 perde me dy tela"></div>
+              <button type="button" id="studioOpenF" class="studio-open-note" title="F · Teli i hapur te kupa">F <small>I HAPUR</small></button>
+              <div class="studio-cup-edge" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="studio-tab-title">
+            <span>TABLATURE · VIJA E BARDHË = MOMENTI AKTUAL</span>
+            <span id="studioTime">00:00.00 / 00:00.00</span>
+          </div>
+          <div class="studio-tab-wrap">
+            <canvas id="studioTabCanvas" height="170" aria-label="Tablatura e lëvizshme me dy tela"></canvas>
+            <div class="studio-tab-legend"><span>● Nota e radhës</span><span>│ Koha e luajtjes</span></div>
+          </div>
+          <div class="studio-footer">
+            <div class="studio-meter"><div id="studioMeterFill"></div></div>
+            <div class="studio-footer-actions">
+              <button type="button" id="studioPlay">▶ Luaj këngën</button>
+              <button type="button" id="studioStop" class="studio-quiet">■ Ndalo</button>
+              <span id="studioNoteCount">Zgjidh një melodi</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section class="instrument-panel" aria-label="Simuluesi i çiftelisë">
       <div class="instrument-toolbar" aria-label="Komandat e çiftelisë">
@@ -230,7 +291,8 @@
       <span class="key">Tinguj nga regjistrimi iPhone · 14 nota · 13 perde Q-D + teli i hapur F</span>
     </div>
   </main>
-  <script src="script.js?v=20261029-2"></script>
-  <script src="mic.js?v=20261029-2"></script>
+  <script src="script.js"></script>
+  <script src="mic.js"></script>
+  <script src="studio.js"></script>
 </body>
 </html>

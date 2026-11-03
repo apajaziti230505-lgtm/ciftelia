@@ -242,6 +242,7 @@ function ndaloAudioTePlanifikuar() {
 }
 
 function ndaloKengen() {
+    window.CifteliaStudio?.stop();
     ndaloAudioTePlanifikuar();
     timers.forEach(clearTimeout);
     timers = [];
@@ -276,6 +277,7 @@ function luajNoten(string, noteNumber) {
 
     const note = { string, noteNumber };
     aktivizoNotat([note]);
+    window.CifteliaStudio?.manual(note);
     tingull(note);
 
     const key = NOTE_KEYS[noteNumber - 1];
@@ -374,6 +376,7 @@ async function luajKengen() {
             maxEndMs = Math.max(maxEndMs, note.time + buffer.duration * 1000);
         }
         if (playbackId !== songPlaybackId) return;
+        window.CifteliaStudio?.start(notes, { audioContext: context, startAt });
         status.textContent = '▶ Po luhet melodia me intervalet e regjistruara.';
         const groups = new Map();
         for (const note of notes) {
@@ -408,6 +411,7 @@ async function luajKengen() {
         }
         let audioFailed = false;
         status.textContent = '▶ Po luhet melodia (mënyra rezervë audio). Për ritëm më të saktë përdor Live Server.';
+        window.CifteliaStudio?.start(notes, { startDelayMs: 0 });
         for (const [time, group] of groups) {
             timers.push(setTimeout(() => {
                 if (fallbackId !== songPlaybackId) return;
@@ -630,6 +634,7 @@ function krijoKengeProve(notes, source = "keyboard", extras = {}) {
     rifreskoKengePersonale(draftSong.id);
     songSelect.value = draftSong.id;
     perditesoButonat();
+    window.CifteliaStudio?.preview();
     status.textContent = `▶ Kënga provë është gati: ${normalized.length} nota. Dëgjoje me Luaj; pastaj kliko Ruaj ose Fshi.`;
     return true;
 }
@@ -687,6 +692,7 @@ async function ruajKengenEzgjedhur() {
     rifreskoKengePersonale(song.id);
     songSelect.value = song.id;
     perditesoButonat();
+    window.CifteliaStudio?.preview();
     status.textContent = `✓ “${name}” u ruajt në listë me ${song.notes.length} nota. Mund ta luash edhe pas rifreskimit.`;
 
     // Eksporti në dosje është veprim OPSIONAL, i kërkuar veçmas me checkbox.

@@ -377,6 +377,7 @@ function micEditEvent(index) {
 
 function micAddEvent(event) {
   micEventsAll.push(event);
+  window.CifteliaStudio?.micEvent(event);
   const key = Number.isInteger(event.noteNumber) ? MIC_NOTE_KEYS[event.noteNumber - 1].toUpperCase() : '?';
   micNote.textContent = event.noteNumber ? `${key} · ${event.noteNumber}` : '?';
   micHz.textContent = Number.isFinite(event.measuredHz) ? `${event.measuredHz.toFixed(1)} Hz` : '— Hz';
@@ -549,7 +550,7 @@ async function micStart() {
     micWorkletNode = null;
     if (micContext.audioWorklet && window.AudioWorkletNode) {
       try {
-        await micContext.audioWorklet.addModule('mic-onset-worklet.js?v=20261029-2');
+        await micContext.audioWorklet.addModule('mic-onset-worklet.js');
         micWorkletNode = new AudioWorkletNode(micContext, 'ciftelia-onset');
         micWorkletNode.port.onmessage = event => {
           if (event.data?.type === 'onset') {
