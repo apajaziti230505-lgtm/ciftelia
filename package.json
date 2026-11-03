@@ -1,0 +1,13 @@
+{
+  "name": "ciftelia-studio-ts",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node tests/test-notes.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

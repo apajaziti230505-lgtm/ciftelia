@@ -1,0 +1,277 @@
+import {AudioEngine} from './audio-engine.js';
+import {MicrophoneRecorder,DetectedHit,FilterOptions} from './microphone.js';
+import {KEYS,HZ,DEMO,Song,NoteEvent,labelFor,fmt} from './constants.js';
+import {allSongs,loadSongs,newSong,saveSongs,exportSong} from './songs.js';
+const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
+const svg=document.getElementById('ciftelia') as unknown as SVGSVGElement;
+const fretLayer=document.getElementById('fret-layer')!;
+const hitZones=document.getElementById('hit-zones')!;
+const highlights=document.getElementById('highlights')!;
+const audio=new AudioEngine();
+const mic=new MicrophoneRecorder(audio);
+let savedSongs=loadSongs();
+let draft:Song|null=null;
+let selectedId=DEMO[0].id;
+let keyboardRecordStart:number|null=null;
+let keyboardEvents:NoteEvent[]=[];
+let micHits:DetectedHit[]=[];
+let micActive=false;
+let playToken=0;
+let playFrame=0;
+const fretXs:number[]=[201];
+const denom=1-Math.pow(2,-13/12);
+for(let i=1;i<=13;i++){fretXs.push(201+808*(1-Math.pow(2,-i/12))/denom);}
+function setStatus(s:string){ $('status').textContent=s; }
+function setMicStatus(s:string){ $('micStatus').textContent=s; }
+function currentSong():Song|null {
+  if(selectedId==='__draft')return draft;
+  return allSongs(savedSongs).find(s=>s.id===selectedId)||null;
+}
+function songForDisplay():Song|null{return currentSong();}
+function renderSongs():void {
+  const selected=selectedId;
+  const select=$<HTMLSelectElement>('songSelect');select.replaceChildren();
+  if(draft){const opt=new Option(`● PROVË — ${draft.name}`,'__draft');select.add(opt);}
+  for(const song of allSongs(savedSongs))select.add(new Option(song.name,song.id));
+  select.value=selected;
+  if(select.selectedIndex<0)select.selectedIndex=0;
+  selectedId=select.value;
+  const selectedSong=currentSong();
+  const isUserSong=!!selectedSong && selectedSong.id!=='draft' && !DEMO.some(s=>s.id===selectedSong.id);
+  $('saveBtn').toggleAttribute('disabled',!(draft && draft.notes.length>0));
+  $('deleteBtn').toggleAttribute('disabled',!isUserSong && selectedId!=='__draft');
+  $('exportBtn').toggleAttribute('disabled',!selectedSong || !selectedSong.notes.length);
+  $('songMeta').textContent=`${selectedSong?.notes.length??0} nota · ${selectedSong?fmt((selectedSong.notes.at(-1)?.time??0)+300):'00:00.00'}`;
+  renderTimeline();
+}
+function sEl(tag:string,attrs:Record<string,string|number>,text?:string):SVGElement{
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,String(v)));
+  if(text!==undefined)el.textContent=text;
+  return el;
+}
+function renderInstrument():void {
+  for(let n=1;n<=13;n++){
+    const l=fretXs[n-1],r=fretXs[n],cx=(l+r)/2;
+    fretLayer.append(sEl('line',{x1:r,x2:r,y1:208,y2:253,'stroke':'#dec5a0','stroke-width':2.6,'stroke-linecap':'round',opacity:.95}));
+    fretLayer.append(sEl('text',{x:cx,y:188,'text-anchor':'middle',fill:'#bbad9c','font-size':15,'font-weight':650},`${n}`));
+    if([4,7,8,11].includes(n))fretLayer.append(sEl('circle',{cx,cy:230.5,r:5.2,fill:'#edb657',stroke:'#352012','stroke-width':2,opacity:.9}));
+    for(const string of [1,2] as const){
+      const rect=sEl('rect',{x:l+1,y:string===1?231:208,width:Math.max(8,r-l-1),height:22,fill:'transparent',style:'cursor:pointer',tabindex:0,role:'button','aria-label':`Teli ${string}, perdja ${n}, nota ${labelFor(n)}`});
+      rect.addEventListener('pointerdown',()=>void hit(n,string));
+      rect.addEventListener('keydown',(e:Event)=>{const k=e as KeyboardEvent;if(k.key==='Enter'||k.key===' '){k.preventDefault();void hit(n,string);}});
+      hitZones.append(rect);
+    }
+  }
+  for(const string of [1,2] as const){
+    const cup=sEl('rect',{x:1050,y:string===1?230:207,width:308,height:24,rx:6,fill:'transparent',style:'cursor:pointer',tabindex:0,role:'button','aria-label':`Teli i hapur F tek kupa, teli ${string}`});
+    cup.addEventListener('pointerdown',()=>void hit(14,string));
+    cup.addEventListener('keydown',(e:Event)=>{const k=e as KeyboardEvent;if(k.key==='Enter'||k.key===' '){k.preventDefault();void hit(14,string)}});
+    hitZones.append(cup);
+  }
+  fretLayer.append(sEl('text',{x:1150,y:407,'text-anchor':'middle',fill:'#d6ad79','font-size':23,'font-weight':800},'F · TELI I HAPUR'));
+}
+function showActive(events:NoteEvent[]):void {
+  highlights.replaceChildren();
+  for(const ev of events){
+    const cx=ev.noteNumber===14?1175:(fretXs[ev.noteNumber-1]+fretXs[ev.noteNumber])/2;
+    const cy=ev.string===1?240:219;
+    highlights.append(sEl('circle',{cx,cy,r:17,fill:'#fbbf24',opacity:.32,filter:'url(#glow)'}));
+    highlights.append(sEl('circle',{cx,cy,r:7.7,fill:'#f59e0b',stroke:'#fef3c7','stroke-width':2}));
+  }
+  const last=events.at(-1);
+  $('liveNote').textContent=last?labelFor(last.noteNumber):'—';
+  $('liveHz').textContent=last?`${HZ[last.noteNumber-1]} Hz`:'— Hz';
+}
+function renderKeys():void {
+  const root=$('keypad');root.replaceChildren();
+  KEYS.forEach((key,i)=>{
+    const el=document.createElement('button');el.type='button';el.className=`keycap ${i===13?'keycap-open':''}`;
+    el.innerHTML=`<strong>${key.toUpperCase()}</strong><span>${i===13?'HAPUR':`PERDJA ${i+1}`}</span><small>${HZ[i]} Hz</small>`;
+    el.addEventListener('pointerdown',()=>void hit(i+1,1));root.append(el);
+  });
+}
+async function hit(noteNumber:number,string:1|2):Promise<void> {
+  if(micActive){setStatus('Mikrofoni është aktiv. Ndaloje për të luajtur notat në shfletues.');return;}
+  try {void audio.hit(noteNumber).catch(e=>setStatus(String(e.message||e)));}
+  catch(e){setStatus(String(e));}
+  showActive([{string,noteNumber,time:0}]);
+  if(keyboardRecordStart!==null){
+    const now=performance.now();
+    if(keyboardEvents.length===0)keyboardRecordStart=now;
+    keyboardEvents.push({string,noteNumber,time:Math.round(now-keyboardRecordStart)});
+    $('recordCounter').textContent=`${keyboardEvents.length} nota`;
+  }
+  setStatus(`${labelFor(noteNumber)} · ${HZ[noteNumber-1]} Hz · Teli ${string}`);
+}
+function createDraftFromNotes(notes:NoteEvent[],name:string):void {
+  draft=newSong(name,notes);
+  selectedId='__draft';renderSongs();
+  setStatus(`U krijua një provë me ${notes.length} nota. Shtyp Luaj për ta dëgjuar, pastaj Ruaj nëse dëshiron.`);
+}
+function recordKeyboard():void {
+  if(micActive){setStatus('Ndalo mikrofonin përpara regjistrimit me tastierë.');return;}
+  if(keyboardRecordStart!==null){
+    keyboardRecordStart=null;$('recordBtn').classList.remove('recording');$('recordBtn').textContent='＋ Regjistro';
+    createDraftFromNotes(keyboardEvents,'Regjistrim me tastierë');return;
+  }
+  stopPlayback();keyboardEvents=[];keyboardRecordStart=performance.now();
+  $('recordBtn').classList.add('recording');$('recordBtn').textContent='■ Ndal regjistrimin';
+  $('recordCounter').textContent='0 nota';
+  setStatus('Regjistrimi nisi. Luaj Q–F, pastaj shtyp Ndal regjistrimin.');
+}
+function filterOptions():FilterOptions {
+  return {
+    lowCut:$<HTMLInputElement>('lowCut').checked,voice:$<HTMLInputElement>('voiceFilter').checked,
+    noise:$<HTMLInputElement>('noiseFilter').checked,echo:$<HTMLInputElement>('echoFilter').checked,
+    autoGain:$<HTMLInputElement>('autoGain').checked,sensitivity:Number($<HTMLInputElement>('sensitivity').value)
+  };
+}
+function renderMicHits():void {
+  const root=$('micEvents');root.replaceChildren();
+  if(!micHits.length){root.textContent='Ende nuk ka goditje të regjistruara.';return;}
+  const start=micHits.slice(-100);
+  const base=micHits.length-start.length;
+  start.forEach((h,i)=>{
+    const row=document.createElement('div');row.className='mic-hit';
+    const time=document.createElement('span');time.className='hit-time';time.textContent=`+${Math.round(h.time-(micHits[base+i-1]?.time??0))}ms`;
+    const freq=document.createElement('span');freq.className='hit-freq';freq.textContent=h.hz?`${h.hz.toFixed(1)} Hz`:'Hz ?';
+    const select=document.createElement('select');select.setAttribute('aria-label',`Korrigjo notën në kohën ${h.time} ms`);
+    select.add(new Option('? — e panjohur',''));
+    KEYS.forEach((k,index)=>select.add(new Option(`${k.toUpperCase()} · ${HZ[index]} Hz`,String(index+1))));
+    select.value=String(h.noteNumber??'');
+    select.addEventListener('change',()=>{h.noteNumber=select.value?Number(select.value):null;if(!micActive)updateDraftFromMic();});
+    row.append(time,select,freq);root.append(row);
+  });
+}
+function updateDraftFromMic():void {
+  const notes:NoteEvent[]=micHits.filter(h=>h.noteNumber!==null).map(h=>({string:1,noteNumber:h.noteNumber!,time:h.time,measuredHz:h.hz??undefined,confidence:h.clarity}));
+  if(draft && selectedId==='__draft'){draft.notes=notes;renderSongs();}
+}
+function stopMic():void {
+  mic.stop();micActive=false;
+  $('micBtn').textContent='🎙 Nis mikrofonin';$('micBtn').classList.remove('recording');
+  const notes:NoteEvent[]=micHits.filter(h=>h.noteNumber!==null).map(h=>({string:1,noteNumber:h.noteNumber!,time:h.time,measuredHz:h.hz??undefined,confidence:h.clarity}));
+  createDraftFromNotes(notes,'Regjistrim me mikrofon');
+  renderMicHits();
+  const unknown=micHits.filter(h=>h.noteNumber===null).length;
+  setMicStatus(`U ndal mikrofoni. ${notes.length} nota të njohura; ${unknown} të paqarta. Për ? përdor listën më poshtë për të zgjedhur notën, pastaj Luaj dhe Ruaj.`);
+}
+async function toggleMic():Promise<void> {
+  if(micActive){stopMic();return;}
+  if(keyboardRecordStart!==null)recordKeyboard();
+  stopPlayback();
+  setMicStatus('Po kërkohet leja e mikrofonit…');
+  try {
+    await mic.start(filterOptions());
+    micActive=true;micHits=[];renderMicHits();
+    $('micBtn').textContent='■ Ndal mikrofonin';$('micBtn').classList.add('recording');
+    setMicStatus('Mikrofoni aktiv. Luaj vetëm telin e poshtëm. Tingulli nuk kthehet në altoparlant për të shmangur jehonën.');
+  }catch(e){setMicStatus(`Gabim: ${e instanceof Error?e.message:String(e)}`);}
+}
+mic.onHit=(hit)=>{
+  micHits.push(hit); // keep editable list separate from worklet-owned array
+  $('micCurrent').textContent=hit.noteNumber?`${labelFor(hit.noteNumber)} · ${HZ[hit.noteNumber-1]} Hz`:'? · notë e paqartë';
+  $('micMeasured').textContent=hit.hz?`${hit.hz.toFixed(1)} Hz`:'— Hz';
+  $('micInterval').textContent=micHits.length>1?`${hit.time-micHits[micHits.length-2].time} ms`:'0 ms';
+  $('micCount').textContent=`${micHits.filter(h=>h.noteNumber!==null).length} / ${micHits.length}`;
+  if(hit.noteNumber)showActive([hit as NoteEvent]);
+  renderMicHits();
+};
+function stopPlayback():void {playToken++;cancelAnimationFrame(playFrame);audio.stop();showActive([]);$('playBtn').textContent='▶ Luaj';$('studioState').textContent='GATI';}
+async function playCurrent():Promise<void> {
+  if(micActive){setStatus('Ndalo mikrofonin para luajtjes.');return;}
+  if(keyboardRecordStart!==null)recordKeyboard();
+  stopPlayback();
+  const song=currentSong();if(!song){setStatus('Zgjidh këngën.');return;}
+  if(!song.notes.length){setStatus('Kënga nuk ka nota të njohura. Korrigjo notat ? te regjistrimi.');return;}
+  const token=++playToken;
+  $('playBtn').textContent='… Po ngarkohet';$('studioState').textContent='NGARKIM';
+  try {
+    await audio.play(song);
+    if(token!==playToken)return;
+    $('playBtn').textContent='▶ Po luhet';$('studioState').textContent='DUKE LUAJTUR';
+    setStatus(`Po luhet ${song.name} · ${song.notes.length} nota`);
+    const loop=()=>{
+      if(token!==playToken)return;
+      const ms=audio.elapsedMs;
+      const current=song.notes.filter(n=>Math.abs(n.time-ms)<75);
+      if(current.length)showActive(current);
+      drawTab(song,ms);
+      $('timeLabel').textContent=`${fmt(ms)} / ${fmt(song.notes.at(-1)!.time+600)}`;
+      if(audio.done()){stopPlayback();setStatus('Kënga përfundoi.');return;}
+      playFrame=requestAnimationFrame(loop);
+    };loop();
+  }catch(e){$('playBtn').textContent='▶ Luaj';$('studioState').textContent='GABIM';setStatus(`Audio: ${e instanceof Error?e.message:String(e)}`);}
+}
+function saveDraft():void {
+  if(!draft||!draft.notes.length){setStatus('Nuk ka këngë provë për ruajtje.');return;}
+  const title=prompt('Emri i këngës:',draft.name);
+  if(title===null)return;
+  if(!title.trim()){setStatus('Vendos një emër për këngën.');return;}
+  const saved={...draft,id:newSong(title,[]).id,name:title.trim()};
+  const next=[...savedSongs,saved];
+  if(!saveSongs(next)){setStatus('Ruajtja dështoi: hapësira e shfletuesit është plot ose ruajtja është çaktivizuar. Eksporto JSON.');return;}
+  savedSongs=next;draft=null;selectedId=saved.id;renderSongs();setStatus(`Kënga “${saved.name}” u ruajt në këtë shfletues.`);
+}
+function deleteSong():void {
+  if(selectedId==='__draft'){
+    if(confirm('Ta fshijmë këngën provë?')){draft=null;selectedId=DEMO[0].id;renderSongs();setStatus('Prova u fshi.');}
+    return;
+  }
+  const song=currentSong();if(!song||DEMO.some(d=>d.id===song.id))return;
+  if(!confirm(`Ta fshijmë këngën “${song.name}”?`))return;
+  savedSongs=savedSongs.filter(s=>s.id!==song.id);saveSongs(savedSongs);selectedId=DEMO[0].id;renderSongs();setStatus('Kënga u fshi nga ky shfletues.');
+}
+const canvas=$<HTMLCanvasElement>('tabCanvas');
+function drawTab(song:Song|null,elapsed=0):void {
+  const rect=canvas.getBoundingClientRect();const w=Math.max(320,rect.width),h=175;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);}
+  const c=canvas.getContext('2d');if(!c)return;c.setTransform(dpr,0,0,dpr,0,0);
+  c.clearRect(0,0,w,h);c.fillStyle='#101c2c';c.fillRect(0,0,w,h);
+  const x0=Math.min(160,w*.3),pxPerMs=.18;
+  c.strokeStyle='#37465a';c.lineWidth=1;
+  for(const y of [60,120]){c.beginPath();c.moveTo(16,y);c.lineTo(w-16,y);c.stroke();}
+  c.fillStyle='#95a4b5';c.font='12px system-ui';c.fillText('TELI 2 · LART',14,45);c.fillText('TELI 1 · POSHTË',14,106);
+  c.strokeStyle='#fac35f';c.lineWidth=2;c.beginPath();c.moveTo(x0,20);c.lineTo(x0,160);c.stroke();
+  if(song){
+    for(const e of song.notes){
+      const x=x0+(e.time-elapsed)*pxPerMs;
+      if(x<8||x>w-8)continue;
+      const y=e.string===1?120:60;
+      c.beginPath();c.arc(x,y,11,0,Math.PI*2);
+      c.fillStyle=Math.abs(e.time-elapsed)<60?'#f2b657':'#203f4f';c.fill();
+      c.strokeStyle='#f2b657';c.lineWidth=1;c.stroke();
+      c.fillStyle=Math.abs(e.time-elapsed)<60?'#141e2b':'#f6e6ca';c.font='bold 12px system-ui';c.textAlign='center';c.fillText(labelFor(e.noteNumber),x,y+4);c.textAlign='start';
+    }
+  }else{c.font='14px system-ui';c.fillStyle='#8d9bac';c.fillText('Regjistro ose zgjidh një këngë.',x0+18,90);}
+}
+function renderTimeline(){drawTab(songForDisplay(),0);$('timeLabel').textContent=`00:00.00 / ${fmt((songForDisplay()?.notes.at(-1)?.time||0)+600)}`;}
+function init():void {
+  renderInstrument();renderKeys();renderSongs();renderMicHits();
+  audio.setVolume(Number($<HTMLInputElement>('volume').value)/100);
+  $('songSelect').addEventListener('change',e=>{stopPlayback();selectedId=(e.target as HTMLSelectElement).value;renderSongs();});
+  $('recordBtn').addEventListener('click',recordKeyboard);
+  $('micBtn').addEventListener('click',()=>void toggleMic());
+  $('playBtn').addEventListener('click',()=>void playCurrent());
+  $('stopBtn').addEventListener('click',()=>{stopPlayback();if(micActive)stopMic();if(keyboardRecordStart!==null)recordKeyboard();setStatus('Ndaluar.');});
+  $('saveBtn').addEventListener('click',saveDraft);
+  $('deleteBtn').addEventListener('click',deleteSong);
+  $('exportBtn').addEventListener('click',()=>{const song=currentSong();if(song)exportSong(song);});
+  $('volume').addEventListener('input',e=>{const value=Number((e.target as HTMLInputElement).value);audio.setVolume(value/100);$('volumeOut').textContent=`${value}%`;});
+  $('soundMode').addEventListener('change',e=>{audio.mode=(e.target as HTMLSelectElement).value==='full'?'full':'short';});
+  for(const id of ['lowCut','voiceFilter'])$(id).addEventListener('change',()=>mic.setFilters(filterOptions()));
+  $('sensitivity').addEventListener('input',()=>{mic.setSensitivity(filterOptions().sensitivity);$('sensitivityOut').textContent=$<HTMLInputElement>('sensitivity').value;});
+  window.addEventListener('keydown',e=>{
+    if(e.repeat||e.altKey||e.metaKey||e.ctrlKey||['INPUT','TEXTAREA','SELECT'].includes((document.activeElement?.tagName||'')))return;
+    const index=KEYS.indexOf(e.key.toLowerCase());if(index>=0){e.preventDefault();void hit(index+1,1);}
+    if(e.code==='Space'){e.preventDefault();void playCurrent();}
+  });
+  window.addEventListener('resize',()=>renderTimeline());
+  window.addEventListener('pagehide',()=>{if(micActive)mic.stop();audio.stop();});
+  $('status').textContent='Gati. Prek një perde, luaj me tastet Q–F ose regjistro një melodi.';
+  // Downloading WAV does not start audio, does not require gesture. Decoding is done after unlock.
+  void audio.prepare();
+}
+init();
