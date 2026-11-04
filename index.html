@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0d1624">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="app.css?v=20261104">
 </head>
 <body>
   <main class="container">
@@ -15,7 +15,7 @@
     </header>
 
     <section class="hero" aria-labelledby="instrTitle">
-      <div class="section-head"><div><span class="eyebrow eyebrow-gold">INSTRUMENT REAL · DY TELA</span><h2 id="instrTitle">13 perde. Një tingull autentik.</h2><p>Luaj mbi instrument, në tastierë ose regjistro me mikrofon. F është teli i hapur te kupa.</p></div><div class="live-note"><small>NOTA AKTUALE</small><strong id="liveNote">—</strong><span id="liveHz">— Hz</span></div></div>
+      <div class="section-head"><div><span class="eyebrow eyebrow-gold">INSTRUMENT REAL · DY TELA</span><h2 id="instrTitle">13 perde. Një tingull autentik.</h2><p>14 tingujt e rinj nga regjistrimi yt: perdet 1–13 dhe F (14) tel i hapur. Akordim 220/440 Hz, pa konvertim të lartësisë.</p></div><div class="live-note"><small>NOTA AKTUALE</small><strong id="liveNote">—</strong><span id="liveHz">— Hz</span></div></div>
       <div class="instrument-stage"><div class="instrument-scroller"><svg id="ciftelia" viewBox="0 0 1450 465" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Çifteli tradicionale me dy tela dhe trembëdhjetë perde; prek perdet ose kupën për tingujt.">
           <defs>
             <linearGradient id="cupWood" x1="0" x2="0.75" y1="0" y2="1">
@@ -188,12 +188,12 @@
       <section class="panel keyboard-panel" aria-label="Luajtja me tastierë">
         <div class="panel-heading"><div><span class="eyebrow eyebrow-gold">QWERTYUIOPASDF</span><h2>14 tingujt e çiftelisë</h2><p>Prek tastet për të luajtur ose regjistruar një melodi.</p></div></div>
         <div id="keypad" class="keypad"></div>
-        <div class="control-group"><div><label for="soundMode">TINGULLI</label><select id="soundMode"><option value="short">I shkurtër · reagim i shpejtë</option><option value="full">I plotë · iPhone</option></select></div><div><label for="volume">VOLUMI <output id="volumeOut">80%</output></label><input id="volume" type="range" min="0" max="100" value="80"></div></div>
+        <div class="control-group"><div><label for="soundMode">TINGULLI</label><select id="soundMode"><option value="short">I shkurtër · regjistrimi i ri</option><option value="full">I plotë · regjistrimi i ri</option></select></div><div><label for="volume">VOLUMI <output id="volumeOut">80%</output></label><input id="volume" type="range" min="0" max="100" value="80"></div></div>
         <p class="note-message"><b>Ruajtja:</b> Regjistro → Ndalo → Luaj për kontroll → Ruaj vetëm nëse dëshiron. Këngët ruhen në këtë shfletues dhe mund të eksportohen si JSON.</p>
       </section>
     </div>
-    <div class="footer"><p id="status" role="status">Gati për të luajtur.</p><span>ÇIFTELIA STUDIO · VERSION LOKAL · NUK ËSHTË PUBLIKUAR</span></div>
+    <div class="footer"><p id="status" role="status">Gati për të luajtur.</p><span>ÇIFTELIA STUDIO · 220 / 440 HZ · PA KONVERTIM</span></div>
   </main>
-  <script type="module" src="./js/main.js"></script>
+  <script type="module" src="./js/main.js?v=20261104"></script>
 </body>
 </html>

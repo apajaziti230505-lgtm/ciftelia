@@ -22,8 +22,8 @@ export class AudioEngine {
             for (const v of variants) {
                 const key = `nota${n}${v}`;
                 if (!this.downloads.has(key))
-                    this.downloads.set(key, fetch(`assets/audio/${key}.wav`).then(r => { if (!r.ok)
-                        throw new Error(`${key}.wav: HTTP ${r.status}`); return r.arrayBuffer(); }));
+                    this.downloads.set(key, fetch(`assets/audio/${key}.m4a`).then(r => { if (!r.ok)
+                        throw new Error(`${key}.m4a: HTTP ${r.status}`); return r.arrayBuffer(); }));
                 tasks.push(this.downloads.get(key).catch(() => undefined));
             }
         await Promise.all(tasks);
@@ -51,7 +51,7 @@ export class AudioEngine {
             try {
                 let task = this.downloads.get(key);
                 if (!task) {
-                    task = fetch(`assets/audio/${key}.wav`).then(r => { if (!r.ok)
+                    task = fetch(`assets/audio/${key}.m4a`).then(r => { if (!r.ok)
                         throw Error(`${r.status}`); return r.arrayBuffer(); });
                     this.downloads.set(key, task);
                 }
@@ -64,20 +64,22 @@ export class AudioEngine {
                 console.warn(`Nuk u ngarkua ${key}`, e);
             }
         }
-        throw new Error(`Mungon tingulli nota${noteNumber}.wav. Kontrollo assets/audio.`);
+        throw new Error(`Mungon tingulli nota${noteNumber}.m4a. Kontrollo assets/audio.`);
     }
     async preload() { await Promise.all([...Array(14)].map((_, i) => this.loadNote(i + 1))); }
     makeSource(buffer, at) {
         const ctx = this.context, src = ctx.createBufferSource();
         src.buffer = buffer;
         const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0.97, at);
-        gain.gain.exponentialRampToValueAtTime(0.001, at + Math.min(0.45, buffer.duration));
+        const playDuration = Math.min(buffer.duration, this.mode === 'short' ? 0.49 : 1.76);
+        gain.gain.setValueAtTime(0.92, at);
+        gain.gain.setValueAtTime(0.92, at + Math.max(0, playDuration - 0.16));
+        gain.gain.exponentialRampToValueAtTime(0.001, at + playDuration);
         src.connect(gain).connect(this.master);
         this.sources.add(src);
         src.onended = () => { this.sources.delete(src); src.disconnect(); gain.disconnect(); };
         src.start(at);
-        src.stop(at + Math.min(buffer.duration, 0.55));
+        src.stop(at + playDuration);
     }
     async hit(noteNumber) {
         // Nxjerr zë edhe kur nota përsëritet shpejt.
@@ -115,7 +117,7 @@ export class AudioEngine {
                 this.makeSource(b, this.playbackStart + ev.time / 1000);
         }
         this.active = true;
-        this.finish = this.playbackStart + Math.max(...song.notes.map(n => n.time)) / 1000 + 0.6;
+        this.finish = this.playbackStart + Math.max(...song.notes.map(n => n.time)) / 1000 + (this.mode === 'short' ? 0.55 : 1.8);
         return Math.round((this.finish - this.playbackStart) * 1000);
     }
     done() { if (this.active && this.context && this.context.currentTime >= this.finish) {

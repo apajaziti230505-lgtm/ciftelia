@@ -1,5 +1,7 @@
 export const KEYS = 'qwertyuiopasdf'.split('');
-export const HZ = [329, 358, 389, 440, 477, 521, 587, 660, 719, 784, 880, 960, 1050, 292];
+// Matje orientuese nga regjistrimi i ri: nuk aplikohet transpozim ose konvertim 220↔440.
+// F = teli i hapur ~220 Hz (me harmonikë të fortë edhe rreth 440 Hz).
+export const HZ = [330, 359, 392, 440, 482, 523, 586, 660, 721, 788, 883, 970, 1053, 220];
 export const TOLERANCE = 15;
 export const FRETS = 13;
 export const DEMO = [

@@ -1,0 +1,100 @@
+[
+  {
+    "nota": 1,
+    "tasti": "Q",
+    "pozicioni": "perdja 1",
+    "hz_e_matur_afersisht": 330,
+    "koha_ne_regjistrim_s": 3.665
+  },
+  {
+    "nota": 2,
+    "tasti": "W",
+    "pozicioni": "perdja 2",
+    "hz_e_matur_afersisht": 359,
+    "koha_ne_regjistrim_s": 8.723
+  },
+  {
+    "nota": 3,
+    "tasti": "E",
+    "pozicioni": "perdja 3",
+    "hz_e_matur_afersisht": 392,
+    "koha_ne_regjistrim_s": 13.981
+  },
+  {
+    "nota": 4,
+    "tasti": "R",
+    "pozicioni": "perdja 4",
+    "hz_e_matur_afersisht": 440,
+    "koha_ne_regjistrim_s": 19.184
+  },
+  {
+    "nota": 5,
+    "tasti": "T",
+    "pozicioni": "perdja 5",
+    "hz_e_matur_afersisht": 482,
+    "koha_ne_regjistrim_s": 24.697
+  },
+  {
+    "nota": 6,
+    "tasti": "Y",
+    "pozicioni": "perdja 6",
+    "hz_e_matur_afersisht": 523,
+    "koha_ne_regjistrim_s": 29.072
+  },
+  {
+    "nota": 7,
+    "tasti": "U",
+    "pozicioni": "perdja 7",
+    "hz_e_matur_afersisht": 586,
+    "koha_ne_regjistrim_s": 33.397
+  },
+  {
+    "nota": 8,
+    "tasti": "I",
+    "pozicioni": "perdja 8",
+    "hz_e_matur_afersisht": 660,
+    "koha_ne_regjistrim_s": 38.316
+  },
+  {
+    "nota": 9,
+    "tasti": "O",
+    "pozicioni": "perdja 9",
+    "hz_e_matur_afersisht": 721,
+    "koha_ne_regjistrim_s": 42.287
+  },
+  {
+    "nota": 10,
+    "tasti": "P",
+    "pozicioni": "perdja 10",
+    "hz_e_matur_afersisht": 788,
+    "koha_ne_regjistrim_s": 45.919
+  },
+  {
+    "nota": 11,
+    "tasti": "A",
+    "pozicioni": "perdja 11",
+    "hz_e_matur_afersisht": 883,
+    "koha_ne_regjistrim_s": 50.473
+  },
+  {
+    "nota": 12,
+    "tasti": "S",
+    "pozicioni": "perdja 12",
+    "hz_e_matur_afersisht": 970,
+    "koha_ne_regjistrim_s": 55.053
+  },
+  {
+    "nota": 13,
+    "tasti": "D",
+    "pozicioni": "perdja 13",
+    "hz_e_matur_afersisht": 1053,
+    "koha_ne_regjistrim_s": 59.972
+  },
+  {
+    "nota": 14,
+    "tasti": "F",
+    "pozicioni": "hapur",
+    "hz_e_matur_afersisht": 220,
+    "koha_ne_regjistrim_s": 65.135
+  }
+]

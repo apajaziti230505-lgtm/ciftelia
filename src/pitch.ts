@@ -15,7 +15,7 @@ export function estimatePitch(samples:Float32Array,sampleRate:number):{hz:number
   for(let i=0;i<n;i++){x[i]-=avg;energy+=x[i]*x[i];}
   if(Math.sqrt(energy/n)<.002) return null;
   const minTau=Math.max(2,Math.floor(fs/1110));
-  const maxTau=Math.min(Math.floor(fs/270),Math.floor(n/2)-1);
+  const maxTau=Math.min(Math.floor(fs/195),Math.floor(n/2)-1);
   const diff=new Float64Array(maxTau+1);
   for(let tau=1;tau<=maxTau;tau++){
     let sum=0;
