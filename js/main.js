@@ -1,6 +1,6 @@
 import { AudioEngine } from './audio-engine.js';
 import { MicrophoneRecorder } from './microphone.js';
-import { KEYS, HZ, DEMO, labelFor, fmt } from './constants.js';
+import { KEYS, HZ, DEMO, labelFor, fmt, withOpenF } from './constants.js';
 import { allSongs, loadSongs, newSong, saveSongs, exportSong } from './songs.js';
 const $ = (id) => document.getElementById(id);
 const svg = document.getElementById('ciftelia');
@@ -68,37 +68,47 @@ function renderInstrument() {
         if ([4, 7, 8, 11].includes(n))
             fretLayer.append(sEl('circle', { cx, cy: 230.5, r: 5.2, fill: '#edb657', stroke: '#352012', 'stroke-width': 2, opacity: .9 }));
         for (const string of [1, 2]) {
-            const rect = sEl('rect', { x: l + 1, y: string === 1 ? 231 : 208, width: Math.max(8, r - l - 1), height: 22, fill: 'transparent', style: 'cursor:pointer', tabindex: 0, role: 'button', 'aria-label': `Teli ${string}, perdja ${n}, nota ${labelFor(n)}` });
-            rect.addEventListener('pointerdown', () => void hit(n, string));
+            const number = string === 1 ? n : 14;
+            const name = string === 1 ? `Perdja ${n}, teli poshtë, ${labelFor(n)}` : 'Teli lart i hapur F, 220 Hz';
+            const rect = sEl('rect', { x: l + 1, y: string === 1 ? 231 : 208, width: Math.max(8, r - l - 1), height: 22, fill: 'transparent', style: 'cursor:pointer', tabindex: 0, role: 'button', 'aria-label': name });
+            rect.addEventListener('pointerdown', () => void hit(number, string));
             rect.addEventListener('keydown', (e) => { const k = e; if (k.key === 'Enter' || k.key === ' ') {
                 k.preventDefault();
-                void hit(n, string);
+                void hit(number, string);
             } });
             hitZones.append(rect);
         }
     }
     for (const string of [1, 2]) {
-        const cup = sEl('rect', { x: 1050, y: string === 1 ? 230 : 207, width: 308, height: 24, rx: 6, fill: 'transparent', style: 'cursor:pointer', tabindex: 0, role: 'button', 'aria-label': `Teli i hapur F tek kupa, teli ${string}` });
-        cup.addEventListener('pointerdown', () => void hit(14, string));
+        const number = string === 1 ? 15 : 14;
+        const cup = sEl('rect', { x: 1050, y: string === 1 ? 230 : 207, width: 308, height: 24, rx: 6, fill: 'transparent', style: 'cursor:pointer', tabindex: 0, role: 'button', 'aria-label': string === 1 ? 'Teli poshtë i hapur G, 293 Hz' : 'Teli lart i hapur F, 220 Hz' });
+        cup.addEventListener('pointerdown', () => void hit(number, string));
         cup.addEventListener('keydown', (e) => { const k = e; if (k.key === 'Enter' || k.key === ' ') {
             k.preventDefault();
-            void hit(14, string);
+            void hit(number, string);
         } });
         hitZones.append(cup);
     }
-    fretLayer.append(sEl('text', { x: 1150, y: 407, 'text-anchor': 'middle', fill: '#d6ad79', 'font-size': 23, 'font-weight': 800 }, 'F · TELI I HAPUR'));
+    fretLayer.append(sEl('text', { x: 1200, y: 409, 'text-anchor': 'middle', fill: '#d6ad79', 'font-size': 20, 'font-weight': 800 }, 'F · LART 220 Hz'));
+    fretLayer.append(sEl('text', { x: 1200, y: 434, 'text-anchor': 'middle', fill: '#f3d49d', 'font-size': 20, 'font-weight': 800 }, 'G · POSHTË 293 Hz'));
 }
 function showActive(events) {
     highlights.replaceChildren();
-    for (const ev of events) {
-        const cx = ev.noteNumber === 14 ? 1175 : (fretXs[ev.noteNumber - 1] + fretXs[ev.noteNumber]) / 2;
+    const visualEvents = withOpenF(events);
+    const shown = new Set();
+    for (const ev of visualEvents) {
+        const key = `${ev.string}-${ev.noteNumber}`;
+        if (shown.has(key))
+            continue;
+        shown.add(key);
+        const cx = ev.noteNumber >= 14 ? 1175 : (fretXs[ev.noteNumber - 1] + fretXs[ev.noteNumber]) / 2;
         const cy = ev.string === 1 ? 240 : 219;
         highlights.append(sEl('circle', { cx, cy, r: 17, fill: '#fbbf24', opacity: .32, filter: 'url(#glow)' }));
         highlights.append(sEl('circle', { cx, cy, r: 7.7, fill: '#f59e0b', stroke: '#fef3c7', 'stroke-width': 2 }));
     }
-    const last = events.at(-1);
-    $('liveNote').textContent = last ? labelFor(last.noteNumber) : '—';
-    $('liveHz').textContent = last ? `${HZ[last.noteNumber - 1]} Hz` : '— Hz';
+    const last = [...events].reverse().find(e => e.noteNumber !== 14) ?? events.at(-1);
+    $('liveNote').textContent = last ? `${labelFor(last.noteNumber)}${last.noteNumber !== 14 ? ' + F' : ''}` : '—';
+    $('liveHz').textContent = last ? `${HZ[last.noteNumber - 1]} Hz${last.noteNumber !== 14 ? ' · F 220 Hz' : ''}` : '— Hz';
 }
 function renderKeys() {
     const root = $('keypad');
@@ -106,9 +116,9 @@ function renderKeys() {
     KEYS.forEach((key, i) => {
         const el = document.createElement('button');
         el.type = 'button';
-        el.className = `keycap ${i === 13 ? 'keycap-open' : ''}`;
-        el.innerHTML = `<strong>${key.toUpperCase()}</strong><span>${i === 13 ? 'HAPUR' : `PERDJA ${i + 1}`}</span><small>${HZ[i]} Hz</small>`;
-        el.addEventListener('pointerdown', () => void hit(i + 1, 1));
+        el.className = `keycap ${i >= 13 ? 'keycap-open' : ''}`;
+        el.innerHTML = `<strong>${key.toUpperCase()}</strong><span>${i === 13 ? 'LART HAPUR' : i === 14 ? 'POSHTË HAPUR' : `PERDJA ${i + 1}`}</span><small>${HZ[i]} Hz</small>`;
+        el.addEventListener('pointerdown', () => void hit(i + 1, i === 13 ? 2 : 1));
         root.append(el);
     });
 }
@@ -131,7 +141,7 @@ async function hit(noteNumber, string) {
         keyboardEvents.push({ string, noteNumber, time: Math.round(now - keyboardRecordStart) });
         $('recordCounter').textContent = `${keyboardEvents.length} nota`;
     }
-    setStatus(`${labelFor(noteNumber)} · ${HZ[noteNumber - 1]} Hz · Teli ${string}`);
+    setStatus(`${labelFor(noteNumber)} · ${HZ[noteNumber - 1]} Hz · Teli ${string}${noteNumber !== 14 ? ' + F (i hapur 220 Hz)' : ''}`);
 }
 function createDraftFromNotes(notes, name) {
     draft = newSong(name, notes);
@@ -157,7 +167,7 @@ function recordKeyboard() {
     $('recordBtn').classList.add('recording');
     $('recordBtn').textContent = '■ Ndal regjistrimin';
     $('recordCounter').textContent = '0 nota';
-    setStatus('Regjistrimi nisi. Luaj Q–F, pastaj shtyp Ndal regjistrimin.');
+    setStatus('Regjistrimi nisi. Luaj notat, pastaj ndalo.');
 }
 function filterOptions() {
     return { lowCut: $('lowCut').checked, sensitivity: Number($('sensitivity').value) };
@@ -192,7 +202,7 @@ function renderMicHits() {
     });
 }
 function updateDraftFromMic() {
-    const notes = micHits.filter(h => h.noteNumber !== null).map(h => ({ string: 1, noteNumber: h.noteNumber, time: h.time, measuredHz: h.hz ?? undefined, confidence: h.clarity }));
+    const notes = micHits.filter(h => h.noteNumber !== null).map(h => ({ string: h.noteNumber === 14 ? 2 : 1, noteNumber: h.noteNumber, time: h.time, measuredHz: h.hz ?? undefined, confidence: h.clarity }));
     if (draft && selectedId === '__draft') {
         draft.notes = notes;
         renderSongs();
@@ -203,7 +213,7 @@ function stopMic() {
     micActive = false;
     $('micBtn').textContent = '🎙 Nis mikrofonin';
     $('micBtn').classList.remove('recording');
-    const notes = micHits.filter(h => h.noteNumber !== null).map(h => ({ string: 1, noteNumber: h.noteNumber, time: h.time, measuredHz: h.hz ?? undefined, confidence: h.clarity }));
+    const notes = micHits.filter(h => h.noteNumber !== null).map(h => ({ string: h.noteNumber === 14 ? 2 : 1, noteNumber: h.noteNumber, time: h.time, measuredHz: h.hz ?? undefined, confidence: h.clarity }));
     createDraftFromNotes(notes, 'Regjistrim me mikrofon');
     renderMicHits();
     const unknown = micHits.filter(h => h.noteNumber === null).length;
@@ -374,7 +384,7 @@ function drawTab(song, elapsed = 0) {
     c.lineTo(x0, 160);
     c.stroke();
     if (song) {
-        for (const e of song.notes) {
+        for (const e of withOpenF(song.notes)) {
             const x = x0 + (e.time - elapsed) * pxPerMs;
             if (x < 8 || x > w - 8)
                 continue;
@@ -412,7 +422,7 @@ async function importSongFile(file) {
             throw new Error('Lista e notave nuk është e vlefshme.');
         const notes = obj.notes.map((v) => {
             const n = v;
-            if (!n || (n.string !== 1 && n.string !== 2) || !Number.isInteger(n.noteNumber) || n.noteNumber < 1 || n.noteNumber > 14 || !Number.isFinite(n.time) || n.time < 0 || n.time > 3_600_000)
+            if (!n || (n.string !== 1 && n.string !== 2) || !Number.isInteger(n.noteNumber) || n.noteNumber < 1 || n.noteNumber > 15 || !Number.isFinite(n.time) || n.time < 0 || n.time > 3_600_000)
                 throw new Error('Një notë ka vlera të pavlefshme.');
             return { string: n.string, noteNumber: n.noteNumber, time: n.time };
         });
@@ -478,8 +488,8 @@ function init() {
     window.addEventListener('resize', () => renderTimeline());
     window.addEventListener('pagehide', () => { if (micActive)
         mic.stop(); audio.stop(); });
-    $('status').textContent = 'Gati. Prek një perde, luaj me tastet Q–F ose regjistro një melodi.';
-    // Downloading WAV does not start audio, does not require gesture. Decoding is done after unlock.
+    $('status').textContent = 'Gati për të luajtur.';
+    // Marrja e regjistrimeve nuk nis zërin pa një veprim të përdoruesit.
     void audio.prepare();
 }
 init();

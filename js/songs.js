@@ -1,6 +1,6 @@
 import { DEMO } from './constants.js';
 const KEY = 'ciftelia-studio-ts-songs-v1';
-const validNote = (n) => n && (n.string === 1 || n.string === 2) && Number.isInteger(n.noteNumber) && n.noteNumber >= 1 && n.noteNumber <= 14 && Number.isFinite(n.time) && n.time >= 0 && n.time < 3600000;
+const validNote = (n) => n && (n.string === 1 || n.string === 2) && Number.isInteger(n.noteNumber) && n.noteNumber >= 1 && n.noteNumber <= 15 && Number.isFinite(n.time) && n.time >= 0 && n.time < 3600000;
 export function loadSongs() {
     try {
         const v = JSON.parse(localStorage.getItem(KEY) || '[]');

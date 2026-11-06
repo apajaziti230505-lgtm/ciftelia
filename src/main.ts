@@ -1,6 +1,6 @@
 import {AudioEngine} from './audio-engine.js';
 import {MicrophoneRecorder,DetectedHit,FilterOptions} from './microphone.js';
-import {KEYS,HZ,DEMO,Song,NoteEvent,labelFor,fmt} from './constants.js';
+import {KEYS,HZ,DEMO,Song,NoteEvent,labelFor,fmt,withOpenF} from './constants.js';
 import {allSongs,loadSongs,newSong,saveSongs,exportSong} from './songs.js';
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const svg=document.getElementById('ciftelia') as unknown as SVGSVGElement;
@@ -57,38 +57,47 @@ function renderInstrument():void {
     fretLayer.append(sEl('text',{x:cx,y:188,'text-anchor':'middle',fill:'#bbad9c','font-size':15,'font-weight':650},`${n}`));
     if([4,7,8,11].includes(n))fretLayer.append(sEl('circle',{cx,cy:230.5,r:5.2,fill:'#edb657',stroke:'#352012','stroke-width':2,opacity:.9}));
     for(const string of [1,2] as const){
-      const rect=sEl('rect',{x:l+1,y:string===1?231:208,width:Math.max(8,r-l-1),height:22,fill:'transparent',style:'cursor:pointer',tabindex:0,role:'button','aria-label':`Teli ${string}, perdja ${n}, nota ${labelFor(n)}`});
-      rect.addEventListener('pointerdown',()=>void hit(n,string));
-      rect.addEventListener('keydown',(e:Event)=>{const k=e as KeyboardEvent;if(k.key==='Enter'||k.key===' '){k.preventDefault();void hit(n,string);}});
+      const number=string===1?n:14;
+      const name=string===1?`Perdja ${n}, teli poshtë, ${labelFor(n)}`:'Teli lart i hapur F, 220 Hz';
+      const rect=sEl('rect',{x:l+1,y:string===1?231:208,width:Math.max(8,r-l-1),height:22,fill:'transparent',style:'cursor:pointer',tabindex:0,role:'button','aria-label':name});
+      rect.addEventListener('pointerdown',()=>void hit(number,string));
+      rect.addEventListener('keydown',(e:Event)=>{const k=e as KeyboardEvent;if(k.key==='Enter'||k.key===' '){k.preventDefault();void hit(number,string);}});
       hitZones.append(rect);
     }
   }
   for(const string of [1,2] as const){
-    const cup=sEl('rect',{x:1050,y:string===1?230:207,width:308,height:24,rx:6,fill:'transparent',style:'cursor:pointer',tabindex:0,role:'button','aria-label':`Teli i hapur F tek kupa, teli ${string}`});
-    cup.addEventListener('pointerdown',()=>void hit(14,string));
-    cup.addEventListener('keydown',(e:Event)=>{const k=e as KeyboardEvent;if(k.key==='Enter'||k.key===' '){k.preventDefault();void hit(14,string)}});
+    const number=string===1?15:14;
+    const cup=sEl('rect',{x:1050,y:string===1?230:207,width:308,height:24,rx:6,fill:'transparent',style:'cursor:pointer',tabindex:0,role:'button','aria-label':string===1?'Teli poshtë i hapur G, 293 Hz':'Teli lart i hapur F, 220 Hz'});
+    cup.addEventListener('pointerdown',()=>void hit(number,string));
+    cup.addEventListener('keydown',(e:Event)=>{const k=e as KeyboardEvent;if(k.key==='Enter'||k.key===' '){k.preventDefault();void hit(number,string)}});
     hitZones.append(cup);
   }
-  fretLayer.append(sEl('text',{x:1150,y:407,'text-anchor':'middle',fill:'#d6ad79','font-size':23,'font-weight':800},'F · TELI I HAPUR'));
+  fretLayer.append(sEl('text',{x:1200,y:409,'text-anchor':'middle',fill:'#d6ad79','font-size':20,'font-weight':800},'F · LART 220 Hz'));
+  fretLayer.append(sEl('text',{x:1200,y:434,'text-anchor':'middle',fill:'#f3d49d','font-size':20,'font-weight':800},'G · POSHTË 293 Hz'));
 }
 function showActive(events:NoteEvent[]):void {
   highlights.replaceChildren();
-  for(const ev of events){
-    const cx=ev.noteNumber===14?1175:(fretXs[ev.noteNumber-1]+fretXs[ev.noteNumber])/2;
+  const visualEvents=withOpenF(events);
+  const shown=new Set<string>();
+  for(const ev of visualEvents){
+    const key=`${ev.string}-${ev.noteNumber}`;
+    if(shown.has(key))continue;
+    shown.add(key);
+    const cx=ev.noteNumber>=14?1175:(fretXs[ev.noteNumber-1]+fretXs[ev.noteNumber])/2;
     const cy=ev.string===1?240:219;
     highlights.append(sEl('circle',{cx,cy,r:17,fill:'#fbbf24',opacity:.32,filter:'url(#glow)'}));
     highlights.append(sEl('circle',{cx,cy,r:7.7,fill:'#f59e0b',stroke:'#fef3c7','stroke-width':2}));
   }
-  const last=events.at(-1);
-  $('liveNote').textContent=last?labelFor(last.noteNumber):'—';
-  $('liveHz').textContent=last?`${HZ[last.noteNumber-1]} Hz`:'— Hz';
+  const last=[...events].reverse().find(e=>e.noteNumber!==14) ?? events.at(-1);
+  $('liveNote').textContent=last?`${labelFor(last.noteNumber)}${last.noteNumber!==14?' + F':''}`:'—';
+  $('liveHz').textContent=last?`${HZ[last.noteNumber-1]} Hz${last.noteNumber!==14?' · F 220 Hz':''}`:'— Hz';
 }
 function renderKeys():void {
   const root=$('keypad');root.replaceChildren();
   KEYS.forEach((key,i)=>{
-    const el=document.createElement('button');el.type='button';el.className=`keycap ${i===13?'keycap-open':''}`;
-    el.innerHTML=`<strong>${key.toUpperCase()}</strong><span>${i===13?'HAPUR':`PERDJA ${i+1}`}</span><small>${HZ[i]} Hz</small>`;
-    el.addEventListener('pointerdown',()=>void hit(i+1,1));root.append(el);
+    const el=document.createElement('button');el.type='button';    el.className=`keycap ${i>=13?'keycap-open':''}`;
+    el.innerHTML=`<strong>${key.toUpperCase()}</strong><span>${i===13?'LART HAPUR':i===14?'POSHTË HAPUR':`PERDJA ${i+1}`}</span><small>${HZ[i]} Hz</small>`;
+    el.addEventListener('pointerdown',()=>void hit(i+1,i===13?2:1));root.append(el);
   });
 }
 async function hit(noteNumber:number,string:1|2):Promise<void> {
@@ -102,7 +111,7 @@ async function hit(noteNumber:number,string:1|2):Promise<void> {
     keyboardEvents.push({string,noteNumber,time:Math.round(now-keyboardRecordStart)});
     $('recordCounter').textContent=`${keyboardEvents.length} nota`;
   }
-  setStatus(`${labelFor(noteNumber)} · ${HZ[noteNumber-1]} Hz · Teli ${string}`);
+  setStatus(`${labelFor(noteNumber)} · ${HZ[noteNumber-1]} Hz · Teli ${string}${noteNumber!==14?' + F (i hapur 220 Hz)':''}`);
 }
 function createDraftFromNotes(notes:NoteEvent[],name:string):void {
   draft=newSong(name,notes);
@@ -118,7 +127,7 @@ function recordKeyboard():void {
   stopPlayback();keyboardEvents=[];keyboardRecordStart=performance.now();
   $('recordBtn').classList.add('recording');$('recordBtn').textContent='■ Ndal regjistrimin';
   $('recordCounter').textContent='0 nota';
-  setStatus('Regjistrimi nisi. Luaj Q–F, pastaj shtyp Ndal regjistrimin.');
+  setStatus('Regjistrimi nisi. Luaj notat, pastaj ndalo.');
 }
 function filterOptions():FilterOptions {
   return {lowCut:$<HTMLInputElement>('lowCut').checked,sensitivity:Number($<HTMLInputElement>('sensitivity').value)};
@@ -141,13 +150,13 @@ function renderMicHits():void {
   });
 }
 function updateDraftFromMic():void {
-  const notes:NoteEvent[]=micHits.filter(h=>h.noteNumber!==null).map(h=>({string:1,noteNumber:h.noteNumber!,time:h.time,measuredHz:h.hz??undefined,confidence:h.clarity}));
+  const notes:NoteEvent[]=micHits.filter(h=>h.noteNumber!==null).map(h=>({string:h.noteNumber===14?2:1,noteNumber:h.noteNumber!,time:h.time,measuredHz:h.hz??undefined,confidence:h.clarity}));
   if(draft && selectedId==='__draft'){draft.notes=notes;renderSongs();}
 }
 function stopMic():void {
   mic.stop();micActive=false;
   $('micBtn').textContent='🎙 Nis mikrofonin';$('micBtn').classList.remove('recording');
-  const notes:NoteEvent[]=micHits.filter(h=>h.noteNumber!==null).map(h=>({string:1,noteNumber:h.noteNumber!,time:h.time,measuredHz:h.hz??undefined,confidence:h.clarity}));
+  const notes:NoteEvent[]=micHits.filter(h=>h.noteNumber!==null).map(h=>({string:h.noteNumber===14?2:1,noteNumber:h.noteNumber!,time:h.time,measuredHz:h.hz??undefined,confidence:h.clarity}));
   createDraftFromNotes(notes,'Regjistrim me mikrofon');
   renderMicHits();
   const unknown=micHits.filter(h=>h.noteNumber===null).length;
@@ -232,7 +241,7 @@ function drawTab(song:Song|null,elapsed=0):void {
   c.fillStyle='#95a4b5';c.font='12px system-ui';c.fillText('TELI 2 · LART',14,45);c.fillText('TELI 1 · POSHTË',14,106);
   c.strokeStyle='#fac35f';c.lineWidth=2;c.beginPath();c.moveTo(x0,20);c.lineTo(x0,160);c.stroke();
   if(song){
-    for(const e of song.notes){
+    for(const e of withOpenF(song.notes)){
       const x=x0+(e.time-elapsed)*pxPerMs;
       if(x<8||x>w-8)continue;
       const y=e.string===1?120:60;
@@ -254,7 +263,7 @@ async function importSongFile(file:File):Promise<void> {
     if(!Array.isArray(obj.notes) || obj.notes.length<1 || obj.notes.length>10000) throw new Error('Lista e notave nuk është e vlefshme.');
     const notes:NoteEvent[]=obj.notes.map((v:unknown)=>{
       const n=v as Partial<NoteEvent>;
-      if(!n || (n.string!==1&&n.string!==2) || !Number.isInteger(n.noteNumber) || (n.noteNumber as number)<1 || (n.noteNumber as number)>14 || !Number.isFinite(n.time) || (n.time as number)<0 || (n.time as number)>3_600_000) throw new Error('Një notë ka vlera të pavlefshme.');
+      if(!n || (n.string!==1&&n.string!==2) || !Number.isInteger(n.noteNumber) || (n.noteNumber as number)<1 || (n.noteNumber as number)>15 || !Number.isFinite(n.time) || (n.time as number)<0 || (n.time as number)>3_600_000) throw new Error('Një notë ka vlera të pavlefshme.');
       return {string:n.string as 1|2,noteNumber:n.noteNumber as number,time:n.time as number};
     });
     const name=typeof obj.name==='string'?obj.name:'Këngë e importuar';
@@ -296,8 +305,8 @@ function init():void {
   });
   window.addEventListener('resize',()=>renderTimeline());
   window.addEventListener('pagehide',()=>{if(micActive)mic.stop();audio.stop();});
-  $('status').textContent='Gati. Prek një perde, luaj me tastet Q–F ose regjistro një melodi.';
-  // Downloading WAV does not start audio, does not require gesture. Decoding is done after unlock.
+  $('status').textContent='Gati për të luajtur.';
+  // Marrja e regjistrimeve nuk nis zërin pa një veprim të përdoruesit.
   void audio.prepare();
 }
 init();
