@@ -138,7 +138,7 @@ async function hit(noteNumber, string) {
         const now = performance.now();
         if (keyboardEvents.length === 0)
             keyboardRecordStart = now;
-        keyboardEvents.push({ string, noteNumber, time: Math.round(now - keyboardRecordStart) });
+        keyboardEvents.push({ string, noteNumber, time: Math.round(now - keyboardRecordStart), velocity: audio.strength === 'lehte' ? .35 : .92 });
         $('recordCounter').textContent = `${keyboardEvents.length} nota`;
     }
     setStatus(`${labelFor(noteNumber)} · ${HZ[noteNumber - 1]} Hz · Teli ${string}${noteNumber !== 14 ? ' + F (i hapur 220 Hz)' : ''}`);
@@ -470,6 +470,7 @@ function init() {
         window.addEventListener('load', () => { void navigator.serviceWorker.register('./sw.js').catch(() => { }); });
     $('volume').addEventListener('input', e => { const value = Number(e.target.value); audio.setVolume(value / 100); $('volumeOut').textContent = `${value}%`; });
     $('soundMode').addEventListener('change', e => { audio.mode = e.target.value === 'full' ? 'full' : 'short'; });
+    $('strengthMode').addEventListener('change', e => { audio.strength = e.target.value === 'lehte' ? 'lehte' : 'fort'; });
     $('lowCut').addEventListener('change', () => mic.setFilters(filterOptions()));
     $('sensitivity').addEventListener('input', () => { mic.setSensitivity(filterOptions().sensitivity); $('sensitivityOut').textContent = $('sensitivity').value; });
     window.addEventListener('keydown', e => {

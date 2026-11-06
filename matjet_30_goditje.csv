@@ -1,0 +1,31 @@
+﻿goditja,nota,teli,pozicioni,dinamika,fillimi_sec,gjatesia_sec,frekuenca_matur_Hz,rms,file
+1,15,poshte,hapur,lehte,1.425,4.0,289.06,0.0374,assets/audio-real/nota15_lehte.m4a
+2,15,poshte,hapur,fort,6.435,4.0,289.22,0.0584,assets/audio-real/nota15_fort.m4a
+3,1,poshte,perdja 1,lehte,11.975,3.68,326.01,0.0525,assets/audio-real/nota1_lehte.m4a
+4,1,poshte,perdja 1,fort,15.845,4.0,325.75,0.0709,assets/audio-real/nota1_fort.m4a
+5,2,poshte,perdja 2,lehte,22.275,3.38,353.97,0.0368,assets/audio-real/nota2_lehte.m4a
+6,2,poshte,perdja 2,fort,25.845,4.0,354.31,0.0611,assets/audio-real/nota2_fort.m4a
+7,3,poshte,perdja 3,lehte,30.565,2.72,386.67,0.0418,assets/audio-real/nota3_lehte.m4a
+8,3,poshte,perdja 3,fort,33.475,4.0,386.93,0.0494,assets/audio-real/nota3_fort.m4a
+9,4,poshte,perdja 4,lehte,38.095,3.3,435.99,0.0504,assets/audio-real/nota4_lehte.m4a
+10,4,poshte,perdja 4,fort,41.585,4.0,435.95,0.0742,assets/audio-real/nota4_fort.m4a
+11,5,poshte,perdja 5,lehte,46.845,2.43,473.11,0.0333,assets/audio-real/nota5_lehte.m4a
+12,5,poshte,perdja 5,fort,49.465,4.0,473.37,0.0614,assets/audio-real/nota5_fort.m4a
+13,6,poshte,perdja 6,lehte,53.765,2.94,516.21,0.0293,assets/audio-real/nota6_lehte.m4a
+14,6,poshte,perdja 6,fort,56.895,4.0,515.71,0.0599,assets/audio-real/nota6_fort.m4a
+15,7,poshte,perdja 7,lehte,61.315,2.99,579.11,0.0252,assets/audio-real/nota7_lehte.m4a
+16,7,poshte,perdja 7,fort,64.495,4.0,579.54,0.0524,assets/audio-real/nota7_fort.m4a
+17,8,poshte,perdja 8,lehte,68.765,3.0,652.36,0.0346,assets/audio-real/nota8_lehte.m4a
+18,8,poshte,perdja 8,fort,71.955,4.0,651.98,0.0524,assets/audio-real/nota8_fort.m4a
+19,9,poshte,perdja 9,lehte,77.415,2.72,709.0,0.0398,assets/audio-real/nota9_lehte.m4a
+20,9,poshte,perdja 9,fort,80.325,3.14,710.18,0.0371,assets/audio-real/nota9_fort.m4a
+21,10,poshte,perdja 10,lehte,83.655,2.42,774.22,0.0387,assets/audio-real/nota10_lehte.m4a
+22,10,poshte,perdja 10,fort,86.265,3.23,777.12,0.053,assets/audio-real/nota10_fort.m4a
+23,11,poshte,perdja 11,lehte,89.685,2.13,870.07,0.0774,assets/audio-real/nota11_lehte.m4a
+24,11,poshte,perdja 11,fort,92.005,3.79,870.28,0.0716,assets/audio-real/nota11_fort.m4a
+25,12,poshte,perdja 12,lehte,95.985,1.6,955.52,0.0506,assets/audio-real/nota12_lehte.m4a
+26,12,poshte,perdja 12,fort,97.775,2.87,954.72,0.0519,assets/audio-real/nota12_fort.m4a
+27,13,poshte,perdja 13,lehte,100.835,1.59,1034.22,0.0305,assets/audio-real/nota13_lehte.m4a
+28,13,poshte,perdja 13,fort,102.615,3.11,1034.89,0.0651,assets/audio-real/nota13_fort.m4a
+29,14,lart,hapur,lehte,105.915,4.0,220.22,0.058,assets/audio-real/nota14_lehte.m4a
+30,14,lart,hapur,fort,110.715,4.0,220.35,0.0759,assets/audio-real/nota14_fort.m4a

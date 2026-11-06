@@ -7,8 +7,13 @@ for(let i=0;i<HZ.length;i++){
   const hz=HZ[i];
   if(hz < MIN_MIC_HZ) {assert.equal(hzToNote(hz),null);continue;}
   assert.equal(hzToNote(hz)?.noteNumber,i+1);
-  assert.equal(hzToNote(hz-14)?.noteNumber,hz-14<MIN_MIC_HZ?undefined:i+1);
-  assert.equal(hzToNote(hz+14)?.noteNumber,i+1);
+  for(const tested of [hz-14,hz+14]) {
+    const found=hzToNote(tested);
+    assert.ok(found, `Missed frequency ${tested}`);
+    // Adjacent ±15 Hz windows sometimes overlap; return nearest target instead of both.
+    const nearest=HZ.reduce((best,v,j) => Math.abs(v-tested)<Math.abs(HZ[best]-tested)?j:best,0)+1;
+    assert.equal(found.noteNumber,nearest);
+  }
   const samples=Float32Array.from({length:4608},(_,t)=>.22*Math.sin(2*Math.PI*hz*t/sr)+.11*Math.sin(4*Math.PI*hz*t/sr)+.07*Math.sin(6*Math.PI*hz*t/sr));
   const found=matchPitch(samples,sr);
   assert.equal(found.noteNumber,i+1,`Pitch estimate failed at ${hz}Hz`);
@@ -34,4 +39,6 @@ assert.equal(hzToNote(278)?.noteNumber,15);
 assert.equal(hzToNote(308)?.noteNumber,15);
 assert.equal(hzToNote(277),null);
 assert.equal(hzToNote(309),null);
-console.log(`OK: ${matches}/15 nota aktive, G 293 Hz + F 220 Hz; ±15 Hz.`);
+assert.equal(hzToNote(289)?.noteNumber,15); // The real open lower string is slightly flat.
+assert.equal(hzToNote(1034)?.noteNumber,13);
+console.log(`OK: ${matches}/15 nota aktive, G 293 Hz (recorded ~289 Hz) + F 220 Hz; ±15 Hz.`);

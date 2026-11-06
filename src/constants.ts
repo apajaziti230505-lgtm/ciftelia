@@ -1,13 +1,13 @@
 export const KEYS = 'qwertyuiopasdfg'.split('') as string[];
 // Matje orientuese nga regjistrimi i ri: nuk aplikohet transpozim ose konvertim 220↔440.
 // F = teli shoqërues i hapur 220 Hz; G = teli melodik i hapur 293 Hz.
-export const HZ = [330, 359, 392, 440, 482, 523, 586, 660, 721, 788, 883, 970, 1053, 220, 293] as const;
+export const HZ = [326, 354, 387, 436, 473, 516, 579, 652, 710, 776, 870, 955, 1035, 220, 293] as const;
 export const TOLERANCE = 15;
 // Pragu për F = 220 Hz me tolerancë ±15 Hz. Nuk ka transpozim audio.
 export const MIN_MIC_HZ = 205;
 export const FRETS = 13;
 export type NoteNumber = number;
-export interface NoteEvent { string: 1 | 2; noteNumber: number; time: number; measuredHz?: number; confidence?: number; }
+export interface NoteEvent { string: 1 | 2; noteNumber: number; time: number; measuredHz?: number; confidence?: number; velocity?: number; }
 export interface Song { id: string; name: string; notes: NoteEvent[]; createdAt: string; }
 export const DEMO: Song[] = [
   { id: 'demo-fast', name: 'Ushtrim i shpejtë · R–Y', createdAt: '', notes:
@@ -34,7 +34,7 @@ export function withOpenF(events: readonly NoteEvent[]): NoteEvent[] {
   const combined: NoteEvent[] = events.map(e => e.noteNumber === 14 ? {...e, string: 2} : e);
   for (const ev of events) {
     if ((ev.noteNumber >= 1 && ev.noteNumber <= 13 || ev.noteNumber === 15) && !accompanimentTimes.has(ev.time)) {
-      combined.push({string:2, noteNumber:14, time:ev.time});
+      combined.push({string:2, noteNumber:14, time:ev.time, velocity:ev.velocity});
       accompanimentTimes.add(ev.time);
     }
   }
