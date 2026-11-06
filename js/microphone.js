@@ -6,7 +6,6 @@ export class MicrophoneRecorder {
     worklet = null;
     sink = null;
     highpass = null;
-    lowpass = null;
     baseAt = null;
     hits = [];
     recording = false;
@@ -22,7 +21,7 @@ export class MicrophoneRecorder {
             throw new Error('Mikrofoni kërkon HTTPS ose localhost dhe leje nga Safari/Chrome.');
         const ctx = await this.audio.unlock();
         const stream = await navigator.mediaDevices.getUserMedia({ audio: {
-                channelCount: 1, echoCancellation: options.echo, noiseSuppression: options.noise, autoGainControl: options.autoGain,
+                channelCount: 1, echoCancellation: false, noiseSuppression: false, autoGainControl: false,
             }, video: false });
         try {
             if (!ctx.audioWorklet?.addModule)
@@ -33,9 +32,6 @@ export class MicrophoneRecorder {
             this.highpass = ctx.createBiquadFilter();
             this.highpass.type = 'highpass';
             this.highpass.Q.value = .707;
-            this.lowpass = ctx.createBiquadFilter();
-            this.lowpass.type = 'lowpass';
-            this.lowpass.Q.value = .707;
             this.setFilters(options);
             this.worklet = new AudioWorkletNode(ctx, 'ciftelia-onsets', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] });
             this.worklet.port.onmessage = e => {
@@ -52,7 +48,7 @@ export class MicrophoneRecorder {
             this.worklet.port.postMessage({ sensitivity: options.sensitivity });
             this.sink = ctx.createGain();
             this.sink.gain.value = 0; // never route microphone to speaker: prevents feedback
-            this.source.connect(this.highpass).connect(this.lowpass).connect(this.worklet).connect(this.sink).connect(ctx.destination);
+            this.source.connect(this.highpass).connect(this.worklet).connect(this.sink).connect(ctx.destination);
             this.baseAt = null;
             this.hits = [];
             this.recording = true;
@@ -65,9 +61,7 @@ export class MicrophoneRecorder {
     }
     setFilters(options) {
         if (this.highpass)
-            this.highpass.frequency.value = options.voice ? 170 : (options.lowCut ? 80 : 15);
-        if (this.lowpass)
-            this.lowpass.frequency.value = options.voice ? 1800 : 12000;
+            this.highpass.frequency.value = options.lowCut ? 80 : 15;
     }
     setSensitivity(s) { this.worklet?.port.postMessage({ sensitivity: s }); }
     stop() {
@@ -79,8 +73,6 @@ export class MicrophoneRecorder {
         this.source = null;
         this.highpass?.disconnect();
         this.highpass = null;
-        this.lowpass?.disconnect();
-        this.lowpass = null;
         this.sink?.disconnect();
         this.sink = null;
         this.stream?.getTracks().forEach(t => t.stop());

@@ -4,8 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0d1624">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=20261104">
+  <link rel="stylesheet" href="app.css">
 </head>
 <body>
   <main class="container">
@@ -15,7 +17,7 @@
     </header>
 
     <section class="hero" aria-labelledby="instrTitle">
-      <div class="section-head"><div><span class="eyebrow eyebrow-gold">INSTRUMENT REAL · DY TELA</span><h2 id="instrTitle">13 perde. Një tingull autentik.</h2><p>14 tingujt e rinj nga regjistrimi yt: perdet 1–13 dhe F (14) tel i hapur. Akordim 220/440 Hz, pa konvertim të lartësisë.</p></div><div class="live-note"><small>NOTA AKTUALE</small><strong id="liveNote">—</strong><span id="liveHz">— Hz</span></div></div>
+      <div class="section-head"><div><span class="eyebrow eyebrow-gold">INSTRUMENT REAL · DY TELA</span><h2 id="instrTitle">13 perde. Një tingull autentik.</h2><p>Luaj mbi instrument, në tastierë ose regjistro me mikrofon. F është teli i hapur te kupa.</p></div><div class="live-note"><small>NOTA AKTUALE</small><strong id="liveNote">—</strong><span id="liveHz">— Hz</span></div></div>
       <div class="instrument-stage"><div class="instrument-scroller"><svg id="ciftelia" viewBox="0 0 1450 465" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Çifteli tradicionale me dy tela dhe trembëdhjetë perde; prek perdet ose kupën për tingujt.">
           <defs>
             <linearGradient id="cupWood" x1="0" x2="0.75" y1="0" y2="1">
@@ -158,7 +160,7 @@
 
     <section class="transport" aria-label="Këngët dhe kontrollet">
       <div class="transport-song"><label for="songSelect">KËNGA E ZGJEDHUR</label><select id="songSelect"></select><div id="songMeta" class="song-meta">0 nota</div></div>
-      <div class="transport-actions"><button type="button" class="btn btn-record" id="recordBtn">＋ Regjistro</button><button type="button" class="btn btn-primary" id="playBtn">▶ Luaj</button><button type="button" class="btn" id="stopBtn">■ Ndalo</button><button type="button" class="btn" id="saveBtn" disabled>▣ Ruaj</button><button type="button" class="btn btn-danger" id="deleteBtn" disabled>Fshi</button><button type="button" class="btn btn-minimal" id="exportBtn">Eksporto JSON</button></div>
+      <div class="transport-actions"><button type="button" class="btn btn-record" id="recordBtn">＋ Regjistro</button><button type="button" class="btn btn-primary" id="playBtn">▶ Luaj</button><button type="button" class="btn" id="stopBtn">■ Ndalo</button><button type="button" class="btn" id="saveBtn" disabled>▣ Ruaj</button><button type="button" class="btn btn-danger" id="deleteBtn" disabled>Fshi</button><button type="button" class="btn btn-minimal" id="exportBtn">Eksporto JSON</button><button type="button" class="btn btn-minimal" id="importBtn">Importo JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button type="button" class="btn btn-minimal" id="installBtn" hidden>Instalo Android</button></div>
       <span id="recordCounter" class="record-counter">GATI</span>
     </section>
 
@@ -170,17 +172,13 @@
 
     <div class="workspace-grid">
       <section class="panel mic-panel" aria-label="Mikrofoni dhe filtrat">
-        <div class="panel-heading"><div><span class="eyebrow eyebrow-gold">REGJISTRIMI LIVE</span><h2>Mikrofoni i çiftelisë</h2><p>Vetëm teli i poshtëm, 14 nota, tolerancë ±15 Hz.</p></div><button type="button" id="micBtn" class="btn btn-mic">🎙 Nis mikrofonin</button></div>
+        <div class="panel-heading"><div><span class="eyebrow eyebrow-gold">REGJISTRIMI LIVE</span><h2>Mikrofoni i çiftelisë</h2><p>Vetëm teli i poshtëm, tolerancë ±15 Hz. Frekuencat nën 230 Hz nuk njihen.</p></div><button type="button" id="micBtn" class="btn btn-mic">🎙 Nis mikrofonin</button></div>
         <div class="mic-metrics"><div><small>NOTA</small><strong id="micCurrent">—</strong></div><div><small>MATJA</small><strong id="micMeasured">— Hz</strong></div><div><small>INTERVALI</small><strong id="micInterval">— ms</strong></div><div><small>NOTA / GODITJE</small><strong id="micCount">0 / 0</strong></div></div>
-        <div class="filters-heading"><strong>Filtrat e hyrjes</strong><small>Low Cut 80 Hz = ON, të tjerët OFF</small></div>
+        <div class="filters-heading"><strong>Filtri i mikrofonit</strong><small>Low Cut 80 Hz; kufi njohjeje 230 Hz</small></div>
         <div class="filters-grid">
-          <label class="switch-line"><input id="lowCut" type="checkbox" checked><span><strong>Low Cut 80 Hz</strong><small>Heq frekuencat e ulëta të ambientit</small></span></label>
-          <label class="switch-line"><input id="voiceFilter" type="checkbox"><span><strong>Voice Filter</strong><small>170–1800 Hz · përdore vetëm nëse duhet</small></span></label>
-          <label class="switch-line"><input id="noiseFilter" type="checkbox"><span><strong>Noise Suppression</strong><small>Filtër i sistemit</small></span></label>
-          <label class="switch-line"><input id="echoFilter" type="checkbox"><span><strong>Echo Cancellation</strong><small>Mund të ndryshojë tingullin</small></span></label>
-          <label class="switch-line"><input id="autoGain" type="checkbox"><span><strong>Auto Gain</strong><small>Rregullim automatik i volumit</small></span></label>
+          <label class="switch-line"><input id="lowCut" type="checkbox" checked><span><strong>Low Cut 80 Hz</strong><small>Redukton zhurmën e ulët, pa transpozim</small></span></label>
         </div>
-        <p class="filter-note">Opsionet e sistemit (Noise, Echo, Auto Gain) zbatohen kur nis mikrofonin. Safari mund t’i injorojë; Low Cut dhe Voice Filter mund të ndryshohen gjatë regjistrimit.</p>
+        <p class="filter-note"><strong>Pragu: 230 Hz.</strong> Çdo frekuencë nën 230 Hz refuzohet automatikisht nga mikrofoni. <strong>Nota F e hapur ≈220 Hz nuk mund të njihet me këtë kufi</strong>, por luhet normalisht nga tastiera dhe kupa. Për ta regjistruar F, duhet ta korrigjosh manualisht nga lista e goditjeve.</p>
         <div class="sensitivity"><label for="sensitivity">Ndjeshmëria e goditjes</label><input id="sensitivity" type="range" min="1" max="10" value="5"><output id="sensitivityOut">5</output></div>
         <p id="micStatus" class="mic-status" role="status">Gati. Gjatë regjistrimit mikrofoni nuk e dërgon tingullin në altoparlant, për të shmangur jehonën. Pasi ndalon, përdor Luaj.</p>
         <div class="mic-events-title"><strong>Goditjet e kapura</strong><small>Korrigjo notat ? para ruajtjes</small></div><div class="mic-events" id="micEvents"></div>
@@ -188,12 +186,12 @@
       <section class="panel keyboard-panel" aria-label="Luajtja me tastierë">
         <div class="panel-heading"><div><span class="eyebrow eyebrow-gold">QWERTYUIOPASDF</span><h2>14 tingujt e çiftelisë</h2><p>Prek tastet për të luajtur ose regjistruar një melodi.</p></div></div>
         <div id="keypad" class="keypad"></div>
-        <div class="control-group"><div><label for="soundMode">TINGULLI</label><select id="soundMode"><option value="short">I shkurtër · regjistrimi i ri</option><option value="full">I plotë · regjistrimi i ri</option></select></div><div><label for="volume">VOLUMI <output id="volumeOut">80%</output></label><input id="volume" type="range" min="0" max="100" value="80"></div></div>
+        <div class="control-group"><div><label for="soundMode">TINGULLI</label><select id="soundMode"><option value="short">I shkurtër · reagim i shpejtë</option><option value="full">I plotë · iPhone</option></select></div><div><label for="volume">VOLUMI <output id="volumeOut">80%</output></label><input id="volume" type="range" min="0" max="100" value="80"></div></div>
         <p class="note-message"><b>Ruajtja:</b> Regjistro → Ndalo → Luaj për kontroll → Ruaj vetëm nëse dëshiron. Këngët ruhen në këtë shfletues dhe mund të eksportohen si JSON.</p>
       </section>
     </div>
-    <div class="footer"><p id="status" role="status">Gati për të luajtur.</p><span>ÇIFTELIA STUDIO · 220 / 440 HZ · PA KONVERTIM</span></div>
+    <div class="footer"><p id="status" role="status">Gati për të luajtur.</p><span>ÇIFTELIA STUDIO · VERSIONI 2 · ANDROID / WEB</span></div>
   </main>
-  <script type="module" src="./js/main.js?v=20261104"></script>
+  <script type="module" src="./js/main.js?v=2"></script>
 </body>
 </html>

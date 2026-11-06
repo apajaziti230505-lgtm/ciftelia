@@ -1,6 +1,6 @@
-# Çiftelia Studio TS — regjistrimi origjinal (220 / 440 Hz)
+# Çiftelia Studio TS — version lokal, jo i publikuar
 
-Rindërtim me TypeScript, Web Audio API dhe AudioWorklet. Dy tela, 13 perde (Q–D), F teli i hapur te kupa; 14 tingujt e rinj të nxjerrë nga “Strimnitsa 2(1).m4a”, pa transpozim; skedarët AAC/M4A për përdorim në shfletues. Nuk ka luajtje videoje.
+Rindërtim me TypeScript, Web Audio API dhe AudioWorklet. Dy tela, 13 perde (Q–D), F teli i hapur te kupa; 14 tinguj WAV të regjistruar më herët nga përdoruesi. Nuk ka luajtje videoje.
 
 ## Nisja
 
@@ -27,9 +27,9 @@ tsc -p tsconfig.json
 - Prek notat Q–D mbi bisht ose F mbi kupë; tastiera `qwertyuiopasdf`.
 - `+ Regjistro`: shënon notat e shtypura me tastierë dhe kohën në ms.
 - `Mikrofon`: kërkon leje, dëgjon vetëm telin e poshtëm dhe detekton goditje me AudioWorklet.
-- ±15 Hz rreth frekuencave të vlerësuara nga regjistrimi: 330,359,392,440,482,523,586,660,721,788,883,970,1053 dhe F (i hapur) ≈220 Hz. Këto janë vlerësime; harmonikat 220/440 mund të vështirësojnë njohjen.
+- ±15 Hz rreth: 329,358,389,440,477,521,587,660,719,784,880,960,1050 dhe F=292 Hz.
 - Filtër Low Cut 80 Hz ON, Voice Filter OFF dhe procesim zëri i sistemit OFF sipas opsioneve që respekton shfletuesi.
-- `Luaj`: tinguj M4A të planifikuar me orën AudioContext; vizualizim tablature të sinkronizuar.
+- `Luaj`: tinguj WAV të planifikuar me orën AudioContext; vizualizim tablature të sinkronizuar.
 - `Ruaj`: vetëm sipas zgjedhjes së përdoruesit; ruhet lokalisht në shfletues. `Fshi` dhe `Eksporto JSON`.
 - Këngët e ruajtura në localStorage nuk transferohen automatikisht në pajisje tjetër.
 
@@ -37,8 +37,12 @@ tsc -p tsconfig.json
 
 Koha e AudioWorklet merret nga pozicioni i mostrës, por vonesat e mikrofonit, rezonanca, zhurma dhe mënyra e përpunimit të iOS ndikojnë saktësinë. Njohja e notave dhe filtrat e sistemit mund të ndryshojnë sipas pajisjes; kjo nuk zëvendëson kalibrimin me çiftelinë tënde. Mikrofoni nuk ka monitorim në altoparlant për të shmangur jehonën; kënga dëgjohet pas regjistrimit me `Luaj`. Testoje në iPhone real para publikimit.
 
-**Akordimi origjinal 220/440 Hz. Asnjë ndryshim automatik i lartësisë ose ritmit të tingullit.**
+**Asnjë skedar nuk është publikuar në GitHub nga ky version.**
 
-## Regjistrimi i ri (4 nëntor 2026)
 
-Goditjet 1–13 janë perdet 1–13 dhe goditja 14 është teli i hapur. Audioja u nda në variantet e plota dhe të shkurtra me fillim/fund të zbutur, filtrin e lehtë 70 Hz, pa ndryshim të lartësisë së tingullit. Shiko `notat_nga_regjistrimi.csv`. Ruajtja e këngëve vazhdon të jetë lokale në shfletues.
+## Versioni 2 / Android
+- UI: vetëm Low Cut 80 Hz; voice/noise/echo/auto gain nuk janë më kontrolle. Kërkesa e mikrofonit dërgon `false` për procesimin e sistemit (shfletuesi mund të mos i respektojë).
+- Mikrofoni refuzon **çdo frekuencë nën 230 Hz**, kështu që nota e hapur 14 / F ≈220 Hz nuk zbulohet automatikisht. Mund të luhet manualisht dhe të korrigjohet në listë.
+- + Regjistro, Importo/Eksporto JSON, Ruaj/Fshi.
+- Android: hap faqen HTTPS në Chrome dhe zgjidh **Instalo aplikacionin** ose **Shto në ekranin kryesor**. Ky është instalim PWA, jo skedar APK.
+- Nuk mund të ndërtohet APK pa Android SDK/Gradle; projekti Android Studio në dosjen `android/` është skelet për ndërtim lokal.

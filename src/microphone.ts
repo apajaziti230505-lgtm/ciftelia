@@ -2,14 +2,13 @@ import {AudioEngine} from './audio-engine.js';
 import {matchPitch} from './pitch.js';
 import {NoteEvent} from './constants.js';
 export interface DetectedHit extends Omit<NoteEvent,'noteNumber'> {noteNumber:number|null;hz:number|null;clarity:number;}
-export interface FilterOptions {lowCut:boolean;voice:boolean;noise:boolean;echo:boolean;autoGain:boolean;sensitivity:number;}
+export interface FilterOptions {lowCut:boolean;sensitivity:number;}
 export class MicrophoneRecorder {
   private stream:MediaStream|null=null;
   private source:MediaStreamAudioSourceNode|null=null;
   private worklet:AudioWorkletNode|null=null;
   private sink:GainNode|null=null;
   private highpass:BiquadFilterNode|null=null;
-  private lowpass:BiquadFilterNode|null=null;
   private baseAt:number|null=null;
   hits:DetectedHit[]=[];
   recording=false;
@@ -21,14 +20,13 @@ export class MicrophoneRecorder {
     if(!navigator.mediaDevices?.getUserMedia) throw new Error('Mikrofoni kërkon HTTPS ose localhost dhe leje nga Safari/Chrome.');
     const ctx=await this.audio.unlock();
     const stream=await navigator.mediaDevices.getUserMedia({audio:{
-      channelCount:1, echoCancellation:options.echo,noiseSuppression:options.noise,autoGainControl:options.autoGain,
+      channelCount:1, echoCancellation:false,noiseSuppression:false,autoGainControl:false,
     },video:false});
     try {
       if(!ctx.audioWorklet?.addModule)throw new Error('Ky shfletues nuk mbështet AudioWorklet. Provo Safari ose Chrome të përditësuar.');
       await ctx.audioWorklet.addModule('./js/mic-onset-worklet.js');
       this.stream=stream;this.source=ctx.createMediaStreamSource(stream);
       this.highpass=ctx.createBiquadFilter();this.highpass.type='highpass';this.highpass.Q.value=.707;
-      this.lowpass=ctx.createBiquadFilter();this.lowpass.type='lowpass';this.lowpass.Q.value=.707;
       this.setFilters(options);
       this.worklet=new AudioWorkletNode(ctx,'ciftelia-onsets',{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[1]});
       this.worklet.port.onmessage=e=>{
@@ -41,13 +39,12 @@ export class MicrophoneRecorder {
       };
       this.worklet.port.postMessage({sensitivity:options.sensitivity});
       this.sink=ctx.createGain();this.sink.gain.value=0; // never route microphone to speaker: prevents feedback
-      this.source.connect(this.highpass).connect(this.lowpass).connect(this.worklet).connect(this.sink).connect(ctx.destination);
+      this.source.connect(this.highpass).connect(this.worklet).connect(this.sink).connect(ctx.destination);
       this.baseAt=null;this.hits=[];this.recording=true;
     } catch(e){stream.getTracks().forEach(t=>t.stop());this.stream=null;throw e;}
   }
-  setFilters(options:Pick<FilterOptions,'lowCut'|'voice'>):void {
-    if(this.highpass) this.highpass.frequency.value=options.voice?170:(options.lowCut?80:15);
-    if(this.lowpass) this.lowpass.frequency.value=options.voice?1800:12000;
+  setFilters(options:Pick<FilterOptions,'lowCut'>):void {
+    if(this.highpass) this.highpass.frequency.value=options.lowCut?80:15;
   }
   setSensitivity(s:number):void {this.worklet?.port.postMessage({sensitivity:s});}
   stop():DetectedHit[] {
@@ -55,7 +52,6 @@ export class MicrophoneRecorder {
     this.worklet?.disconnect();this.worklet?.port.close();this.worklet=null;
     this.source?.disconnect();this.source=null;
     this.highpass?.disconnect();this.highpass=null;
-    this.lowpass?.disconnect();this.lowpass=null;
     this.sink?.disconnect();this.sink=null;
     this.stream?.getTracks().forEach(t=>t.stop());this.stream=null;
     return [...this.hits];

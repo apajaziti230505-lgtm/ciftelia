@@ -160,11 +160,7 @@ function recordKeyboard() {
     setStatus('Regjistrimi nisi. Luaj Q–F, pastaj shtyp Ndal regjistrimin.');
 }
 function filterOptions() {
-    return {
-        lowCut: $('lowCut').checked, voice: $('voiceFilter').checked,
-        noise: $('noiseFilter').checked, echo: $('echoFilter').checked,
-        autoGain: $('autoGain').checked, sensitivity: Number($('sensitivity').value)
-    };
+    return { lowCut: $('lowCut').checked, sensitivity: Number($('sensitivity').value) };
 }
 function renderMicHits() {
     const root = $('micEvents');
@@ -404,6 +400,40 @@ function drawTab(song, elapsed = 0) {
     }
 }
 function renderTimeline() { drawTab(songForDisplay(), 0); $('timeLabel').textContent = `00:00.00 / ${fmt((songForDisplay()?.notes.at(-1)?.time || 0) + 600)}`; }
+async function importSongFile(file) {
+    try {
+        if (file.size > 2_000_000)
+            throw new Error('Skedari është tepër i madh.');
+        const data = JSON.parse(await file.text());
+        if (!data || typeof data !== 'object')
+            throw new Error('JSON i pavlefshëm.');
+        const obj = data;
+        if (!Array.isArray(obj.notes) || obj.notes.length < 1 || obj.notes.length > 10000)
+            throw new Error('Lista e notave nuk është e vlefshme.');
+        const notes = obj.notes.map((v) => {
+            const n = v;
+            if (!n || (n.string !== 1 && n.string !== 2) || !Number.isInteger(n.noteNumber) || n.noteNumber < 1 || n.noteNumber > 14 || !Number.isFinite(n.time) || n.time < 0 || n.time > 3_600_000)
+                throw new Error('Një notë ka vlera të pavlefshme.');
+            return { string: n.string, noteNumber: n.noteNumber, time: n.time };
+        });
+        const name = typeof obj.name === 'string' ? obj.name : 'Këngë e importuar';
+        stopPlayback();
+        createDraftFromNotes(notes, name);
+        setStatus('Kënga u importua si PROVË. Shtyp Luaj dhe pastaj Ruaj nëse dëshiron.');
+    }
+    catch (e) {
+        setStatus(`Importimi dështoi: ${e instanceof Error ? e.message : String(e)}`);
+    }
+}
+let deferredInstall = null;
+function installAndroid() {
+    const promptEvent = deferredInstall;
+    if (!promptEvent) {
+        setStatus('Në Android: Chrome → ⋮ → Shto në ekranin kryesor / Instalo aplikacionin.');
+        return;
+    }
+    void promptEvent.prompt().then(() => promptEvent.userChoice).then(() => { deferredInstall = null; $('installBtn').hidden = true; }).catch(() => { });
+}
 function init() {
     renderInstrument();
     renderKeys();
@@ -421,10 +451,16 @@ function init() {
     $('deleteBtn').addEventListener('click', deleteSong);
     $('exportBtn').addEventListener('click', () => { const song = currentSong(); if (song)
         exportSong(song); });
+    $('importBtn').addEventListener('click', () => $('importFile').click());
+    $('importFile').addEventListener('change', () => { const input = $('importFile'); if (input.files?.[0])
+        void importSongFile(input.files[0]); input.value = ''; });
+    $('installBtn').addEventListener('click', installAndroid);
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstall = e; $('installBtn').hidden = false; });
+    if ('serviceWorker' in navigator)
+        window.addEventListener('load', () => { void navigator.serviceWorker.register('./sw.js').catch(() => { }); });
     $('volume').addEventListener('input', e => { const value = Number(e.target.value); audio.setVolume(value / 100); $('volumeOut').textContent = `${value}%`; });
     $('soundMode').addEventListener('change', e => { audio.mode = e.target.value === 'full' ? 'full' : 'short'; });
-    for (const id of ['lowCut', 'voiceFilter'])
-        $(id).addEventListener('change', () => mic.setFilters(filterOptions()));
+    $('lowCut').addEventListener('change', () => mic.setFilters(filterOptions()));
     $('sensitivity').addEventListener('input', () => { mic.setSensitivity(filterOptions().sensitivity); $('sensitivityOut').textContent = $('sensitivity').value; });
     window.addEventListener('keydown', e => {
         if (e.repeat || e.altKey || e.metaKey || e.ctrlKey || ['INPUT', 'TEXTAREA', 'SELECT'].includes((document.activeElement?.tagName || '')))

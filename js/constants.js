@@ -3,6 +3,8 @@ export const KEYS = 'qwertyuiopasdf'.split('');
 // F = teli i hapur ~220 Hz (me harmonikë të fortë edhe rreth 440 Hz).
 export const HZ = [330, 359, 392, 440, 482, 523, 586, 660, 721, 788, 883, 970, 1053, 220];
 export const TOLERANCE = 15;
+// Kufiri i prerë i njohjes. F ~220 Hz nuk identifikohet automatikisht.
+export const MIN_MIC_HZ = 230;
 export const FRETS = 13;
 export const DEMO = [
     { id: 'demo-fast', name: 'Ushtrim i shpejtë · R–Y', createdAt: '', notes: [4, 5, 6, 7, 7, 7, 6, 5, 4, 14, 4, 5, 6, 7].flatMap((noteNumber, i) => [
@@ -15,7 +17,7 @@ export const DEMO = [
     }
 ];
 export function hzToNote(hz) {
-    if (!Number.isFinite(hz) || hz <= 0)
+    if (!Number.isFinite(hz) || hz < MIN_MIC_HZ)
         return null;
     let best = -1, diff = Infinity;
     HZ.forEach((v, i) => { const d = Math.abs(hz - v); if (d < diff) {

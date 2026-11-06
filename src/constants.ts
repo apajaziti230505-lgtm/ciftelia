@@ -3,6 +3,8 @@ export const KEYS = 'qwertyuiopasdf'.split('') as string[];
 // F = teli i hapur ~220 Hz (me harmonikë të fortë edhe rreth 440 Hz).
 export const HZ = [330, 359, 392, 440, 482, 523, 586, 660, 721, 788, 883, 970, 1053, 220] as const;
 export const TOLERANCE = 15;
+// Kufiri i prerë i njohjes. F ~220 Hz nuk identifikohet automatikisht.
+export const MIN_MIC_HZ = 230;
 export const FRETS = 13;
 export type NoteNumber = number;
 export interface NoteEvent { string: 1 | 2; noteNumber: number; time: number; measuredHz?: number; confidence?: number; }
@@ -20,7 +22,7 @@ export const DEMO: Song[] = [
   }
 ];
 export function hzToNote(hz: number): {noteNumber: number; target: number; error: number} | null {
-  if (!Number.isFinite(hz) || hz<=0) return null;
+  if (!Number.isFinite(hz) || hz < MIN_MIC_HZ) return null;
   let best = -1, diff = Infinity;
   HZ.forEach((v,i)=>{const d = Math.abs(hz-v); if(d<diff){best=i;diff=d;}});
   return diff <= TOLERANCE ? {noteNumber:best+1,target:HZ[best],error:diff} : null;
