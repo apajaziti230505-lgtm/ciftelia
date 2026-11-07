@@ -22,3 +22,23 @@
 .analysis-note-row .btn{padding:7px 9px;min-height:33px}
 #analysisMoreBtn{margin-top:12px}
 @media(max-width:680px){.analysis-status-row{flex-wrap:wrap}.analysis-status-row progress{max-width:100%;width:100%}.analysis-rows{max-height:430px}.analysis-note-row{grid-template-columns:1fr 1fr 1fr;gap:6px}.analysis-confidence{grid-column:1;grid-row:2}.analysis-note-row .btn{font-size:11px}}
+
+/* Redaktuesi i strofave dhe dy telave */
+.stanza-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:8px 0 12px}
+.stanza-actions span{font-size:11px;color:#99aec0}
+.stanza-list{display:grid;gap:7px;margin-bottom:14px}
+.stanza-entry{display:grid;grid-template-columns:minmax(100px,1fr) 110px 36px;gap:7px;align-items:center;border-radius:9px;background:#102237;padding:7px}
+.stanza-entry input{width:100%;min-width:0;padding:8px;background:#172d42;border:1px solid #496074;color:#f2e2bf;border-radius:7px;font-size:12px}
+.stanza-entry .btn{min-height:32px;padding:6px}
+.stanza-divider{padding:10px 12px;border-left:3px solid #e3b36a;border-radius:6px;background:#172938;color:#ebc990;font-size:13px;font-weight:750;margin-top:7px}
+.analysis-note-row{grid-template-columns:minmax(76px,96px) minmax(72px,90px) minmax(50px,60px) 63px 38px 38px 38px 65px}
+.analysis-note-row .f-companion{display:flex;align-items:center;gap:5px;color:#ebbf83;font-weight:750;font-size:12px;white-space:nowrap}
+.analysis-note-row .f-companion input{width:16px;height:16px;accent-color:#e5b15d}
+.analysis-note-row .btn{min-width:32px;padding:6px}
+.analysis-rows{max-height:540px}
+@media(max-width:760px){
+ .analysis-note-row{grid-template-columns:minmax(70px,1fr) minmax(70px,1fr) 54px 42px;gap:6px}
+ .analysis-note-row .analysis-confidence{grid-column:auto;grid-row:auto}
+ .analysis-note-row .stanza-split{grid-column:span 1}
+ .stanza-entry{grid-template-columns:minmax(120px,1fr) 90px 36px}
+}

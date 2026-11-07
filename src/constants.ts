@@ -7,8 +7,9 @@ export const TOLERANCE = 15;
 export const MIN_MIC_HZ = 205;
 export const FRETS = 13;
 export type NoteNumber = number;
-export interface NoteEvent { string: 1 | 2; noteNumber: number; time: number; measuredHz?: number; confidence?: number; velocity?: number; }
-export interface Song { id: string; name: string; notes: NoteEvent[]; createdAt: string; originalAudioId?: string; }
+export interface NoteEvent { string: 1 | 2; noteNumber: number; time: number; measuredHz?: number; confidence?: number; velocity?: number; withF?: boolean; }
+export interface Stanza { start: number; label: string; }
+export interface Song { id: string; name: string; notes: NoteEvent[]; createdAt: string; originalAudioId?: string; stanzas?: Stanza[]; }
 export const DEMO: Song[] = [
   { id: 'demo-fast', name: 'Ushtrim i shpejtë · R–Y', createdAt: '', notes:
     [4,5,6,7,7,7,6,5,4,14,4,5,6,7].flatMap((noteNumber,i) => [
@@ -33,7 +34,7 @@ export function withOpenF(events: readonly NoteEvent[]): NoteEvent[] {
   const accompanimentTimes = new Set(events.filter(e => e.noteNumber === 14).map(e => e.time));
   const combined: NoteEvent[] = events.map(e => e.noteNumber === 14 ? {...e, string: 2} : e);
   for (const ev of events) {
-    if ((ev.noteNumber >= 1 && ev.noteNumber <= 13 || ev.noteNumber === 15) && !accompanimentTimes.has(ev.time)) {
+    if ((ev.noteNumber >= 1 && ev.noteNumber <= 13 || ev.noteNumber === 15) && ev.withF !== false && !accompanimentTimes.has(ev.time)) {
       combined.push({string:2, noteNumber:14, time:ev.time, velocity:ev.velocity});
       accompanimentTimes.add(ev.time);
     }

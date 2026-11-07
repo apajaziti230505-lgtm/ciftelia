@@ -32,7 +32,7 @@ export function withOpenF(events) {
     const accompanimentTimes = new Set(events.filter(e => e.noteNumber === 14).map(e => e.time));
     const combined = events.map(e => e.noteNumber === 14 ? { ...e, string: 2 } : e);
     for (const ev of events) {
-        if ((ev.noteNumber >= 1 && ev.noteNumber <= 13 || ev.noteNumber === 15) && !accompanimentTimes.has(ev.time)) {
+        if ((ev.noteNumber >= 1 && ev.noteNumber <= 13 || ev.noteNumber === 15) && ev.withF !== false && !accompanimentTimes.has(ev.time)) {
             combined.push({ string: 2, noteNumber: 14, time: ev.time, velocity: ev.velocity });
             accompanimentTimes.add(ev.time);
         }

@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=6-import-20261107">
+  <link rel="stylesheet" href="app.css?v=8-strofa-20261107">
 </head>
 <body>
   <main class="container">
@@ -17,7 +17,7 @@
     </header>
 
     <section class="hero" aria-labelledby="instrTitle">
-      <div class="section-head"><div><h2 id="instrTitle">Çiftelia me dy tela</h2><p>Poshtë: 293 Hz · Lart: 220 Hz</p></div><div class="live-note"><small>NOTA AKTUALE</small><strong id="liveNote">—</strong><span id="liveHz">— Hz</span></div></div>
+      <div class="section-head"><div><h2 id="instrTitle">Luaj çiftelinë</h2></div><div class="live-note"><small>NOTA AKTUALE</small><strong id="liveNote">—</strong><span id="liveHz">— Hz</span></div></div>
       <div class="instrument-stage"><div class="instrument-scroller"><svg id="ciftelia" viewBox="0 0 1450 465" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Çifteli tradicionale me dy tela dhe trembëdhjetë perde; prek perdet ose kupën për tingujt.">
           <defs>
             <linearGradient id="cupWood" x1="0" x2="0.75" y1="0" y2="1">
@@ -155,7 +155,6 @@
           <g id="highlights" pointer-events="none"></g>
           <g id="hit-zones"></g>
         </svg></div></div>
-      <div class="instrument-hints"><span>Q–D · 13 perdet</span><span><b>G · 293 Hz</b> poshtë hapur</span><span><b>F · 220 Hz</b> lart hapur</span></div>
     </section>
 
     <section class="transport" aria-label="Këngët dhe kontrollet">
@@ -171,18 +170,20 @@
     </section>
 
     <section class="panel analysis-panel" aria-labelledby="analysisTitle">
-      <div class="panel-heading"><div><h2 id="analysisTitle">Nga audio në tablaturë</h2><p>Importo regjistrimin origjinal, analizo goditjet, korrigjo notat dhe ruaje.</p></div></div>
+      <div class="panel-heading"><div><h2 id="analysisTitle">Këngët dhe strofat</h2><p>Ngarko këngën, korrigjo notat dhe ndaji në strofa.</p></div></div>
       <div class="analysis-actions">
         <label class="btn btn-primary analysis-upload" for="audioImportFile">＋ Importo këngë audio</label>
         <input id="audioImportFile" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" hidden>
-        <button id="analyzeBtn" class="btn" type="button" disabled>Analizo notat</button>
-        <button id="analysisAddBtn" class="btn btn-minimal" type="button" disabled>+ Shto notë te koha aktuale</button>
+        <button id="analyzeBtn" class="btn" type="button" disabled>↻ Onset Detection</button><button id="analysisEditSavedBtn" class="btn btn-minimal" type="button" disabled>✎ Redakto këngën</button>
+        <button id="analysisAddBtn" class="btn btn-minimal" type="button" disabled>＋ Shto notë</button>
       </div>
       <audio id="originalPlayer" controls preload="metadata" class="original-player" hidden aria-label="Luaj regjistrimin origjinal"></audio>
       <div class="analysis-status-row"><progress id="analysisProgress" max="100" value="0"></progress><span id="analysisStatus" role="status">Zgjidh një audio për analizë.</span></div>
-      <p class="analysis-hint">Kënga dëgjohet si regjistrim origjinal, pa shtuar automatikisht telin 220 Hz. Analiza jep propozime; goditjet e paqarta mbeten ?. Korrigjo milisekondat dhe shkruaj numrin e perdes: 1–13; 14 = F lart, 15 = G poshtë i hapur. Maksimumi 150 sekonda / 25 MB.</p>
+      <p class="analysis-hint">Onset Detection gjen goditjet. Plotëso perdet 1–13, 14 = F ose 15 = teli poshtë i hapur. F shtohet në tablaturë për çdo notë poshtë; hiqe vetëm kur duhet. Audioja origjinale nuk ndryshohet.</p>
       <div id="analysisEdit" class="analysis-edit" hidden>
-        <div class="analysis-edit-header"><strong>Korrigjo notat dhe kohët</strong><span id="analysisCount"></span></div>
+        <div class="analysis-edit-header"><strong>Strofat dhe notat</strong><span id="analysisCount"></span></div>
+        <div class="stanza-actions"><button id="stanzaAddBtn" type="button" class="btn btn-minimal">＋ Ndaj strofë te koha aktuale</button><span>Ndrysho emrin, kohën, perden ose F për çdo goditje.</span></div>
+        <div id="stanzaList" class="stanza-list"></div>
         <div id="analysisRows" class="analysis-rows"></div>
         <button type="button" class="btn btn-minimal" id="analysisMoreBtn" hidden>Shfaq 60 të tjera</button>
       </div>
@@ -210,6 +211,6 @@
     </div>
     <div class="footer"><p id="status" role="status">Gati për të luajtur.</p></div>
   </main>
-  <script type="module" src="./js/main.js?v=6-import-20261107"></script>
+  <script type="module" src="./js/main.js?v=8-strofa-20261107"></script>
 </body>
 </html>
