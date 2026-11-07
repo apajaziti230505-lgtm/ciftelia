@@ -40,3 +40,15 @@ Skedarët e vjetër `assets/audio/` mbeten vetëm si rezervë nëse nuk ngarkohe
 Ngarkimi i parë në internet mund të marrë pak kohë për 30 mostrat audio (rreth 1.65 MB); më pas ato ruhen në cache-in e shfletuesit.
 
 **Kufizim:** njohja e goditjeve me mikrofon dhe audioja në iPhone/Android real duhen provuar në pajisje. Njohja e 220 Hz mund të ngatërrohet me harmonikën 440 Hz kur telat tingëllojnë njëkohësisht. Matjet janë orientuese nga regjistrimi, jo certifikim akordimi.
+
+
+## Analiza nga audio origjinale – paneli i ri
+
+- Në panelin **Analizo një këngë**, importo MP3/M4A/WAV (deri 25 MB dhe 150 sekonda).
+- **Analizo notat** kërkon goditjet dhe përpiqet t'i identifikojë nga 30 regjistrimet reale të çiftelisë. Në rastet e paqarta shfaq **?** dhe kërkon korrigjim.
+- Mund të ndryshosh milisekondën, perden, telin, të dëgjosh notën nga audioja origjinale, si dhe të shtosh/fshish shënime.
+- Audioja origjinale luhet **pa përzier automatikisht telin 220 Hz**. Tablatura lëviz sipas audios.
+- **Ruaj këngën + tablaturën** përdor IndexedDB në shfletuesin lokal. Këngët nuk sinkronizohen me pajisje të tjera dhe nuk ngarkohen automatikisht në GitHub.
+- **Eksporto tablaturën JSON** ruan vetëm shënimet; për ta transferuar duhet ruajtur veçmas edhe skedari audio origjinal.
+- Kjo është analizë ndihmëse, jo transkriptim 100% i garantuar. Dy telat, jehona, instrumentet e tjerë dhe goditjet e shpejta kërkojnë kontroll manual.
+- Kodi: \`src/audio-transcriber.ts\` → \`js/audio-transcriber.js\`; përpilohet me \`tsc -p tsconfig.json\`.
