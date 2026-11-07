@@ -162,7 +162,7 @@
         <button id="practicePauseBtn" type="button" class="btn btn-minimal">⏸ Pauzë</button>
         <button id="practiceStopBtn" type="button" class="btn btn-minimal">■ Ndalo</button>
         <select id="practiceSpeedSelect" aria-label="Shpejtësia e ushtrimit">
-          <option value="1">1.00× Normal</option><option value="0.5">0.50× Ngadalë</option>
+          <option value="1">1.00× Normal</option><option value="0.5">0.50× Ngadalë</option><option value="0.25">0.25× Shumë ngadalë</option>
         </select>
         <span class="practice-indicator">Tani <strong id="practiceNoteNow">—</strong><span class="practice-arrow">→</span>Më pas <strong id="practiceNoteNext">—</strong></span>
       </div>
@@ -188,7 +188,7 @@
             <input type="number" id="tabSeekSeconds" min="0" value="0.000" step="0.001" inputmode="decimal" aria-label="Sekonda e saktë me tre shifra pas presjes">
           </label>
           <button type="button" id="tabSeekGoBtn" class="btn btn-minimal">Shko</button>
-          <select id="playbackSpeed" aria-label="Shpejtësia e muzikës"><option value="1">Normal · 1.00×</option><option value="0.5">Slow Motion · 0.50×</option></select>
+          <select id="playbackSpeed" aria-label="Shpejtësia e muzikës"><option value="1">Normal · 1.00×</option><option value="0.5">Slow Motion · 0.50×</option><option value="0.25">Slow Motion · 0.25×</option></select>
           <select id="selectedGroupSelect" aria-label="Zgjidh grupin për luajtje"><option value="0">Grupi 1</option></select>
           <button type="button" id="groupPlayBtn" class="btn btn-group-play">▶ Luaj grupin</button>
         </div>
@@ -315,6 +315,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v19/main.js"></script>
+  <script type="module" src="./js/v19/main.js?v=20-speed-quarter"></script>
 </body>
 </html>

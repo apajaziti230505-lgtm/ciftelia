@@ -1,4 +1,4 @@
-const CACHE='ciftelia-studio-v19-practice-clean-20261107';
+const CACHE='ciftelia-studio-v20-speed-quarter-20261107';
 const CORE=['./','./index.html','./app.css','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png',
   './js/v19/main.js','./js/v19/constants.js','./js/v19/audio-engine.js','./js/v19/pitch.js',
   './js/v19/microphone.js','./js/v19/mic-onset-worklet.js','./js/v19/songs.js',

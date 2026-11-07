@@ -1227,7 +1227,8 @@ function init():void {
   $('selectedGroupSelect').addEventListener('change',e=>selectGroup(Number((e.target as HTMLSelectElement).value)));
   $('playbackSpeed').addEventListener('change',e=>{
     if(audio.playing)seekToMs(playbackPositionMs()); // Ndalo planifikimin e vjetër para ndryshimit të shpejtësisë.
-    playbackSpeed=Number((e.target as HTMLSelectElement).value)===0.5?0.5:1;
+    const requestedSpeed=Number((e.target as HTMLSelectElement).value);
+    playbackSpeed=([1,0.5,0.25].includes(requestedSpeed)?requestedSpeed:1);
     configurePlaybackSpeed();
     setStatus(`Shpejtësia: ${playbackSpeed.toFixed(2)}×`);
   });
