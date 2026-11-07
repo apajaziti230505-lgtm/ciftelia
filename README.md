@@ -121,3 +121,10 @@ Modulet JavaScript ngarkohen nga `js/v12/` që të mos përzihen skedarët e rin
 - Shkalla kohore ka shenja çdo 0.1 s dhe etiketa çdo 0.5 s. Vlerat në ekran janë në milisekonda, por saktësia reale e goditjes varet nga audioja dhe përdoruesi.
 - Kontrollet përdorin të njëjtin lexues `originalPlayer` për këngët e importuara; nuk krijojnë audion e dytë.
 - Testet e logjikës dhe sintaksës janë kryer; testimi i ndërveprimit real me prekje në Android/iPhone mbetet për t'u bërë.
+
+
+## V17 — Kliko kudo në tablaturë
+- Fusha Koha (sekonda) dhe butoni Shko mbeten.
+- Mënyra e re **Kliko kudo → Notë** zgjedh kohën nga pozicioni horizontal në çdo zonë të tablaturës, përfshirë shiritin e grupeve dhe sekondat poshtë.
+- Klikimi ndalon luajtjen, shfaq një shenjë ? në sekondën e zgjedhur, pastaj zgjedh perden dhe Vendos/Vendos & Vazhdo.
+- Pamja horizontale nuk zhvendoset automatikisht pas klikimit. Trekëndëshat sipër kufijve të grupeve mbeten për tërheqjen e tyre.

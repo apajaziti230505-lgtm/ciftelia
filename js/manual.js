@@ -11,3 +11,10 @@ export function manualNote(n, time, withF = true, groupStart = 0) {
     return { time: Math.round(time), noteNumber: n, string: (n === 14 ? 2 : 1),
         confidence: 1, withF: n === 14 ? false : withF, groupStart, detail: 'Vendosur manualisht' };
 }
+/** Every band of the canvas maps to the same time at its horizontal pixel.
+ * The left labels and right padding snap to the visible edge rather than
+ * generating a negative or off-screen note. */
+export function manualAnywhereTime(x, viewStartMs, left, scale, canvasWidth, right, maxDurationMs) {
+    const px = Math.max(left, Math.min(canvasWidth - right, Number.isFinite(x) ? x : left));
+    return manualTapTime(false, 0, px, viewStartMs, left, scale, maxDurationMs);
+}

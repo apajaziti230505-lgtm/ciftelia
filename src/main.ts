@@ -6,7 +6,7 @@ import {analyzeAudio,GuessedHit} from './analysis.js';
 import {putOriginal,getOriginal,deleteOriginal} from './local-audio.js';
 import {GROUP_COLORS,detectNoteGroups,groupAtTime,groupForNote,GroupSensitivity} from './grouping.js';
 import {timelineGeometry,timelineX,timelineTime,clampTimelineStart,clampGroupBoundary,findGroupBoundary} from './timeline.js';
-import {manualTapTime,manualNote} from './manual.js';
+import {manualTapTime,manualAnywhereTime,manualNote} from './manual.js';
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const svg=document.getElementById('ciftelia') as unknown as SVGSVGElement;
 const fretLayer=document.getElementById('fret-layer')!;
@@ -45,6 +45,7 @@ let tabFollowPlayback=true;
 let tabDrag:{pointerId:number;index:number;oldStart:number;previewMs:number}|null=null;
 // Manual transcription: a tap captures the audio playback time; the user chooses the fret.
 let manualMode=false;
+let instantTabNoteMode=false;
 let manualPending:{time:number;string:1|2}|null=null;
 let syntheticStartMs=0;
 let seekPendingUntilMetadata:number|null=null;
@@ -621,16 +622,21 @@ function renderTimeline():void {
 }
 /** A click must use its own position, even if music was playing elsewhere. */
 function captureManualTime(x:number,geom:ReturnType<typeof timelineGeometry>):number {
-  return manualTapTime(false,0,x,tabViewStartMs,geom.left,geom.scale,activeSeekEndMs());
+  return manualAnywhereTime(x,tabViewStartMs,geom.left,geom.scale,geom.width,geom.right,activeSeekEndMs());
 }
 function renderManualMode():void{
   const btn=$<HTMLButtonElement>('manualModeBtn');
   btn.classList.toggle('is-on',manualMode);
   btn.setAttribute('aria-pressed',String(manualMode));
   btn.textContent=manualMode?'✍ Shënim manual: AKTIV':'✍ Shëno manualisht';
+  const quickBtn=$<HTMLButtonElement>('instantTabNoteBtn');
+  quickBtn.classList.toggle('is-on',instantTabNoteMode);
+  quickBtn.setAttribute('aria-pressed',String(instantTabNoteMode));
+  quickBtn.textContent=instantTabNoteMode?'📍 Kliko kudo: AKTIV':'📍 Kliko kudo → Notë';
+  document.querySelector('.tab-canvas-wrap')?.classList.toggle('instant-note-active',instantTabNoteMode);
   $('manualEntryPanel').hidden=!manualPending;
   $('manualClearBtn').toggleAttribute('disabled',!editableTab()||!importedHits.length);
-  $('tabHelp').textContent=manualMode
+  $('tabHelp').textContent=instantTabNoteMode ? 'Kliko kudo mbi tablaturë — edhe te numrat e sekondave ose hapësira bosh. Muzika ndalet në atë sekondë dhe shfaqet ?. Për ta tërhequr vijën e grupit, përdor trekëndëshin e saj.' : manualMode
     ?'Kliko te sekonda ku dëshiron notën: kënga ndalet në atë pozicion. Zgjidh perden dhe përdor Vendos & Vazhdo. Koha mund të rregullohet në 0.001 sekonda.'
     :'Tërhiq vijën e grupit për të korrigjuar kufirin. Përdor ✍ Shëno manualisht për të vendosur notat ndërsa dëgjon muzikën.';
 }
@@ -654,7 +660,8 @@ function beginManualNote(x:number,y:number,geom:ReturnType<typeof timelineGeomet
   $<HTMLInputElement>('manualTimeSeconds').value=preciseTime(time);
   renderManualMode();
   tabFollowPlayback=false;
-  focusTimelineAt(time);
+  // Preserve the exact horizontal point that was tapped: do not auto-pan.
+  redrawTab();
   setStatus(`Shënim në ${fmt(time)}. Zgjidh perden dhe shtyp Vendos ose Vendos & Vazhdo.`);
   $<HTMLElement>('manualEntryPanel').scrollIntoView({block:'nearest',behavior:'smooth'});
   select.focus({preventScroll:true});
@@ -687,7 +694,7 @@ function commitManualNote(resume:boolean):void{
   }
 }
 function setManualMode(on:boolean):void{
-  if(!on)cancelManualNote();
+  if(!on){cancelManualNote();instantTabNoteMode=false;}
   manualMode=on;renderManualMode();
   setStatus(on?'Shënim manual aktiv. Shtyp Luaj; prek tablaturën në goditjen që dëgjon.':'Shënimi manual u çaktivizua.');
 }
@@ -718,6 +725,19 @@ function installTabInteraction():void{
     const song=songForDisplay();if(!song)return;
     const rect=canvas.getBoundingClientRect(),geom=visibleTab();
     const x=event.clientX-rect.left,y=event.clientY-rect.top;
+    // Alternative direct mode: any visible pixel, including rulers, empty bands
+    // and the left labels, selects the exact horizontal second. Marker triangles
+    // remain reserved for intentionally dragging group boundaries.
+    if(instantTabNoteMode){
+      if(!editableTab()){setStatus('Importo një audio ose hap Redakto këngën për të shtuar notë.');return;}
+      const safeX=Math.max(geom.left,Math.min(geom.width-geom.right,x));
+      const boundary=y>=16&&y<38 ? findGroupBoundary(tabCurrentGroups(song),safeX,tabViewStartMs,geom.left,geom.scale,13) : -1;
+      if(boundary<1){
+        const chosenY=y<37?119:y; // ruler means the melodic (lower) string
+        beginManualNote(safeX,chosenY,geom);
+        event.preventDefault();return;
+      }
+    }
     if(y<16||y>162||x<geom.left||x>geom.width-geom.right)return;
     // In the string area, a tap ALWAYS selects the tapped second, not a nearby group marker.
     if(y>=37){
@@ -793,7 +813,7 @@ async function editSavedAudio():Promise<void>{
   draft={...song,notes:song.notes.map(n=>({...n}))};
   stanzas=sanitizeStanzas(song.stanzas);
   importedHits=song.notes.map(n=>({time:n.time,noteNumber:n.noteNumber,string:n.string,confidence:n.confidence??1,withF:n.withF!==false,groupStart:n.groupStart,detail:'Ruajtur'}));
-  analysisRowsVisible=60; selectedId='__draft';manualPending=null;manualMode=true;
+  analysisRowsVisible=60; selectedId='__draft';manualPending=null;manualMode=true;instantTabNoteMode=false;
   renderSongs();renderImportedHits();renderManualMode();await prepareOriginalForSelection();
   setStatus('Po redakton këngën e ruajtur. Ndryshimet ruhen vetëm kur shtyp Ruaj.');
 }
@@ -1011,7 +1031,7 @@ async function importAudioFile(file:File):Promise<void>{
   if(analyzing)return;
   if(file.size>25_000_000){setStatus('Audioja është mbi 25 MB. Përdor regjistrim më të shkurtër.');return;}
   if(!file.type.startsWith('audio/') && !/\.(wav|m4a|mp3|ogg)$/i.test(file.name)){setStatus('Zgjidh skedar audio WAV, M4A ose MP3.');return;}
-  stopPlayback();manualPending=null;manualMode=true;selectedGroupStart=0;tabCurrentMs=0;tabViewStartMs=0;tabFollowPlayback=true;importFile=file;importedHits=[];selectedImportedHit=null;stanzas=[{start:0,label:'Grupi 1',color:GROUP_COLORS[0]}];editingSongId=null;analysisRowsVisible=60;
+  stopPlayback();manualPending=null;manualMode=true;instantTabNoteMode=false;selectedGroupStart=0;tabCurrentMs=0;tabViewStartMs=0;tabFollowPlayback=true;importFile=file;importedHits=[];selectedImportedHit=null;stanzas=[{start:0,label:'Grupi 1',color:GROUP_COLORS[0]}];editingSongId=null;analysisRowsVisible=60;
   draft=newSong(file.name.replace(/\.[^.]+$/,''),[]);draft.originalAudioId='__draft';draft.stanzas=stanzas;selectedId='__draft';
   renderSongs();renderImportedHits();showOriginalBlob(file,'__draft');
   $('analyzeBtn').removeAttribute('disabled');$('analysisProgress').setAttribute('value','0');
@@ -1045,6 +1065,19 @@ function installAndroid():void {
 
 function init():void {
   installTabInteraction();
+  $('instantTabNoteBtn').addEventListener('click',()=>{
+    if(!instantTabNoteMode && !editableTab()){
+      const song=currentSong();
+      if(importedSong(song) && selectedId!=='__draft'){
+        void editSavedAudio().then(()=>{instantTabNoteMode=true;manualMode=true;renderManualMode();setStatus('Kliko kudo mbi tablaturë për të vendosur notën te sekonda e zgjedhur.');});
+      }else setStatus('Importo një këngë audio për të përdorur Kliko kudo → Notë.');
+      return;
+    }
+    instantTabNoteMode=!instantTabNoteMode;
+    if(instantTabNoteMode)manualMode=true;
+    renderManualMode();
+    setStatus(instantTabNoteMode?'Kliko kudo në tablaturë për të ndalur te sekonda dhe për të shkruar perden.':'Mënyra Kliko kudo u çaktivizua.');
+  });
   $('manualModeBtn').addEventListener('click',()=>{
     if(!editableTab()){
       const song=currentSong();
@@ -1073,7 +1106,7 @@ function init():void {
   renderManualMode();
   renderInstrument();renderKeys();renderSongs();renderMicHits();
   audio.setVolume(Number($<HTMLInputElement>('volume').value)/100);
-  $('songSelect').addEventListener('change',e=>{stopPlayback();manualPending=null;manualMode=false;renderManualMode();selectedGroupStart=0;tabViewStartMs=0;tabCurrentMs=0;tabFollowPlayback=true;selectedId=(e.target as HTMLSelectElement).value;renderSongs();renderImportedHits();void prepareOriginalForSelection();});
+  $('songSelect').addEventListener('change',e=>{stopPlayback();manualPending=null;manualMode=false;instantTabNoteMode=false;renderManualMode();selectedGroupStart=0;tabViewStartMs=0;tabCurrentMs=0;tabFollowPlayback=true;selectedId=(e.target as HTMLSelectElement).value;renderSongs();renderImportedHits();void prepareOriginalForSelection();});
   $('recordBtn').addEventListener('click',recordKeyboard);
   $('micBtn').addEventListener('click',()=>void toggleMic());
   $('playBtn').addEventListener('click',()=>void toggleTabPlay());

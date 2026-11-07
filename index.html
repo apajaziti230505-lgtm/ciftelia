@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=16-seek-20261107">
+  <link rel="stylesheet" href="app.css?v=17-seek-20261107">
 </head>
 <body>
   <main class="container">
@@ -192,10 +192,11 @@
       </div>
       <div class="manual-toolbar" role="group" aria-label="Shënimi manual i notave">
         <button id="manualModeBtn" type="button" class="btn btn-manual" aria-pressed="false">✍ Shëno manualisht</button>
+        <button id="instantTabNoteBtn" type="button" class="btn btn-instant-note" aria-pressed="false" title="Prek kudo në tablaturë te sekonda që dëshiron dhe zgjidh perden">📍 Kliko kudo → Notë</button>
         <button id="manualClearBtn" type="button" class="btn btn-minimal" disabled>Pastro notat</button>
-        <span class="manual-hint">Kliko vendin e saktë në tablaturë: muzika ndalet dhe vendos notën aty.</span>
+        <span class="manual-hint">Dy mënyra: cakto sekondën me Shko, ose aktivizo Kliko kudo → Notë.</span>
       </div>
-      <div class="tab-canvas-wrap"><canvas id="tabCanvas" tabindex="0" aria-label="Tablatura. Në mënyrën manuale, prek telin kur dëgjon një goditje, pastaj zgjidh perden." height="175"></canvas></div>
+      <div class="tab-canvas-wrap"><canvas id="tabCanvas" tabindex="0" aria-label="Tablatura interaktive: cakto sekondën, ose aktivizo Kliko kudo për të shtuar notën në pozicionin horizontal të prekur." height="175"></canvas></div>
       <div id="manualEntryPanel" class="manual-entry" hidden>
         <strong id="manualTimeLabel">00:00.000</strong><label for="manualTimeSeconds">Koha e notës (s)</label><input id="manualTimeSeconds" type="number" min="0" step="0.001" value="0.000" inputmode="decimal" aria-label="Koha e saktë e notës në sekonda">
         <label for="manualFretSelect">Perdja / nota</label>
@@ -296,6 +297,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v16/main.js"></script>
+  <script type="module" src="./js/v17/main.js"></script>
 </body>
 </html>

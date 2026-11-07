@@ -138,3 +138,10 @@
 @media(max-width:680px){.tab-audio-transport{padding:9px}.tab-audio-buttons{gap:5px}.tab-audio-buttons .btn{padding:8px;font-size:11px}.tab-audio-buttons select{max-width:150px;flex:1 1 112px}.tab-seconds-label input{width:105px}.tab-audio-scrub output{min-width:67px}}
 /* The original audio remains available to the script but playback controls are by the tablature. */
 .original-player{display:none!important}
+
+/* V17: direct note placement from any canvas band, without moving group handles. */
+.btn-instant-note{border-color:#e5ab67;color:#ffe0a8;background:#443324}
+.btn-instant-note.is-on{border-color:#71ddbc;color:#e9fff5;background:#15513e}
+.tab-canvas-wrap.instant-note-active canvas{cursor:crosshair;touch-action:manipulation}
+.tab-canvas-wrap.instant-note-active{outline:1px solid rgba(113,221,188,.48);outline-offset:2px}
+@media(max-width:680px){.btn-instant-note{flex:1 1 150px}}
