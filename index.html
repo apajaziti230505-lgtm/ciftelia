@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=8-strofa-20261107">
+  <link rel="stylesheet" href="app.css?v=9-strofa-20261107">
 </head>
 <body>
   <main class="container">
@@ -170,19 +170,19 @@
     </section>
 
     <section class="panel analysis-panel" aria-labelledby="analysisTitle">
-      <div class="panel-heading"><div><h2 id="analysisTitle">Këngët dhe strofat</h2><p>Ngarko këngën, korrigjo notat dhe ndaji në strofa.</p></div></div>
+      <div class="panel-heading"><div><h2 id="analysisTitle">Nga audio në tablaturë</h2><p>Importo regjistrimin origjinal, analizo goditjet, korrigjo notat dhe ruaje.</p></div></div>
       <div class="analysis-actions">
         <label class="btn btn-primary analysis-upload" for="audioImportFile">＋ Importo këngë audio</label>
         <input id="audioImportFile" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" hidden>
         <button id="analyzeBtn" class="btn" type="button" disabled>↻ Onset Detection</button><button id="analysisEditSavedBtn" class="btn btn-minimal" type="button" disabled>✎ Redakto këngën</button>
-        <button id="analysisAddBtn" class="btn btn-minimal" type="button" disabled>＋ Shto notë</button>
+        <button id="analysisAddBtn" class="btn btn-minimal" type="button" disabled>＋ Shto poshtë notës së zgjedhur</button>
       </div>
       <audio id="originalPlayer" controls preload="metadata" class="original-player" hidden aria-label="Luaj regjistrimin origjinal"></audio>
       <div class="analysis-status-row"><progress id="analysisProgress" max="100" value="0"></progress><span id="analysisStatus" role="status">Zgjidh një audio për analizë.</span></div>
       <p class="analysis-hint">Onset Detection gjen goditjet. Plotëso perdet 1–13, 14 = F ose 15 = teli poshtë i hapur. F shtohet në tablaturë për çdo notë poshtë; hiqe vetëm kur duhet. Audioja origjinale nuk ndryshohet.</p>
       <div id="analysisEdit" class="analysis-edit" hidden>
         <div class="analysis-edit-header"><strong>Strofat dhe notat</strong><span id="analysisCount"></span></div>
-        <div class="stanza-actions"><button id="stanzaAddBtn" type="button" class="btn btn-minimal">＋ Ndaj strofë te koha aktuale</button><span>Ndrysho emrin, kohën, perden ose F për çdo goditje.</span></div>
+        <div class="stanza-actions"><button id="stanzaAddBtn" type="button" class="btn btn-minimal" disabled>＋ Ndaj strofë te nota e zgjedhur</button><span id="selectedNoteHint">Prek një rresht note që ta zgjedhësh, pastaj shto notën menjëherë poshtë saj.</span></div>
         <div id="stanzaList" class="stanza-list"></div>
         <div id="analysisRows" class="analysis-rows"></div>
         <button type="button" class="btn btn-minimal" id="analysisMoreBtn" hidden>Shfaq 60 të tjera</button>
@@ -211,6 +211,6 @@
     </div>
     <div class="footer"><p id="status" role="status">Gati për të luajtur.</p></div>
   </main>
-  <script type="module" src="./js/main.js?v=8-strofa-20261107"></script>
+  <script type="module" src="./js/main.js?v=9-strofa-20261107"></script>
 </body>
 </html>

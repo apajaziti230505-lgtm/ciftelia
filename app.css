@@ -42,3 +42,14 @@
  .analysis-note-row .stanza-split{grid-column:span 1}
  .stanza-entry{grid-template-columns:minmax(120px,1fr) 90px 36px}
 }
+
+
+/* V9: vijat e strofave dhe nota e zgjedhur */
+.stanza-divider{--stanza-color:#e8b45a;display:flex;align-items:center;gap:14px;grid-column:1 / -1;margin:18px 0 7px;padding:11px 14px;border:1px solid var(--stanza-color);border-left:6px solid var(--stanza-color);border-radius:10px;background:#13263b;color:var(--stanza-color);font-size:13px;font-weight:800}
+.stanza-divider::after{content:"";height:4px;flex:1;min-width:24px;background:var(--stanza-color);border-radius:10px;opacity:.95}
+.stanza-entry{--stanza-color:#e8b45a;border-left:4px solid var(--stanza-color)}
+.analysis-note-row{cursor:pointer;scroll-margin:16px;transition:border-color .15s,background .15s}
+.analysis-note-row.is-selected{border:2px solid #53d7c4;background:#163d48;box-shadow:inset 4px 0 0 #53d7c4,0 0 0 1px rgba(83,215,196,.18)}
+.analysis-note-row:focus-within{border-color:#53d7c4}
+#selectedNoteHint{color:#bed8df}
+#analysisAddBtn:not(:disabled){border-color:#53d7c4;color:#b9faed;background:#12363e}

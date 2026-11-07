@@ -30,6 +30,8 @@ let audioSelectToken = 0;
 let analyzing = false;
 let editingSongId = null;
 let stanzas = [{ start: 0, label: 'Strofa 1' }];
+let selectedImportedHit = null;
+const STANZA_COLORS=['#e8b45a','#42bdae','#b894f6','#f08097','#79aaf0','#86c870'];
 function importedSong(song) { return !!song?.originalAudioId; }
 function clearOriginalUrl() { if (originalObjectUrl)
     URL.revokeObjectURL(originalObjectUrl); originalObjectUrl = null; originalSourceId = null; originalPlayer.removeAttribute('src'); originalPlayer.load(); }
@@ -487,8 +489,8 @@ function drawTab(song, elapsed = 0) {
         for (const stanza of song.stanzas.slice(1)) {
             const sx = x0 + (stanza.start - elapsed) * pxPerMs;
             if (sx >= 16 && sx <= w - 16) {
-                c.strokeStyle = '#8291a2';
-                c.setLineDash([4, 5]);
+                c.strokeStyle=STANZA_COLORS[song.stanzas.indexOf(stanza)%STANZA_COLORS.length];c.lineWidth=3;
+                c.setLineDash([]);
                 c.beginPath();
                 c.moveTo(sx, 23);
                 c.lineTo(sx, 154);
@@ -566,6 +568,7 @@ async function editSavedAudio() {
         return;
     stopPlayback();
     editingSongId = song.id;
+  selectedImportedHit=null;
     importFile = null;
     $('analyzeBtn').setAttribute('disabled', '');
     draft = { ...song, notes: song.notes.map(n => ({ ...n })) };
@@ -603,7 +606,7 @@ function renderStanzas() {
     for (let i = 0; i < stanzas.length; i++) {
         const s = stanzas[i];
         const row = document.createElement('div');
-        row.className = 'stanza-entry';
+        row.className='stanza-entry';row.style.setProperty('--stanza-color',STANZA_COLORS[i%STANZA_COLORS.length]);
         const label = document.createElement('input');
         label.type = 'text';
         label.maxLength = 65;
@@ -640,20 +643,50 @@ function updateImportDraft() {
     draft.stanzas = sanitizeStanzas(stanzas);
     renderSongs();
 }
+
+/** Notat shtohen sipas rreshtit te perzgjedhur, jo kohes se riprodhuesit. */
+function selectImportedHit(hit) {
+  selectedImportedHit=hit;
+  document.querySelectorAll('.analysis-note-row.is-selected').forEach(row=>row.classList.remove('is-selected'));
+  document.querySelectorAll('.analysis-note-row').forEach(row=>{
+    if((row).dataset.noteIndex===String(importedHits.indexOf(hit)))row.classList.add('is-selected');
+  });
+  $('analysisAddBtn').toggleAttribute('disabled',false);
+  $('stanzaAddBtn').toggleAttribute('disabled',false);
+  $('selectedNoteHint').textContent=`Nota e zgjedhur: ${hit.noteNumber??'?'} · ${fmt(hit.time)}. Butoni + shton note poshte ketij rreshti.`;
+}
+function insertNoteBelow(hit) {
+  if(!draft?.originalAudioId)return;
+  importedHits.sort((a,b)=>a.time-b.time);
+  const index=importedHits.indexOf(hit);
+  if(index<0)return;
+  const following=importedHits[index+1];
+  const durationMs=Number.isFinite(originalPlayer.duration)?Math.round(originalPlayer.duration*1000):3600000;
+  const nextTime=following?(following.time>hit.time+1?Math.floor((hit.time+following.time)/2):hit.time):Math.min(durationMs,hit.time+200);
+  const newHit={time:nextTime,noteNumber:null,string:1,withF:true,confidence:0,detail:'Shtuar poshte notes se zgjedhur'};
+  importedHits.splice(index+1,0,newHit);
+  selectedImportedHit=newHit;
+  analysisRowsVisible=Math.max(analysisRowsVisible,index+2);
+  updateImportDraft();renderImportedHits();
+  const selected=document.querySelector('.analysis-note-row.is-selected');
+  selected?.scrollIntoView({block:'nearest'});
+  selected?.querySelector('.analysis-fret')?.focus({preventScroll:true});
+  setStatus('Nota e re u shtua poshte notes se zgjedhur. Vendos numrin e perdes.');
+}
+
 function renderImportedHits() {
     const editor = $('analysisEdit'), rows = $('analysisRows');
     rows.replaceChildren();
     editor.hidden = selectedId !== '__draft' || !draft?.originalAudioId;
     const editable = selectedId === '__draft' && !!draft?.originalAudioId;
-    $('analysisAddBtn').toggleAttribute('disabled', !editable);
-    $('stanzaAddBtn').toggleAttribute('disabled', !editable);
-    if (!editable) {
-        $('stanzaList').replaceChildren();
-        return;
-    }
+  if(!importedHits.includes(selectedImportedHit))selectedImportedHit=null;
+    $('analysisAddBtn').toggleAttribute('disabled',!editable || !selectedImportedHit);
+    $('stanzaAddBtn').toggleAttribute('disabled',!editable || !selectedImportedHit);
+    if(!editable){$('stanzaList').replaceChildren();$('selectedNoteHint').textContent='Prek nje note per ta zgjedhur.';return;}
+  $('selectedNoteHint').textContent=selectedImportedHit?`Nota e zgjedhur: ${selectedImportedHit.noteNumber??'?'} · ${fmt(selectedImportedHit.time)}`:'Prek nje rresht note, pastaj shto note poshte saj.';
     const unknown = importedHits.filter(h => h.noteNumber === null).length;
     $('analysisCount').textContent = `${importedHits.length} goditje · ${unknown} për t’u plotësuar`;
-    importedHits.sort((a, b) => a.time - b.time || a.string - b.string);
+    importedHits.sort((a,b)=>a.time-b.time);
     renderStanzas();
     let previousStanza = -1;
     importedHits.slice(0, analysisRowsVisible).forEach((hit) => {
@@ -663,13 +696,17 @@ function renderImportedHits() {
                 index = i;
         if (index !== previousStanza) {
             const title = document.createElement('div');
-            title.className = 'stanza-divider';
+            title.className = 'stanza-divider';title.style.setProperty('--stanza-color',STANZA_COLORS[index%STANZA_COLORS.length]);
             title.textContent = `${stanzas[index].label} · ${fmt(stanzas[index].start)}`;
             rows.append(title);
             previousStanza = index;
         }
         const row = document.createElement('div');
         row.className = 'analysis-note-row';
+    row.dataset.noteIndex=String(importedHits.indexOf(hit));
+    if(hit===selectedImportedHit)row.classList.add('is-selected');
+    row.addEventListener('pointerdown',()=>selectImportedHit(hit));
+    row.addEventListener('focusin',()=>selectImportedHit(hit));
         if (hit.noteNumber === null)
             row.classList.add('unknown');
         const ms = document.createElement('input');
@@ -684,7 +721,7 @@ function renderImportedHits() {
         fret.min = '1';
         fret.max = '15';
         fret.step = '1';
-        fret.placeholder = 'Perdja';
+        fret.placeholder = 'Perdja';fret.classList.add('analysis-fret');
         fret.setAttribute('aria-label', 'Perdja 1–13; 14 F; 15 i hapur poshtë');
         fret.value = hit.noteNumber === null ? '' : String(hit.noteNumber);
         const fLabel = document.createElement('label');
@@ -710,21 +747,14 @@ function renderImportedHits() {
         plus.type = 'button';
         plus.className = 'btn btn-minimal';
         plus.textContent = '+';
-        plus.title = 'Shto goditje pas kësaj';
-        plus.addEventListener('click', () => {
-            const following = importedHits.filter(h => h.time > hit.time).sort((a, b) => a.time - b.time)[0];
-            const nextTime = following ? Math.round((hit.time + following.time) / 2) : hit.time + 200;
-            importedHits.push({ time: nextTime, noteNumber: null, string: 1, withF: true, confidence: 0, detail: 'Shtuar manualisht' });
-            analysisRowsVisible = Math.max(analysisRowsVisible, importedHits.length);
-            updateImportDraft();
-            renderImportedHits();
-        });
+        plus.title = 'Shto note poshte kesaj note';
+        plus.addEventListener('click',()=>insertNoteBelow(hit));
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'btn btn-minimal';
         remove.textContent = '×';
         remove.title = 'Fshi goditjen';
-        remove.addEventListener('click', () => { importedHits = importedHits.filter(x => x !== hit); updateImportDraft(); renderImportedHits(); });
+        remove.addEventListener('click', () => { if(selectedImportedHit===hit)selectedImportedHit=null;importedHits = importedHits.filter(x => x !== hit); updateImportDraft(); renderImportedHits(); });
         const split = document.createElement('button');
         split.type = 'button';
         split.className = 'btn btn-minimal stanza-split';
@@ -771,6 +801,7 @@ async function importAudioFile(file) {
     stopPlayback();
     importFile = file;
     importedHits = [];
+    selectedImportedHit=null;
     stanzas = [{ start: 0, label: 'Strofa 1' }];
     editingSongId = null;
     analysisRowsVisible = 60;
@@ -803,6 +834,7 @@ async function analyzeImported() {
             $('analysisProgress').value = pct;
         });
         importedHits = report.hits.map(h => ({ ...h, withF: true }));
+    selectedImportedHit=null;
         analysisRowsVisible = 60;
         stanzas = autoStanzas(importedHits);
         updateImportDraft();
@@ -852,27 +884,17 @@ function init() {
         void importAudioFile(input.files[0]); input.value = ''; });
     $('analyzeBtn').addEventListener('click', () => void analyzeImported());
     $('analysisEditSavedBtn').addEventListener('click', () => void editSavedAudio());
-    $('stanzaAddBtn').addEventListener('click', () => {
-        if (!draft?.originalAudioId)
-            return;
-        const current = Math.max(0, Math.round(originalPlayer.currentTime * 1000));
-        if (current === 0 || stanzas.some(s => s.start === current)) {
-            setStatus('Zhvendose audion në fillim të strofës së re.');
-            return;
-        }
-        stanzas.push({ start: current, label: `Strofa ${stanzas.length + 1}` });
-        updateImportDraft();
-        renderImportedHits();
-    });
-    $('analysisAddBtn').addEventListener('click', () => {
-        if (!draft?.originalAudioId)
-            return;
-        importedHits.push({ time: Math.max(0, Math.round(originalPlayer.currentTime * 1000)), noteNumber: null, string: 1, withF: true, confidence: 0, detail: 'Shtuar manualisht' });
-        analysisRowsVisible = Math.max(analysisRowsVisible, importedHits.length);
-        updateImportDraft();
-        renderImportedHits();
-    });
-    $('analysisMoreBtn').addEventListener('click', () => { analysisRowsVisible += 60; renderImportedHits(); });
+    $('stanzaAddBtn').addEventListener('click',()=>{
+    if(!draft?.originalAudioId||!selectedImportedHit)return;
+    const start=selectedImportedHit.time;
+    if(start===0||stanzas.some(s=>s.start===start)){setStatus('Kjo note eshte tashme fillim strofe. Zgjidh nje note tjeter.');return;}
+    stanzas.push({start,label:`Strofa ${stanzas.length+1}`});updateImportDraft();renderImportedHits();
+  });
+  $('analysisAddBtn').addEventListener('click',()=>{
+    if(!draft?.originalAudioId||!selectedImportedHit){setStatus('Prek se pari nje note ne liste.');return;}
+    insertNoteBelow(selectedImportedHit);
+  });
+  $('analysisMoreBtn').addEventListener('click', () => { analysisRowsVisible += 60; renderImportedHits(); });
     originalPlayer.addEventListener('play', () => {
         const song = currentSong();
         if (!importedSong(song))

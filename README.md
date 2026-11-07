@@ -63,3 +63,6 @@ Ngarkimi i parë në internet mund të marrë pak kohë për 30 mostrat audio (r
 - Strofat ndahen sipas pauzave të gjata; mund të shtohen manualisht, emërtohen dhe lëvizen në milisekonda.
 - Këngët e ruajtura që kanë audio mund të redaktohen dhe të ruhen mbi të njëjtën këngë.
 - Analiza automatikisht propozon goditje/nota; rezultatet e pasigurta duhet të kontrollohen me dëgjim.
+
+## V9 — Strofat me ngjyra dhe shtim note poshte rreshtit
+Ndarjet e strofave shfaqen me vija te trasha me ngjyra te ndryshme edhe ne tablature. Prek nje note per ta zgjedhur, pastaj shtyp **+ Shto poshte notes se zgjedhur**. Nota e re shfaqet menjehere poshte dhe koha vendoset mes dy goditjeve; mund ta korrigjosh ne milisekonda. Ndarja e strofes vendoset te nota e zgjedhur. Audioja origjinale nuk ndryshohet.

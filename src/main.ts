@@ -30,6 +30,8 @@ let audioSelectToken=0;
 let analyzing=false;
 let editingSongId:string|null=null;
 let stanzas:Stanza[]=[{start:0,label:'Strofa 1'}];
+let selectedImportedHit:GuessedHit|null=null;
+const STANZA_COLORS=['#e8b45a','#42bdae','#b894f6','#f08097','#79aaf0','#86c870'];
 function importedSong(song:Song|null):boolean{return !!song?.originalAudioId;}
 function clearOriginalUrl():void { if(originalObjectUrl)URL.revokeObjectURL(originalObjectUrl);originalObjectUrl=null;originalSourceId=null;originalPlayer.removeAttribute('src');originalPlayer.load(); }
 function showOriginalBlob(blob:Blob,id:string):void {
@@ -290,7 +292,7 @@ function drawTab(song:Song|null,elapsed=0):void {
     c.fillStyle='#e7bc78';c.font='bold 11px system-ui';c.fillText(selected.label.slice(0,48),x0+9,15);
     for(const stanza of song.stanzas.slice(1)){
       const sx=x0+(stanza.start-elapsed)*pxPerMs;
-      if(sx>=16&&sx<=w-16){c.strokeStyle='#8291a2';c.setLineDash([4,5]);c.beginPath();c.moveTo(sx,23);c.lineTo(sx,154);c.stroke();c.setLineDash([]);}
+      if(sx>=16&&sx<=w-16){c.strokeStyle=STANZA_COLORS[song.stanzas.indexOf(stanza)%STANZA_COLORS.length];c.lineWidth=3;c.setLineDash([]);c.beginPath();c.moveTo(sx,23);c.lineTo(sx,154);c.stroke();c.setLineDash([]);}
     }
   }
   c.strokeStyle='#fac35f';c.lineWidth=2;c.beginPath();c.moveTo(x0,20);c.lineTo(x0,160);c.stroke();
@@ -330,7 +332,8 @@ async function importSongFile(file:File):Promise<void> {
 async function editSavedAudio():Promise<void>{
   const song=currentSong();
   if(!song?.originalAudioId || selectedId==='__draft')return;
-  stopPlayback(); editingSongId=song.id; importFile=null; $('analyzeBtn').setAttribute('disabled','');
+  stopPlayback(); editingSongId=song.id;
+  selectedImportedHit=null; importFile=null; $('analyzeBtn').setAttribute('disabled','');
   draft={...song,notes:song.notes.map(n=>({...n}))};
   stanzas=sanitizeStanzas(song.stanzas);
   importedHits=song.notes.map(n=>({time:n.time,noteNumber:n.noteNumber,string:n.string,confidence:n.confidence??1,withF:n.withF!==false,detail:'Ruajtur'}));
@@ -359,7 +362,7 @@ function renderStanzas():void{
   const target=$('stanzaList');target.replaceChildren();
   stanzas=sanitizeStanzas(stanzas);
   for(let i=0;i<stanzas.length;i++){
-    const s=stanzas[i];const row=document.createElement('div');row.className='stanza-entry';
+    const s=stanzas[i];const row=document.createElement('div');row.className='stanza-entry';row.style.setProperty('--stanza-color',STANZA_COLORS[i%STANZA_COLORS.length]);
     const label=document.createElement('input');label.type='text';label.maxLength=65;label.value=s.label;
     label.setAttribute('aria-label',`Emri i strofës ${i+1}`);
     label.addEventListener('change',()=>{s.label=label.value.trim()||`Strofa ${i+1}`;updateImportDraft();renderImportedHits();});
@@ -382,31 +385,68 @@ function updateImportDraft():void {
   draft.stanzas=sanitizeStanzas(stanzas);
   renderSongs();
 }
+
+/** Notat shtohen sipas rreshtit te perzgjedhur, jo kohes se riprodhuesit. */
+function selectImportedHit(hit:GuessedHit):void {
+  selectedImportedHit=hit;
+  document.querySelectorAll('.analysis-note-row.is-selected').forEach(row=>row.classList.remove('is-selected'));
+  document.querySelectorAll('.analysis-note-row').forEach(row=>{
+    if((row as HTMLElement).dataset.noteIndex===String(importedHits.indexOf(hit)))row.classList.add('is-selected');
+  });
+  $('analysisAddBtn').toggleAttribute('disabled',false);
+  $('stanzaAddBtn').toggleAttribute('disabled',false);
+  $('selectedNoteHint').textContent=`Nota e zgjedhur: ${hit.noteNumber??'?'} · ${fmt(hit.time)}. Butoni + shton note poshte ketij rreshti.`;
+}
+function insertNoteBelow(hit:GuessedHit):void {
+  if(!draft?.originalAudioId)return;
+  importedHits.sort((a,b)=>a.time-b.time);
+  const index=importedHits.indexOf(hit);
+  if(index<0)return;
+  const following=importedHits[index+1];
+  const durationMs=Number.isFinite(originalPlayer.duration)?Math.round(originalPlayer.duration*1000):3600000;
+  const nextTime=following?(following.time>hit.time+1?Math.floor((hit.time+following.time)/2):hit.time):Math.min(durationMs,hit.time+200);
+  const newHit:GuessedHit={time:nextTime,noteNumber:null,string:1,withF:true,confidence:0,detail:'Shtuar poshte notes se zgjedhur'};
+  importedHits.splice(index+1,0,newHit);
+  selectedImportedHit=newHit;
+  analysisRowsVisible=Math.max(analysisRowsVisible,index+2);
+  updateImportDraft();renderImportedHits();
+  const selected=document.querySelector<HTMLElement>('.analysis-note-row.is-selected');
+  selected?.scrollIntoView({block:'nearest'});
+  selected?.querySelector<HTMLInputElement>('.analysis-fret')?.focus({preventScroll:true});
+  setStatus('Nota e re u shtua poshte notes se zgjedhur. Vendos numrin e perdes.');
+}
+
 function renderImportedHits():void {
   const editor=$('analysisEdit'),rows=$('analysisRows');rows.replaceChildren();
   editor.hidden=selectedId!=='__draft' || !draft?.originalAudioId;
   const editable=selectedId==='__draft' && !!draft?.originalAudioId;
-  $('analysisAddBtn').toggleAttribute('disabled',!editable);
-  $('stanzaAddBtn').toggleAttribute('disabled',!editable);
-  if(!editable){$('stanzaList').replaceChildren();return;}
+  if(!importedHits.includes(selectedImportedHit as GuessedHit))selectedImportedHit=null;
+  $('analysisAddBtn').toggleAttribute('disabled',!editable || !selectedImportedHit);
+  $('stanzaAddBtn').toggleAttribute('disabled',!editable || !selectedImportedHit);
+  if(!editable){$('stanzaList').replaceChildren();$('selectedNoteHint').textContent='Prek nje note per ta zgjedhur.';return;}
+  $('selectedNoteHint').textContent=selectedImportedHit?`Nota e zgjedhur: ${selectedImportedHit.noteNumber??'?'} · ${fmt(selectedImportedHit.time)}`:'Prek nje rresht note, pastaj shto note poshte saj.';
   const unknown=importedHits.filter(h=>h.noteNumber===null).length;
   $('analysisCount').textContent=`${importedHits.length} goditje · ${unknown} për t’u plotësuar`;
-  importedHits.sort((a,b)=>a.time-b.time||a.string-b.string);
+  importedHits.sort((a,b)=>a.time-b.time);
   renderStanzas();
   let previousStanza=-1;
   importedHits.slice(0,analysisRowsVisible).forEach((hit)=>{
     let index=0;for(let i=0;i<stanzas.length;i++)if(stanzas[i].start<=hit.time)index=i;
     if(index!==previousStanza){
-      const title=document.createElement('div');title.className='stanza-divider';title.textContent=`${stanzas[index].label} · ${fmt(stanzas[index].start)}`;
+      const title=document.createElement('div');title.className='stanza-divider';title.style.setProperty('--stanza-color',STANZA_COLORS[index%STANZA_COLORS.length]);title.textContent=`${stanzas[index].label} · ${fmt(stanzas[index].start)}`;
       rows.append(title);previousStanza=index;
     }
     const row=document.createElement('div');row.className='analysis-note-row';
+    row.dataset.noteIndex=String(importedHits.indexOf(hit));
+    if(hit===selectedImportedHit)row.classList.add('is-selected');
+    row.addEventListener('pointerdown',()=>selectImportedHit(hit));
+    row.addEventListener('focusin',()=>selectImportedHit(hit));
     if(hit.noteNumber===null)row.classList.add('unknown');
     const ms=document.createElement('input');ms.type='number';ms.min='0';ms.step='1';
     ms.max=String(Math.round((originalPlayer.duration||150)*1000));ms.value=String(hit.time);
     ms.setAttribute('aria-label','Koha në milisekonda');
     const fret=document.createElement('input');fret.type='number';fret.min='1';fret.max='15';fret.step='1';
-    fret.placeholder='Perdja';fret.setAttribute('aria-label','Perdja 1–13; 14 F; 15 i hapur poshtë');
+    fret.placeholder='Perdja';fret.classList.add('analysis-fret');fret.setAttribute('aria-label','Perdja 1–13; 14 F; 15 i hapur poshtë');
     fret.value=hit.noteNumber===null?'':String(hit.noteNumber);
     const fLabel=document.createElement('label');fLabel.className='f-companion';
     const fCheck=document.createElement('input');fCheck.type='checkbox';fCheck.checked=hit.noteNumber!==14&&hit.withF!==false;fCheck.disabled=hit.noteNumber===14;
@@ -417,15 +457,10 @@ function renderImportedHits():void {
     status.textContent=hit.noteNumber===null?'?':hit.confidence<.65?'Kontrollo':'✓';status.title=hit.detail;
     const seek=document.createElement('button');seek.type='button';seek.className='btn btn-minimal';seek.textContent='▶';seek.title='Dëgjo nga kjo goditje';
     seek.addEventListener('click',()=>{originalPlayer.currentTime=hit.time/1000;void originalPlayer.play().catch(e=>setStatus(String(e)));});
-    const plus=document.createElement('button');plus.type='button';plus.className='btn btn-minimal';plus.textContent='+';plus.title='Shto goditje pas kësaj';
-    plus.addEventListener('click',()=>{
-      const following=importedHits.filter(h=>h.time>hit.time).sort((a,b)=>a.time-b.time)[0];
-      const nextTime=following?Math.round((hit.time+following.time)/2):hit.time+200;
-      importedHits.push({time:nextTime,noteNumber:null,string:1,withF:true,confidence:0,detail:'Shtuar manualisht'});
-      analysisRowsVisible=Math.max(analysisRowsVisible,importedHits.length);updateImportDraft();renderImportedHits();
-    });
+    const plus=document.createElement('button');plus.type='button';plus.className='btn btn-minimal';plus.textContent='+';plus.title = 'Shto note poshte kesaj note';
+    plus.addEventListener('click',()=>insertNoteBelow(hit));
     const remove=document.createElement('button');remove.type='button';remove.className='btn btn-minimal';remove.textContent='×';remove.title='Fshi goditjen';
-    remove.addEventListener('click',()=>{importedHits=importedHits.filter(x=>x!==hit);updateImportDraft();renderImportedHits();});
+    remove.addEventListener('click',()=>{if(selectedImportedHit===hit)selectedImportedHit=null;importedHits=importedHits.filter(x=>x!==hit);updateImportDraft();renderImportedHits();});
     const split=document.createElement('button');split.type='button';split.className='btn btn-minimal stanza-split';split.textContent='Strofë';split.title='Fillo strofë të re këtu';
     split.addEventListener('click',()=>{
       if(hit.time===0||stanzas.some(s=>s.start===hit.time))return;
@@ -446,7 +481,7 @@ async function importAudioFile(file:File):Promise<void>{
   if(analyzing)return;
   if(file.size>25_000_000){setStatus('Audioja është mbi 25 MB. Përdor regjistrim më të shkurtër.');return;}
   if(!file.type.startsWith('audio/') && !/\.(wav|m4a|mp3|ogg)$/i.test(file.name)){setStatus('Zgjidh skedar audio WAV, M4A ose MP3.');return;}
-  stopPlayback();importFile=file;importedHits=[];stanzas=[{start:0,label:'Strofa 1'}];editingSongId=null;analysisRowsVisible=60;
+  stopPlayback();importFile=file;importedHits=[];selectedImportedHit=null;stanzas=[{start:0,label:'Strofa 1'}];editingSongId=null;analysisRowsVisible=60;
   draft=newSong(file.name.replace(/\.[^.]+$/,''),[]);draft.originalAudioId='__draft';draft.stanzas=stanzas;selectedId='__draft';
   renderSongs();renderImportedHits();showOriginalBlob(file,'__draft');
   $('analyzeBtn').removeAttribute('disabled');$('analysisProgress').setAttribute('value','0');
@@ -464,7 +499,8 @@ async function analyzeImported():Promise<void>{
     const report=await analyzeAudio(decoded,(n,intensity)=>audio.loadNote(n,intensity),(s,pct)=>{
       $('analysisStatus').textContent=s;$<HTMLProgressElement>('analysisProgress').value=pct;
     });
-    importedHits=report.hits.map(h=>({...h,withF:true}));analysisRowsVisible=60;
+    importedHits=report.hits.map(h=>({...h,withF:true}));
+    selectedImportedHit=null;analysisRowsVisible=60;
     stanzas=autoStanzas(importedHits);
     updateImportDraft();renderImportedHits();
     setStatus(`U gjetën ${report.detectedOnsets} goditje të mundshme. ${report.uncertainCount} janë të pasigurta. Kontrollo para Ruaj.`);
@@ -495,15 +531,14 @@ function init():void {
   $('analyzeBtn').addEventListener('click',()=>void analyzeImported());
   $('analysisEditSavedBtn').addEventListener('click',()=>void editSavedAudio());
   $('stanzaAddBtn').addEventListener('click',()=>{
-    if(!draft?.originalAudioId)return;
-    const current=Math.max(0,Math.round(originalPlayer.currentTime*1000));
-    if(current===0||stanzas.some(s=>s.start===current)){setStatus('Zhvendose audion në fillim të strofës së re.');return;}
-    stanzas.push({start:current,label:`Strofa ${stanzas.length+1}`});updateImportDraft();renderImportedHits();
+    if(!draft?.originalAudioId||!selectedImportedHit)return;
+    const start=selectedImportedHit.time;
+    if(start===0||stanzas.some(s=>s.start===start)){setStatus('Kjo note eshte tashme fillim strofe. Zgjidh nje note tjeter.');return;}
+    stanzas.push({start,label:`Strofa ${stanzas.length+1}`});updateImportDraft();renderImportedHits();
   });
   $('analysisAddBtn').addEventListener('click',()=>{
-    if(!draft?.originalAudioId)return;
-    importedHits.push({time:Math.max(0,Math.round(originalPlayer.currentTime*1000)),noteNumber:null,string:1,withF:true,confidence:0,detail:'Shtuar manualisht'});
-    analysisRowsVisible=Math.max(analysisRowsVisible,importedHits.length);updateImportDraft();renderImportedHits();
+    if(!draft?.originalAudioId||!selectedImportedHit){setStatus('Prek se pari nje note ne liste.');return;}
+    insertNoteBelow(selectedImportedHit);
   });
   $('analysisMoreBtn').addEventListener('click',()=>{analysisRowsVisible+=60;renderImportedHits();});
   originalPlayer.addEventListener('play',()=>{

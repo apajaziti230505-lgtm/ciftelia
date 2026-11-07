@@ -1,4 +1,4 @@
-const CACHE='ciftelia-studio-v8-stanzas-onset-20261107';
+const CACHE='ciftelia-studio-v9-stanzas-colors-note-select-20261107';
 const CORE=['./','./index.html','./app.css','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./js/main.js','./js/constants.js','./js/audio-engine.js','./js/pitch.js','./js/microphone.js','./js/mic-onset-worklet.js','./js/songs.js','./js/analysis.js','./js/local-audio.js'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
