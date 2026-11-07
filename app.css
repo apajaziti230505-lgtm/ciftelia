@@ -53,3 +53,18 @@
 .analysis-note-row:focus-within{border-color:#53d7c4}
 #selectedNoteHint{color:#bed8df}
 #analysisAddBtn:not(:disabled){border-color:#53d7c4;color:#b9faed;background:#12363e}
+
+/* V10 – i njëjti identitet ngjyre për gjithë grupin, nga notat deri te tablatura. */
+.stanza-entry{grid-template-columns:minmax(100px,1fr) 100px 44px 36px;}
+.stanza-entry .group-color-picker{padding:3px;min-width:42px;height:36px;cursor:pointer;border:1px solid var(--stanza-color);}
+.analysis-note-row{--group-color:#e8b45a;border-left:5px solid var(--group-color);
+  background:color-mix(in srgb,var(--group-color) 14%,#172a40);}
+.analysis-note-row.unknown{background:color-mix(in srgb,var(--group-color) 13%,#302b25);}
+.analysis-note-row.is-selected{border:2px solid #53d7c4;border-left:6px solid var(--group-color);
+  background:color-mix(in srgb,var(--group-color) 27%,#163d48);}
+.stanza-divider{background:color-mix(in srgb,var(--stanza-color) 12%,#13263b);}
+.group-tip{margin:9px 0;color:#aab9c8;font-size:12px;line-height:1.55;}
+.analysis-column-hint{font-size:11px;color:#b5c9db;margin:10px 0;}
+.analysis-column-hint strong{color:#f2cb88;}
+#groupAutoBtn:not(:disabled){border-color:#68b8c7;color:#c8f0f3;}
+@media(max-width:760px){.stanza-entry{grid-template-columns:minmax(110px,1fr) 85px 42px 34px;}}

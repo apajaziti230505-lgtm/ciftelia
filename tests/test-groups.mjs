@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {detectNoteGroups,groupAtTime,GROUP_COLORS} from '../js/grouping.js';
+const a=[0,210,450,700].map(time=>({time}));
+const b=[1500,1720,1940,2170].map(time=>({time}));
+const c=[3190,3440,3680,3920].map(time=>({time}));
+const marks=detectNoteGroups([...a,...b,...c]);
+assert.deepEqual(marks.map(s=>s.start),[0,1500,3190]);
+assert.equal(groupAtTime(marks,2080),1);
+assert.equal(groupAtTime(marks,3440),2);
+assert.equal(marks[1].color,GROUP_COLORS[1]);
+assert.equal(detectNoteGroups([0,180,390,600,840].map(time=>({time}))).length,1);
+assert.equal(detectNoteGroups([0,180,1250,1420,1640,1840].map(time=>({time}))).length,1);
+console.log('OK: V10 grupe sipas pauzave.');

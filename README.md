@@ -66,3 +66,10 @@ Ngarkimi i parë në internet mund të marrë pak kohë për 30 mostrat audio (r
 
 ## V9 — Strofat me ngjyra dhe shtim note poshte rreshtit
 Ndarjet e strofave shfaqen me vija te trasha me ngjyra te ndryshme edhe ne tablature. Prek nje note per ta zgjedhur, pastaj shtyp **+ Shto poshte notes se zgjedhur**. Nota e re shfaqet menjehere poshte dhe koha vendoset mes dy goditjeve; mund ta korrigjosh ne milisekonda. Ndarja e strofes vendoset te nota e zgjedhur. Audioja origjinale nuk ndryshohet.
+
+## V10 — Grupe notash me ngjyra
+
+- Onset Detection zbulon goditjet dhe propozon grupe kur ka një pauzë të dallueshme, zakonisht pas të paktën 3 notave. Ndarja është orientuese, jo njohje e garantuar e frazave.
+- Mund të krijosh grup te nota e zgjedhur, ose të rillogaritësh grupet sipas pauzave.
+- Ngjyra e zgjedhur i aplikohet çdo note të grupit, vijës ndarëse dhe tablaturës.
+- Emrat dhe ngjyrat ruhen me këngën. Audioja origjinale nuk ndryshohet.

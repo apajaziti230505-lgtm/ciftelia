@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=9-strofa-20261107">
+  <link rel="stylesheet" href="app.css?v=10-groups-20261107">
 </head>
 <body>
   <main class="container">
@@ -179,11 +179,11 @@
       </div>
       <audio id="originalPlayer" controls preload="metadata" class="original-player" hidden aria-label="Luaj regjistrimin origjinal"></audio>
       <div class="analysis-status-row"><progress id="analysisProgress" max="100" value="0"></progress><span id="analysisStatus" role="status">Zgjidh një audio për analizë.</span></div>
-      <p class="analysis-hint">Onset Detection gjen goditjet. Plotëso perdet 1–13, 14 = F ose 15 = teli poshtë i hapur. F shtohet në tablaturë për çdo notë poshtë; hiqe vetëm kur duhet. Audioja origjinale nuk ndryshohet.</p>
+      <p class="analysis-hint">Onset Detection gjen goditjet dhe pauzat për të propozuar grupe notash. Plotëso perdet 1–13, 14 = F ose 15 = teli poshtë i hapur. F shtohet në tablaturë për çdo notë poshtë; hiqe vetëm kur duhet. Audioja origjinale nuk ndryshohet.</p>
       <div id="analysisEdit" class="analysis-edit" hidden>
-        <div class="analysis-edit-header"><strong>Strofat dhe notat</strong><span id="analysisCount"></span></div>
-        <div class="stanza-actions"><button id="stanzaAddBtn" type="button" class="btn btn-minimal" disabled>＋ Ndaj strofë te nota e zgjedhur</button><span id="selectedNoteHint">Prek një rresht note që ta zgjedhësh, pastaj shto notën menjëherë poshtë saj.</span></div>
-        <div id="stanzaList" class="stanza-list"></div>
+        <div class="analysis-edit-header"><strong>Grupet e notave dhe perdet</strong><span id="analysisCount"></span></div>
+        <div class="stanza-actions"><button id="stanzaAddBtn" type="button" class="btn btn-minimal" disabled>＋ Krijo grup nga nota e zgjedhur</button><span id="selectedNoteHint">Prek një rresht note që ta zgjedhësh, pastaj shto notën menjëherë poshtë saj.</span></div>
+        <button id="groupAutoBtn" type="button" class="btn btn-minimal" disabled>↻ Nda grupet sipas pauzave</button><p class="group-tip">Pas një pauze të dallueshme, 3 ose më shumë nota mund të formojnë grup të ri. Prek një notë për ta filluar vetë grupin. Ngjyra zbatohet te të gjitha notat e grupit.</p><div id="stanzaList" class="stanza-list"></div><div class="analysis-column-hint">Koha (ms) · <strong>Perdja (1–13)</strong> · F · Dëgjo · Shto · Fshi · Grup</div>
         <div id="analysisRows" class="analysis-rows"></div>
         <button type="button" class="btn btn-minimal" id="analysisMoreBtn" hidden>Shfaq 60 të tjera</button>
       </div>
@@ -211,6 +211,6 @@
     </div>
     <div class="footer"><p id="status" role="status">Gati për të luajtur.</p></div>
   </main>
-  <script type="module" src="./js/main.js?v=9-strofa-20261107"></script>
+  <script type="module" src="./js/main.js?v=10-groups-20261107"></script>
 </body>
 </html>
