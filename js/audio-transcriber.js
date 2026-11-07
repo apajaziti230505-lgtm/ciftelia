@@ -212,5 +212,14 @@ el('tr-export').addEventListener('click',()=>{
  const href=URL.createObjectURL(blob),a=document.createElement('a');a.href=href;a.download='ciftelia-tablature.json';a.click();setTimeout(()=>URL.revokeObjectURL(href),500);
 });
 player.addEventListener('loadedmetadata',()=>{el('tr-add').disabled=false;draw();});
+// Avoid simultaneous playback of the original track and the playable instrument.
+for(const name of ['playBtn','recordBtn','micBtn','keypad','ciftelia']){
+  document.getElementById(name)?.addEventListener('pointerdown',()=>player.pause(),{capture:true});
+}
+document.addEventListener('keydown',e=>{
+  if(e.altKey||e.ctrlKey||e.metaKey||['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName||''))return;
+  if('qwertyuiopasdfg'.includes(e.key.toLowerCase())||e.code==='Space')player.pause();
+});
+
 window.addEventListener('resize',draw);draw();void library();
 export {};
