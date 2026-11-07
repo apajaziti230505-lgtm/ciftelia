@@ -94,3 +94,12 @@ Modulet JavaScript ngarkohen nga `js/v12/` që të mos përzihen skedarët e rin
 - **Shpejtësia**: Normal 1.00× ose Slow Motion 0.50×. Audioja origjinale ngadalësohet pa ndryshuar qëllimisht lartësinë (nëse shfletuesi mbështet `preservesPitch`). Për këngët e krijuara me mostra, ngadalësohen intervalet mes goditjeve pa transpozuar mostrat.
 
 **Kufizim i rëndësishëm:** Në një regjistrim audio të vetëm, një notë e zhvendosur vizualisht te grupi tjetër nuk mund të izolohet fizikisht nga tingujt e tjerë të regjistruar në të njëjtin moment. Luajtja e grupit për audion origjinale ndjek kufijtë kohorë të grupeve; lëvizja manuale e një note ndryshon tablaturën dhe ngjyrën, jo skedarin audio. Për këtë duhet analizë/redaktim audio më i avancuar.
+
+
+## V14 — Tablatura horizontale dhe kufijtë që lëvizin
+- **◀ Majtas / Djathtas ▶** lëvizin pamjen e tablaturës pa ndryshuar kohën e këngës.
+- Vijat me ngjyrë tregojnë fillimin e grupeve; shiritat me të njëjtën ngjyrë tregojnë gjithë intervalin kohor të grupit.
+- Pasi të hapësh **Redakto këngën**, tërhiq vijën e grupit horizontalisht në tablaturë, ose zgjidh grupin dhe shtyp **-50 ms / +50 ms**. Grupi i parë që fillon në 0 ms mbetet i palëvizshëm.
+- **◎ Ndiq muzikën** rikthen ndjekjen automatike gjatë luajtjes. Shpejtësitë 1× dhe 0.50× ruhen.
+- Korrigjimet ndryshojnë kufirin e grupit dhe ngjyrat në tablaturë, por **nuk zhvendosin goditjet apo audio-n**. Notat që janë zhvendosur manualisht në një grup tjetër mbajnë ngjyrën dhe anëtarësinë e tij, edhe nëse koha e tyre origjinale ndodhet jashtë segmentit kohor të grupit.
+- Shtyp **Ruaj** që ndryshimi të mbetet në pajisjen tënde.

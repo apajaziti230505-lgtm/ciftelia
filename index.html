@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=13-group-speed-20261107">
+  <link rel="stylesheet" href="app.css?v=14-group-speed-20261107">
 </head>
 <body>
   <main class="container">
@@ -165,7 +165,13 @@
 
     <section class="tab-section" aria-labelledby="tabTitle">
       <div class="tab-heading"><div><h2 id="tabTitle">Tablatura</h2></div><div class="tab-state"><span id="studioState">GATI</span><strong id="timeLabel">00:00.00 / 00:00.00</strong></div></div>
-      <div class="tab-canvas-wrap"><canvas id="tabCanvas" aria-label="Tablatura me dy tela, nota në kohën përkatëse" height="175"></canvas></div>
+      <div class="tab-nav" role="group" aria-label="Lëviz nëpër tablaturë dhe korrigjo kufijtë e grupeve">
+        <div class="tab-nav-set"><span>PAMJA</span><button id="tabLeftBtn" class="btn btn-minimal" type="button" title="Shiko më majtas">◀ Majtas</button><button id="tabRightBtn" class="btn btn-minimal" type="button" title="Shiko më djathtas">Djathtas ▶</button><button id="tabFollowBtn" class="btn btn-minimal" type="button" title="Ndiq muzikën gjatë luajtjes">◎ Ndiq muzikën</button></div>
+        <div class="tab-nav-set"><span>VIJA E GRUPIT</span><button id="tabMarkLeftBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms majtas">−50 ms</button><button id="tabMarkRightBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms djathtas">+50 ms</button></div>
+        <strong id="tabViewRange" aria-live="polite">00:00 – 00:00</strong>
+      </div>
+      <div class="tab-canvas-wrap"><canvas id="tabCanvas" tabindex="0" aria-label="Tablatura me dy tela. Tërhiq vijën me ngjyrë të grupit majtas ose djathtas për të ndryshuar fillimin e grupit. Përdor shigjetat e pamjes për të lëvizur në këngë." height="175"></canvas></div>
+      <p class="tab-help" id="tabHelp">Zgjidh një grup. Në mënyrën Redakto këngën, tërhiq vijën e tij me ngjyrë në tablaturë për të ndryshuar kufirin; shigjetat lëvizin pamjen.</p>
       
     </section>
 
@@ -237,7 +243,7 @@
           }
         } catch (e) { console.warn('Pastrimi i cache nuk përfundoi:', e); }
         const url = new URL(window.location.href);
-        url.searchParams.set('version', '13-group-speed');
+        url.searchParams.set('version', '14-tablature');
         url.searchParams.set('r', String(Date.now()));
         window.location.replace(url.href);
       });
@@ -250,6 +256,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v13/main.js"></script>
+  <script type="module" src="./js/v14/main.js"></script>
 </body>
 </html>

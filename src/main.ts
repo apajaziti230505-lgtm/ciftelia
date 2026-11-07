@@ -5,6 +5,7 @@ import {allSongs,loadSongs,newSong,saveSongs,exportSong} from './songs.js';
 import {analyzeAudio,GuessedHit} from './analysis.js';
 import {putOriginal,getOriginal,deleteOriginal} from './local-audio.js';
 import {GROUP_COLORS,detectNoteGroups,groupAtTime,groupForNote,GroupSensitivity} from './grouping.js';
+import {timelineGeometry,timelineX,timelineTime,clampTimelineStart,clampGroupBoundary,findGroupBoundary} from './timeline.js';
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const svg=document.getElementById('ciftelia') as unknown as SVGSVGElement;
 const fretLayer=document.getElementById('fret-layer')!;
@@ -36,6 +37,12 @@ let selectedGroupStart=0;
 let activeGroupEndMs:number|null=null;
 let playbackSpeed=1;
 let currentPlayMode:'all'|'group'='all';
+// Koha e riprodhimit dhe pamja horizontale mbahen të ndara.
+let tabCurrentMs=0;
+let tabViewStartMs=0;
+let tabFollowPlayback=true;
+let tabDrag:{pointerId:number;index:number;oldStart:number;previewMs:number}|null=null;
+
 const STANZA_COLORS=GROUP_COLORS;
 function importedSong(song:Song|null):boolean{return !!song?.originalAudioId;}
 function clearOriginalUrl():void { if(originalObjectUrl)URL.revokeObjectURL(originalObjectUrl);originalObjectUrl=null;originalSourceId=null;originalPlayer.removeAttribute('src');originalPlayer.load(); }
@@ -88,7 +95,8 @@ function selectGroup(start:number):void{
   selectedGroupStart=group.start;
   $<HTMLSelectElement>('selectedGroupSelect').value=String(group.start);
   document.querySelectorAll('.stanza-entry').forEach(el=>el.classList.toggle('group-active',(el as HTMLElement).dataset.groupStart===String(group.start)));
-  setStatus(`U zgjodh ${group.label}. Shtyp ▶ Luaj grupin.`);
+  focusTimelineAt(group.start);
+  setStatus(`U zgjodh ${group.label}. Vija me ngjyrë shfaqet në tablaturë.`);
 }
 function renderSongs():void {
   const selected=selectedId;
@@ -271,6 +279,9 @@ async function playSelectedGroup():Promise<void>{
   const song=currentSong();if(!song){setStatus('Zgjidh një këngë.');return;}
   const range=selectedGroupRange(song);
   stopPlayback();currentPlayMode='group';
+  tabCurrentMs=range.start;tabFollowPlayback=true;
+  tabViewStartMs=clampTimelineStart(range.start-visibleTab().visibleMs*.25,visibleTab().visibleMs,tabSongEnd(song));
+  redrawTab();
   if(importedSong(song)){
     if(!originalPlayer.src){setStatus('Mungon audioja origjinale në këtë pajisje.');return;}
     activeGroupEndMs=range.end;
@@ -310,7 +321,7 @@ async function playCurrent():Promise<void> {
   const song=currentSong();if(!song){setStatus('Zgjidh këngën.');return;}
   if(!song.notes.length && !importedSong(song)){setStatus('Kënga nuk ka nota të njohura. Korrigjo notat ? te regjistrimi.');return;}
   const token=++playToken;
-  currentPlayMode='all';configurePlaybackSpeed();
+  currentPlayMode='all';configurePlaybackSpeed();tabCurrentMs=0;tabViewStartMs=0;tabFollowPlayback=true;
   if(importedSong(song)){
     if(!originalPlayer.src){setStatus('Mungon audioja origjinale në këtë pajisje. Zgjidh këngën sërish.');return;}
     try {originalPlayer.currentTime=0;await originalPlayer.play();}
@@ -361,44 +372,197 @@ async function deleteSong():Promise<void> {
   selectedId=DEMO[0].id;renderSongs();void prepareOriginalForSelection();setStatus('Kënga u fshi nga ky shfletues.');
 }
 const canvas=$<HTMLCanvasElement>('tabCanvas');
-function drawTab(song:Song|null,elapsed=0):void {
-  const rect=canvas.getBoundingClientRect();const w=Math.max(320,rect.width),h=175;
-  const dpr=Math.min(2,window.devicePixelRatio||1);
+function tabSongEnd(song:Song|null):number{
+  const maxNote=Math.max(0,...(song?.notes??[]).map(n=>n.time));
+  const maxGroup=Math.max(0,...(song?.stanzas??[]).map(g=>g.start));
+  const audioEnd=importedSong(song)&&Number.isFinite(originalPlayer.duration)?originalPlayer.duration*1000:0;
+  return Math.max(1600,maxNote+950,maxGroup+850,audioEnd);
+}
+function visibleTab():{left:number;right:number;scale:number;visibleMs:number;width:number}{
+  return timelineGeometry(canvas.getBoundingClientRect().width||360);
+}
+function tabCurrentGroups(song:Song|null):Stanza[]{
+  return activeSongGroups(song);
+}
+function editableTab():boolean{return selectedId==='__draft' && !!draft?.originalAudioId;}
+function redrawTab():void{drawTab(songForDisplay(),tabCurrentMs);}
+function focusTimelineAt(time:number):void{
+  const geom=visibleTab();
+  tabViewStartMs=clampTimelineStart(time-geom.visibleMs*.25,geom.visibleMs,tabSongEnd(songForDisplay()));
+  tabFollowPlayback=false;
+  redrawTab();
+}
+function moveTimeline(direction:-1|1):void{
+  const song=songForDisplay();if(!song)return;
+  const geom=visibleTab();
+  tabViewStartMs=clampTimelineStart(tabViewStartMs+direction*geom.visibleMs*.66,geom.visibleMs,tabSongEnd(song));
+  tabFollowPlayback=false;redrawTab();
+}
+function applyGroupMarkerPosition(index:number,proposed:number):void{
+  if(!editableTab()){setStatus('Për të lëvizur grupet, hap Redakto këngën.');return;}
+  const marker=stanzas[index];if(!marker || index===0)return;
+  const old=marker.start;
+  const next=clampGroupBoundary(stanzas,index,proposed,tabSongEnd(draft));
+  if(next===null){setStatus('Grupet janë shumë afër për ta lëvizur këtë vijë.');return;}
+  if(next===old){redrawTab();return;}
+  marker.start=next;
+  for(const hit of importedHits)if(hit.groupStart===old)hit.groupStart=next;
+  if(selectedGroupStart===old)selectedGroupStart=next;
+  stanzas=sanitizeStanzas(stanzas);
+  updateImportDraft();renderImportedHits();
+  tabFollowPlayback=false;
+  redrawTab();
+  setStatus(`Vija e ${marker.label} u zhvendos nga ${fmt(old)} në ${fmt(next)}. Shtyp Ruaj për ta ruajtur.`);
+}
+function moveSelectedMarker(delta:number):void{
+  const index=stanzas.findIndex(g=>g.start===selectedGroupStart);
+  if(index<=0){setStatus('Zgjidh grupin 2 ose një grup pas tij. Grupi i parë fillon në 0.');return;}
+  applyGroupMarkerPosition(index,stanzas[index].start+delta);
+}
+function setTabControls(song:Song|null,geom:ReturnType<typeof timelineGeometry>):void{
+  const groups=tabCurrentGroups(song);
+  const canMove=editableTab() && groups.findIndex(g=>g.start===selectedGroupStart)>0;
+  $('tabLeftBtn').toggleAttribute('disabled',!song || tabViewStartMs<=0);
+  $('tabRightBtn').toggleAttribute('disabled',!song || tabViewStartMs>=clampTimelineStart(tabSongEnd(song),geom.visibleMs,tabSongEnd(song)));
+  $('tabMarkLeftBtn').toggleAttribute('disabled',!canMove);
+  $('tabMarkRightBtn').toggleAttribute('disabled',!canMove);
+  $('tabFollowBtn').classList.toggle('is-on',tabFollowPlayback);
+  $('tabFollowBtn').setAttribute('aria-pressed',String(tabFollowPlayback));
+  $('tabViewRange').textContent=`${fmt(tabViewStartMs)} – ${fmt(tabViewStartMs+geom.visibleMs)}`;
+}
+function drawTab(song:Song|null,elapsed=tabCurrentMs):void {
+  tabCurrentMs=Math.max(0,elapsed);
+  const rect=canvas.getBoundingClientRect();const geom=timelineGeometry(rect.width);const {width:w,left,right,scale,visibleMs}=geom;
+  const h=175,dpr=Math.min(2,window.devicePixelRatio||1);
   if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);}
   const c=canvas.getContext('2d');if(!c)return;c.setTransform(dpr,0,0,dpr,0,0);
+  if(song && tabFollowPlayback && (audio.playing || (!originalPlayer.paused && importedSong(song)))){
+    const x=timelineX(tabCurrentMs,tabViewStartMs,left,scale);
+    if(x>left+(w-left-right)*.79 || x<left+8)tabViewStartMs=clampTimelineStart(tabCurrentMs-visibleMs*.24,visibleMs,tabSongEnd(song));
+  }
+  tabViewStartMs=clampTimelineStart(tabViewStartMs,visibleMs,tabSongEnd(song));
   c.clearRect(0,0,w,h);c.fillStyle='#101c2c';c.fillRect(0,0,w,h);
-  const x0=Math.min(160,w*.3),pxPerMs=.18;
-  c.strokeStyle='#37465a';c.lineWidth=1;
-  for(const y of [60,120]){c.beginPath();c.moveTo(16,y);c.lineTo(w-16,y);c.stroke();}
-  c.fillStyle='#95a4b5';c.font='12px system-ui';c.fillText('TELI 2 · LART',14,45);c.fillText('TELI 1 · POSHTË',14,106);
-  if(song?.stanzas?.length){
-    const selected=[...song.stanzas].filter(s=>s.start<=elapsed).at(-1)??song.stanzas[0];
-    c.fillStyle=selected.color||STANZA_COLORS[song.stanzas.indexOf(selected)%STANZA_COLORS.length];c.font='bold 11px system-ui';c.fillText(selected.label.slice(0,48),x0+9,15);
-    for(const [i,stanza] of song.stanzas.entries()){
-      if(i===0)continue;
-      const sx=x0+(stanza.start-elapsed)*pxPerMs;
-      if(sx>=16&&sx<=w-16){
-        c.strokeStyle=stanza.color||STANZA_COLORS[i%STANZA_COLORS.length];c.lineWidth=3;
-        c.beginPath();c.moveTo(sx,20);c.lineTo(sx,158);c.stroke();
-      }
+  const groups=tabCurrentGroups(song);
+  const visualGroups=groups.map((g,i)=>tabDrag?.index===i?{...g,start:tabDrag.previewMs}:g);
+  // Each group has a continuous colored region, so manually corrected starts are visible.
+  for(let i=0;i<visualGroups.length;i++){
+    const g=visualGroups[i],start=g.start,end=visualGroups[i+1]?.start??tabSongEnd(song);
+    const x1=Math.max(left,timelineX(start,tabViewStartMs,left,scale));
+    const x2=Math.min(w-right,timelineX(end,tabViewStartMs,left,scale));
+    if(x2<=x1)continue;
+    const color=g.color||STANZA_COLORS[i%STANZA_COLORS.length];
+    c.fillStyle=color;c.globalAlpha=g.start===selectedGroupStart?.21:.11;c.fillRect(x1,27,x2-x1,131);c.globalAlpha=1;
+    c.fillStyle=color;c.globalAlpha=.65;c.fillRect(x1,3,x2-x1,22);c.globalAlpha=1;
+    if(x2-x1>28){c.fillStyle='#101c2c';c.font='bold 10px system-ui';c.fillText(g.label.slice(0,Math.max(3,Math.floor((x2-x1)/8))),x1+5,17);}
+  }
+  c.strokeStyle='#33465b';c.lineWidth=1;
+  for(const y of [60,120]){c.beginPath();c.moveTo(left,y);c.lineTo(w-right,y);c.stroke();}
+  c.fillStyle='#9baebc';c.font=w<430?'10px system-ui':'12px system-ui';
+  c.fillText('LART',12,62);c.fillText('POSHTË',12,122);
+  // Seconds on the visible time ruler.
+  c.font='10px system-ui';c.fillStyle='#819bb0';
+  for(let sec=Math.ceil(tabViewStartMs/1000);sec*1000<=tabViewStartMs+visibleMs;sec++){
+    const sx=timelineX(sec*1000,tabViewStartMs,left,scale);
+    if(sx<left+7||sx>w-right-15)continue;
+    c.globalAlpha=.55;c.strokeStyle='#516477';c.beginPath();c.moveTo(sx,26);c.lineTo(sx,155);c.stroke();c.globalAlpha=1;
+    c.fillText(`${sec}s`,sx+3,170);
+  }
+  // Colored boundary lines and draggable handles. The first group starts at zero (fixed).
+  for(let i=1;i<visualGroups.length;i++){
+    const group=visualGroups[i],sx=timelineX(group.start,tabViewStartMs,left,scale);
+    if(sx<left-8||sx>w-right+8)continue;
+    const color=group.color||STANZA_COLORS[i%STANZA_COLORS.length];
+    c.strokeStyle=color;c.lineWidth=group.start===selectedGroupStart?4.5:3;
+    c.beginPath();c.moveTo(sx,23);c.lineTo(sx,157);c.stroke();
+    c.fillStyle=color;c.beginPath();c.moveTo(sx-9,24);c.lineTo(sx+9,24);c.lineTo(sx,37);c.closePath();c.fill();
+    if(tabDrag?.index===i){
+      c.fillStyle='#f8f4ed';c.font='bold 11px system-ui';
+      const text=fmt(group.start);c.fillText(text,Math.min(w-65,Math.max(left+4,sx+12)),48);
     }
   }
-  c.strokeStyle='#fac35f';c.lineWidth=2;c.beginPath();c.moveTo(x0,20);c.lineTo(x0,160);c.stroke();
+  const playerX=timelineX(tabCurrentMs,tabViewStartMs,left,scale);
+  if(playerX>=left && playerX<=w-right){
+    c.strokeStyle='#f8cc76';c.lineWidth=2;c.beginPath();c.moveTo(playerX,26);c.lineTo(playerX,159);c.stroke();
+  }
   if(song){
     for(const e of withOpenF(song.notes)){
-      const x=x0+(e.time-elapsed)*pxPerMs;
-      if(x<8||x>w-8)continue;
+      const x=timelineX(e.time,tabViewStartMs,left,scale);
+      if(x<left-11||x>w-right+11)continue;
       const y=e.string===1?120:60;
-      c.beginPath();c.arc(x,y,11,0,Math.PI*2);
-      const gi=song.stanzas?.length?groupForNote(song.stanzas,e):0;
-      const groupColor=song.stanzas?.[gi]?.color||STANZA_COLORS[gi%STANZA_COLORS.length];
-      c.fillStyle=Math.abs(e.time-elapsed)<60?groupColor:'#203f4f';c.fill();
-      c.strokeStyle=groupColor;c.lineWidth=1.7;c.stroke();
-      c.fillStyle=Math.abs(e.time-elapsed)<60?'#141e2b':'#f6e6ca';c.font='bold 12px system-ui';c.textAlign='center';c.fillText(labelFor(e.noteNumber),x,y+4);c.textAlign='start';
+      const gi=groupForNote(groups,e);
+      const groupColor=groups[gi]?.color||STANZA_COLORS[gi%STANZA_COLORS.length];
+      c.beginPath();c.arc(x,y,11,0,Math.PI*2);c.fillStyle=Math.abs(e.time-tabCurrentMs)<60?groupColor:'#203f4f';c.fill();
+      c.strokeStyle=groupColor;c.lineWidth=2;c.stroke();
+      c.fillStyle=Math.abs(e.time-tabCurrentMs)<60?'#141e2b':'#f6e6ca';c.font='bold 12px system-ui';c.textAlign='center';c.fillText(labelFor(e.noteNumber),x,y+4);c.textAlign='start';
+      // Notes manually moved between groups keep their original time but take their target group's color.
+      if(Number.isFinite(e.groupStart) && gi!==groupAtTime(groups,e.time)){
+        c.fillStyle=groupColor;c.fillRect(x+6,y-15,5,5);
+      }
     }
-  }else{c.font='14px system-ui';c.fillStyle='#8d9bac';c.fillText('Regjistro ose zgjidh një këngë.',x0+18,90);}
+  }else{c.font='13px system-ui';c.fillStyle='#8d9bac';c.fillText('Zgjidh këngën.',left+20,92);}
+  c.fillStyle='#132437';c.fillRect(0,0,left-1,h);
+  c.fillStyle='#a7bccc';c.font='bold 11px system-ui';c.fillText('TELI LART',7,47);c.fillText('TELI POSHTË',7,106);
+  setTabControls(song,geom);
 }
-function renderTimeline(){drawTab(songForDisplay(),0);$('timeLabel').textContent=`00:00.00 / ${fmt((songForDisplay()?.notes.at(-1)?.time||0)+600)}`;}
+function renderTimeline():void {
+  drawTab(songForDisplay(),tabCurrentMs);
+  const song=songForDisplay();
+  $('timeLabel').textContent=`${fmt(tabCurrentMs)} / ${fmt(tabSongEnd(song))}`;
+}
+function installTabInteraction():void{
+  $('tabLeftBtn').addEventListener('click',()=>moveTimeline(-1));
+  $('tabRightBtn').addEventListener('click',()=>moveTimeline(1));
+  $('tabFollowBtn').addEventListener('click',()=>{
+    tabFollowPlayback=true;tabViewStartMs=clampTimelineStart(tabCurrentMs-visibleTab().visibleMs*.25,visibleTab().visibleMs,tabSongEnd(songForDisplay()));redrawTab();
+  });
+  $('tabMarkLeftBtn').addEventListener('click',()=>moveSelectedMarker(-50));
+  $('tabMarkRightBtn').addEventListener('click',()=>moveSelectedMarker(50));
+  canvas.addEventListener('pointerdown',(event:PointerEvent)=>{
+    const song=songForDisplay();if(!song)return;
+    const rect=canvas.getBoundingClientRect(),geom=visibleTab();
+    const x=event.clientX-rect.left,y=event.clientY-rect.top;
+    if(y<17||y>162||x<geom.left-17||x>geom.width-geom.right+8)return;
+    const groups=tabCurrentGroups(song);
+    const index=findGroupBoundary(groups,x,tabViewStartMs,geom.left,geom.scale,19);
+    if(index<1)return;
+    if(!editableTab()){
+      selectedGroupStart=groups[index].start;
+      refreshGroupPicker(song);redrawTab();
+      setStatus('Për të tërhequr këtë vijë, shtyp Redakto këngën.');
+      return;
+    }
+    selectedGroupStart=groups[index].start;
+    tabFollowPlayback=false;
+    tabDrag={pointerId:event.pointerId,index,oldStart:groups[index].start,previewMs:groups[index].start};
+    canvas.setPointerCapture(event.pointerId);
+    canvas.style.cursor='ew-resize';event.preventDefault();redrawTab();
+  });
+  canvas.addEventListener('pointermove',(event:PointerEvent)=>{
+    if(!tabDrag||event.pointerId!==tabDrag.pointerId)return;
+    const geom=visibleTab(),rect=canvas.getBoundingClientRect();
+    const proposed=timelineTime(event.clientX-rect.left,tabViewStartMs,geom.left,geom.scale);
+    const value=clampGroupBoundary(stanzas,tabDrag.index,proposed,tabSongEnd(draft));
+    if(value!==null)tabDrag.previewMs=value;
+    redrawTab();event.preventDefault();
+  });
+  canvas.addEventListener('pointerup',(event:PointerEvent)=>{
+    if(!tabDrag||event.pointerId!==tabDrag.pointerId)return;
+    const drag=tabDrag;tabDrag=null;
+    if(canvas.hasPointerCapture(event.pointerId))canvas.releasePointerCapture(event.pointerId);
+    canvas.style.cursor='crosshair';
+    applyGroupMarkerPosition(drag.index,drag.previewMs);
+    event.preventDefault();
+  });
+  canvas.addEventListener('pointercancel',()=>{tabDrag=null;canvas.style.cursor='crosshair';redrawTab();});
+  canvas.addEventListener('keydown',(event:KeyboardEvent)=>{
+    if(event.key==='ArrowLeft'||event.key==='ArrowRight'){
+      event.preventDefault();
+      if(event.shiftKey)moveSelectedMarker(event.key==='ArrowLeft'?-50:50);
+      else moveTimeline(event.key==='ArrowLeft'?-1:1);
+    }
+  });
+  window.addEventListener('resize',redrawTab);
+}
 
 async function importSongFile(file:File):Promise<void> {
   try {
@@ -476,7 +640,8 @@ function createGroupAtHit(hit:GuessedHit):void{
     stanzas.push({start,label:`Grupi ${stanzas.length+1}`,color:GROUP_COLORS[position%GROUP_COLORS.length]});
     stanzas=sanitizeStanzas(stanzas);
     hit.groupStart=start;selectedGroupStart=start;
-    setStatus(`U krijua grupi i ri në ${fmt(start)}. Mund t'i zhvendosësh notat me ↑ / ↓.`);
+    focusTimelineAt(start);
+    setStatus(`U krijua grupi i ri në ${fmt(start)}. Kufiri i tij shihet tani te Tablatura.`);
   }
   selectedImportedHit=hit;
   const groupOrder=stanzas.flatMap((_,i)=>importedHits.filter(h=>groupForNote(stanzas,h)===i).sort((a,b)=>a.time-b.time));
@@ -496,16 +661,8 @@ function renderStanzas():void{
     const time=document.createElement('input');time.type='number';time.min='0';time.step='1';time.value=String(s.start);time.disabled=i===0;
     time.setAttribute('aria-label',`Fillimi i grupit ${i+1} në milisekonda`);
     time.addEventListener('change',()=>{
-      const oldStart=s.start;
-      const proposed=Math.max(1,Math.round(Number(time.value)||0));
-      if(stanzas.some(other=>other!==s&&other.start===proposed)){
-        setStatus('Ekziston një grup tjetër në këtë kohë. Vendos një kohë tjetër.');time.value=String(oldStart);return;
-      }
-      s.start=proposed;
-      if(selectedGroupStart===oldStart)selectedGroupStart=s.start;
-      // Ruaj lidhjen e notave që u zhvendosën manualisht në këtë grup.
-      for(const hit of importedHits)if(hit.groupStart===oldStart)hit.groupStart=s.start;
-      updateImportDraft();renderImportedHits();
+      const index=stanzas.findIndex(g=>g.start===s.start);
+      applyGroupMarkerPosition(index,Number(time.value));
     });
     const remove=document.createElement('button');remove.type='button';remove.className='btn btn-minimal';remove.textContent='×';remove.disabled=i===0;
     remove.setAttribute('aria-label',`Fshi ndarjen e grupit ${i+1}`);
@@ -652,7 +809,7 @@ async function importAudioFile(file:File):Promise<void>{
   if(analyzing)return;
   if(file.size>25_000_000){setStatus('Audioja është mbi 25 MB. Përdor regjistrim më të shkurtër.');return;}
   if(!file.type.startsWith('audio/') && !/\.(wav|m4a|mp3|ogg)$/i.test(file.name)){setStatus('Zgjidh skedar audio WAV, M4A ose MP3.');return;}
-  stopPlayback();selectedGroupStart=0;importFile=file;importedHits=[];selectedImportedHit=null;stanzas=[{start:0,label:'Grupi 1',color:GROUP_COLORS[0]}];editingSongId=null;analysisRowsVisible=60;
+  stopPlayback();selectedGroupStart=0;tabCurrentMs=0;tabViewStartMs=0;tabFollowPlayback=true;importFile=file;importedHits=[];selectedImportedHit=null;stanzas=[{start:0,label:'Grupi 1',color:GROUP_COLORS[0]}];editingSongId=null;analysisRowsVisible=60;
   draft=newSong(file.name.replace(/\.[^.]+$/,''),[]);draft.originalAudioId='__draft';draft.stanzas=stanzas;selectedId='__draft';
   renderSongs();renderImportedHits();showOriginalBlob(file,'__draft');
   $('analyzeBtn').removeAttribute('disabled');$('analysisProgress').setAttribute('value','0');
@@ -685,9 +842,10 @@ function installAndroid():void {
 }
 
 function init():void {
+  installTabInteraction();
   renderInstrument();renderKeys();renderSongs();renderMicHits();
   audio.setVolume(Number($<HTMLInputElement>('volume').value)/100);
-  $('songSelect').addEventListener('change',e=>{stopPlayback();selectedGroupStart=0;selectedId=(e.target as HTMLSelectElement).value;renderSongs();renderImportedHits();void prepareOriginalForSelection();});
+  $('songSelect').addEventListener('change',e=>{stopPlayback();selectedGroupStart=0;tabViewStartMs=0;tabCurrentMs=0;tabFollowPlayback=true;selectedId=(e.target as HTMLSelectElement).value;renderSongs();renderImportedHits();void prepareOriginalForSelection();});
   $('recordBtn').addEventListener('click',recordKeyboard);
   $('micBtn').addEventListener('click',()=>void toggleMic());
   $('playBtn').addEventListener('click',()=>void playCurrent());
@@ -725,6 +883,7 @@ function init():void {
     insertNoteBelow(selectedImportedHit);
   });
   $('analysisMoreBtn').addEventListener('click',()=>{analysisRowsVisible+=60;renderImportedHits();});
+  originalPlayer.addEventListener('loadedmetadata',redrawTab);
   originalPlayer.addEventListener('play',()=>{
     const song=currentSong();if(!importedSong(song))return;
     audio.stop();cancelAnimationFrame(playFrame);const token=++playToken;

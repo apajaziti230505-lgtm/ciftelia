@@ -94,3 +94,16 @@
 .analysis-note-row{grid-template-columns:minmax(70px,90px) minmax(64px,75px) 43px 57px repeat(5,minmax(34px,auto)) 55px;}
 .move-group{font-size:17px!important;font-weight:800;min-width:33px}
 @media(max-width:950px){.stanza-entry{grid-template-columns:minmax(90px,1fr) 85px 38px 75px 32px}.analysis-note-row{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.analysis-note-row .btn{min-width:32px}.transport-actions #selectedGroupSelect{flex:1 1 125px}.transport-actions #playbackSpeed{flex:1 1 145px}}
+
+/* V14: tablaturë horizontale me kufij grupesh të lëvizshëm */
+.tab-nav{display:flex;align-items:center;flex-wrap:wrap;gap:10px 20px;margin:3px 0 11px;padding:9px 10px;background:#102034;border:1px solid #2b4056;border-radius:10px}
+.tab-nav-set{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.tab-nav-set>span{font-size:10px;font-weight:800;letter-spacing:.07em;color:#8ba3b6;margin-right:4px}
+.tab-nav .btn{min-height:33px;padding:6px 10px;font-size:11px}
+#tabViewRange{font-size:10px;color:#b9d4dd;font-variant-numeric:tabular-nums;margin-left:auto}
+#tabFollowBtn.is-on{border-color:#62cbb7;color:#bbf5e6;background:#154039}
+#tabMarkLeftBtn:not(:disabled),#tabMarkRightBtn:not(:disabled){border-color:#dda85d;color:#efd5a2}
+.tab-help{font-size:11px;line-height:1.55;color:#9eb4c7;margin:9px 1px 1px}
+.tab-canvas-wrap canvas{touch-action:pan-y;cursor:crosshair;outline-offset:3px}
+.tab-canvas-wrap canvas:focus-visible{outline:2px solid #65d6c1}
+@media(max-width:680px){.tab-nav{gap:8px;padding:8px}.tab-nav-set{gap:5px}.tab-nav .btn{padding:7px 8px}#tabViewRange{width:100%;margin:1px 0 0}.tab-help{font-size:10px}}
