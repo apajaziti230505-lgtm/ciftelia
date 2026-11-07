@@ -122,3 +122,19 @@
 .manual-f-label input{accent-color:#e3ae58}
 #tabCanvas{touch-action:pan-y}
 @media(max-width:680px){.manual-entry{align-items:stretch}.manual-entry select{max-width:100%;flex:1}.manual-entry .btn{flex:1}.manual-hint{flex-basis:100%}}
+
+/* V16: kontrollet e sinkronizuara direkt mbi tablaturë. */
+.tab-audio-transport{display:grid;gap:12px;margin:10px 0 14px;padding:13px;background:#101e2f;border:1px solid #37516b;border-radius:12px}
+.tab-audio-buttons{display:flex;flex-wrap:wrap;align-items:end;gap:7px}
+.tab-audio-buttons .btn{min-height:42px}
+.tab-audio-buttons select{background:#1b3047;color:#f0f5f8;border:1px solid #47617a;border-radius:9px;min-height:42px;padding:8px 10px;font-size:12px;max-width:200px}
+.tab-seconds-label{display:flex;flex-direction:column;gap:4px;color:#b7c9d9;font-size:11px;font-weight:600}
+.tab-seconds-label input{width:126px;height:42px;border-radius:9px;border:1px solid #527089;background:#17293e;color:#fff;padding:7px 9px;font-size:14px;font-variant-numeric:tabular-nums}
+.tab-audio-scrub{display:flex;align-items:center;gap:10px;color:#b8cbd9;font-size:11px}
+.tab-audio-scrub input{flex:1;min-width:0;accent-color:#edbc6b;touch-action:pan-x;min-height:22px}
+.tab-audio-scrub output{min-width:78px;text-align:right;font-variant-numeric:tabular-nums;color:#f2d397;font-weight:700}
+#tabCanvas{cursor:crosshair;touch-action:none}
+.manual-entry input[type=number]{width:116px;min-width:0;padding:8px;border:1px solid #527089;background:#17293e;color:#fff;border-radius:8px;font-variant-numeric:tabular-nums}
+@media(max-width:680px){.tab-audio-transport{padding:9px}.tab-audio-buttons{gap:5px}.tab-audio-buttons .btn{padding:8px;font-size:11px}.tab-audio-buttons select{max-width:150px;flex:1 1 112px}.tab-seconds-label input{width:105px}.tab-audio-scrub output{min-width:67px}}
+/* The original audio remains available to the script but playback controls are by the tablature. */
+.original-player{display:none!important}

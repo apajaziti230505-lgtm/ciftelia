@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=15-manual-20261107">
+  <link rel="stylesheet" href="app.css?v=16-seek-20261107">
 </head>
 <body>
   <main class="container">
@@ -159,12 +159,32 @@
 
     <section class="transport" aria-label="Këngët dhe kontrollet">
       <div class="transport-song"><label for="songSelect">KËNGA E ZGJEDHUR</label><select id="songSelect"></select><div id="songMeta" class="song-meta">0 nota</div></div>
-      <div class="transport-actions"><button type="button" class="btn btn-record" id="recordBtn">＋ Regjistro</button><button type="button" class="btn btn-primary" id="playBtn">▶ Luaj</button><select id="selectedGroupSelect" aria-label="Zgjidh grupin për luajtje"><option value="0">Grupi 1</option></select><button type="button" class="btn btn-group-play" id="groupPlayBtn">▶ Luaj grupin</button><select id="playbackSpeed" aria-label="Shpejtësia e muzikës"><option value="1">Normal · 1.00×</option><option value="0.5">Slow Motion · 0.50×</option></select><button type="button" class="btn" id="stopBtn">■ Ndalo</button><button type="button" class="btn" id="saveBtn" disabled>▣ Ruaj</button><button type="button" class="btn btn-danger" id="deleteBtn" disabled>Fshi</button><button type="button" class="btn btn-minimal" id="exportBtn">Eksporto JSON</button><button type="button" class="btn btn-minimal" id="importBtn">Importo JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button type="button" class="btn btn-minimal" id="installBtn" hidden>Instalo Android</button></div>
+      <div class="transport-actions"><button type="button" class="btn btn-record" id="recordBtn">＋ Regjistro</button><button type="button" class="btn" id="saveBtn" disabled>▣ Ruaj</button><button type="button" class="btn btn-danger" id="deleteBtn" disabled>Fshi</button><button type="button" class="btn btn-minimal" id="exportBtn">Eksporto JSON</button><button type="button" class="btn btn-minimal" id="importBtn">Importo JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button type="button" class="btn btn-minimal" id="installBtn" hidden>Instalo Android</button></div>
       <span id="recordCounter" class="record-counter">GATI</span>
     </section>
 
     <section class="tab-section" aria-labelledby="tabTitle">
       <div class="tab-heading"><div><h2 id="tabTitle">Tablatura</h2></div><div class="tab-state"><span id="studioState">GATI</span><strong id="timeLabel">00:00.00 / 00:00.00</strong></div></div>
+      <div class="tab-audio-transport" role="group" aria-label="Kontrollet e këngës te tablatura">
+        <div class="tab-audio-buttons">
+          <button type="button" id="playBtn" class="btn btn-primary">▶ Luaj</button>
+          <button type="button" id="stopBtn" class="btn">■ Ndalo</button>
+          <button type="button" id="tabBackBtn" class="btn btn-minimal" title="Kthehu 1 sekondë">⟲ −1 s</button>
+          <button type="button" id="tabFineBackBtn" class="btn btn-minimal" title="Kthehu 100 milisekonda">−0.1 s</button>
+          <button type="button" id="tabFineNextBtn" class="btn btn-minimal" title="Ec 100 milisekonda përpara">+0.1 s</button>
+          <button type="button" id="tabNextBtn" class="btn btn-minimal" title="Ec 1 sekondë përpara">+1 s ⟳</button>
+          <label class="tab-seconds-label" for="tabSeekSeconds">Koha (sekonda)
+            <input type="number" id="tabSeekSeconds" min="0" value="0.000" step="0.001" inputmode="decimal" aria-label="Sekonda e saktë me tre shifra pas presjes">
+          </label>
+          <button type="button" id="tabSeekGoBtn" class="btn btn-minimal">Shko</button>
+          <select id="playbackSpeed" aria-label="Shpejtësia e muzikës"><option value="1">Normal · 1.00×</option><option value="0.5">Slow Motion · 0.50×</option></select>
+          <select id="selectedGroupSelect" aria-label="Zgjidh grupin për luajtje"><option value="0">Grupi 1</option></select>
+          <button type="button" id="groupPlayBtn" class="btn btn-group-play">▶ Luaj grupin</button>
+        </div>
+        <div class="tab-audio-scrub">
+          <span>0:00</span><input type="range" id="tabSeekSlider" min="0" max="1" step="0.001" value="0" aria-label="Zgjidh sekondën në të gjithë regjistrimin"><output id="tabSeekReadout" for="tabSeekSlider">00:00.000</output>
+        </div>
+      </div>
       <div class="tab-nav" role="group" aria-label="Lëviz nëpër tablaturë dhe korrigjo kufijtë e grupeve">
         <div class="tab-nav-set"><span>PAMJA</span><button id="tabLeftBtn" class="btn btn-minimal" type="button" title="Shiko më majtas">◀ Majtas</button><button id="tabRightBtn" class="btn btn-minimal" type="button" title="Shiko më djathtas">Djathtas ▶</button><button id="tabFollowBtn" class="btn btn-minimal" type="button" title="Ndiq muzikën gjatë luajtjes">◎ Ndiq muzikën</button></div>
         <div class="tab-nav-set"><span>VIJA E GRUPIT</span><button id="tabMarkLeftBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms majtas">−50 ms</button><button id="tabMarkRightBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms djathtas">+50 ms</button></div>
@@ -173,11 +193,11 @@
       <div class="manual-toolbar" role="group" aria-label="Shënimi manual i notave">
         <button id="manualModeBtn" type="button" class="btn btn-manual" aria-pressed="false">✍ Shëno manualisht</button>
         <button id="manualClearBtn" type="button" class="btn btn-minimal" disabled>Pastro notat</button>
-        <span class="manual-hint">Dëgjo këngën dhe prek tablaturën kur fillon nota.</span>
+        <span class="manual-hint">Kliko vendin e saktë në tablaturë: muzika ndalet dhe vendos notën aty.</span>
       </div>
       <div class="tab-canvas-wrap"><canvas id="tabCanvas" tabindex="0" aria-label="Tablatura. Në mënyrën manuale, prek telin kur dëgjon një goditje, pastaj zgjidh perden." height="175"></canvas></div>
       <div id="manualEntryPanel" class="manual-entry" hidden>
-        <strong id="manualTimeLabel">00:00.00</strong>
+        <strong id="manualTimeLabel">00:00.000</strong><label for="manualTimeSeconds">Koha e notës (s)</label><input id="manualTimeSeconds" type="number" min="0" step="0.001" value="0.000" inputmode="decimal" aria-label="Koha e saktë e notës në sekonda">
         <label for="manualFretSelect">Perdja / nota</label>
         <select id="manualFretSelect" aria-label="Zgjidh perden e notës së re">
           <option value="">? — Zgjidh notën</option>
@@ -203,7 +223,7 @@
         <button id="analyzeBtn" class="btn" type="button" disabled>↻ Onset Detection</button><button id="analysisEditSavedBtn" class="btn btn-minimal" type="button" disabled>✎ Redakto këngën</button>
         <button id="analysisAddBtn" class="btn btn-minimal" type="button" disabled>＋ Shto poshtë notës së zgjedhur</button>
       </div>
-      <audio id="originalPlayer" controls preload="metadata" class="original-player" hidden aria-label="Luaj regjistrimin origjinal"></audio>
+      <audio id="originalPlayer" preload="metadata" class="original-player" hidden aria-label="Luaj regjistrimin origjinal"></audio>
       <div class="analysis-status-row"><progress id="analysisProgress" max="100" value="0"></progress><span id="analysisStatus" role="status">Ngarko një audio për të filluar shënimin manual.</span></div>
       <p class="analysis-hint">Shëno notat me dorë ndërsa dëgjon; nëse dëshiron, Onset Detection mund të propozojë fillimet e goditjeve. Plotëso perdet 1–13, 14 = F ose 15 = teli poshtë i hapur. F shtohet në tablaturë për çdo notë poshtë; hiqe vetëm kur duhet. Audioja origjinale nuk ndryshohet.</p>
       <div id="analysisEdit" class="analysis-edit" hidden>
@@ -276,6 +296,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v15/main.js"></script>
+  <script type="module" src="./js/v16/main.js"></script>
 </body>
 </html>

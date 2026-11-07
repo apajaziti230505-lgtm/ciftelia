@@ -111,3 +111,13 @@ Modulet JavaScript ngarkohen nga `js/v12/` që të mos përzihen skedarët e rin
 - Kur audioja është në pauzë, prek pozicionin kohor në tablaturë për ta futur një notë që të ka ikur. Kohën e korrigjon në milisekonda në listën e notave.
 - Për regjistrime të ruajtura, kliko **Redakto këngën** ose **Shëno manualisht** dhe ruaji korrigjimet me **Ruaj**.
 - **Pastro notat** kërkon konfirmim dhe nuk prek audion. Shënimi manual nuk ndryshon mostrën origjinale ose 30 tingujt.
+
+## V16 — Kontrolli i saktë i tablaturës
+
+- Luaj/Pauzë, Ndalo, ec −1s / +1s, −0.1s / +0.1s, zgjedhja e grupit, Luaj grupin dhe Slow Motion 0.50× janë vendosur ngjitur me tablaturën.
+- Mund të zgjedhësh sekondën e saktë (3 shifra dhjetore, saktësi hyrëse 1 ms) ose të përdorësh shiritin e navigimit për gjithë këngën.
+- Klikimi në telin e tablaturës e ndalon audion dhe kërkon të vendosë notën **në kohën e klikuar**, jo në pozicionin e vonuar të luajtjes. Vijat e grupeve lëvizen vetëm nga trekëndëshat sipër tyre.
+- Në panelin e notës së re mund të korrigjosh kohën para se ta ruash; pas shënimit mund të vazhdosh nga pozicioni i ndalur.
+- Shkalla kohore ka shenja çdo 0.1 s dhe etiketa çdo 0.5 s. Vlerat në ekran janë në milisekonda, por saktësia reale e goditjes varet nga audioja dhe përdoruesi.
+- Kontrollet përdorin të njëjtin lexues `originalPlayer` për këngët e importuara; nuk krijojnë audion e dytë.
+- Testet e logjikës dhe sintaksës janë kryer; testimi i ndërveprimit real me prekje në Android/iPhone mbetet për t'u bërë.

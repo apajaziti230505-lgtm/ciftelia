@@ -1,9 +1,9 @@
-/** Capture an onset from the original recording, not from a timer or the screen position while playing. */
+/** A precise tab click maps pixels to ms irrespective of live playback position. */
 export function manualTapTime(
   isPlaying:boolean, playerMs:number, x:number,
   viewStartMs:number, left:number, scale:number, maxDurationMs:number
 ):number {
-  const proposed=isPlaying?playerMs:viewStartMs+(x-left)/scale;
+  const proposed=viewStartMs+(x-left)/scale;
   if(!Number.isFinite(proposed))return 0;
   return Math.max(0,Math.min(Math.max(0,maxDurationMs),Math.round(proposed)));
 }

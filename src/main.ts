@@ -46,10 +46,12 @@ let tabDrag:{pointerId:number;index:number;oldStart:number;previewMs:number}|nul
 // Manual transcription: a tap captures the audio playback time; the user chooses the fret.
 let manualMode=false;
 let manualPending:{time:number;string:1|2}|null=null;
+let syntheticStartMs=0;
+let seekPendingUntilMetadata:number|null=null;
 
 const STANZA_COLORS=GROUP_COLORS;
 function importedSong(song:Song|null):boolean{return !!song?.originalAudioId;}
-function clearOriginalUrl():void { if(originalObjectUrl)URL.revokeObjectURL(originalObjectUrl);originalObjectUrl=null;originalSourceId=null;originalPlayer.removeAttribute('src');originalPlayer.load(); }
+function clearOriginalUrl():void { seekPendingUntilMetadata=null;if(originalObjectUrl)URL.revokeObjectURL(originalObjectUrl);originalObjectUrl=null;originalSourceId=null;originalPlayer.removeAttribute('src');originalPlayer.load(); }
 function showOriginalBlob(blob:Blob,id:string):void {
   clearOriginalUrl();originalObjectUrl=URL.createObjectURL(blob);originalSourceId=id;
   originalPlayer.src=originalObjectUrl;originalPlayer.hidden=false;originalPlayer.load();
@@ -261,6 +263,7 @@ function stopPlayback():void {
   playToken++;cancelAnimationFrame(playFrame);audio.stop();originalPlayer.pause();
   activeGroupEndMs=null;currentPlayMode='all';showActive([]);
   $('playBtn').textContent='▶ Luaj';$('groupPlayBtn').textContent='▶ Luaj grupin';$('studioState').textContent='GATI';
+  syncTabTransport();
 }
 function selectedGroupRange(song:Song):{start:number;end:number;name:string;index:number}{
   const groups=activeSongGroups(song);
@@ -317,6 +320,96 @@ async function playSelectedGroup():Promise<void>{
       playFrame=requestAnimationFrame(loop);
     };loop();
   }catch(e){stopPlayback();setStatus('Gabim gjatë luajtjes së grupit: '+String(e));}
+}
+/** All tab controls share the exact original audio clock and position. */
+function playbackPositionMs():number {
+  return importedSong(currentSong()) && Number.isFinite(originalPlayer.currentTime)
+    ? originalPlayer.currentTime*1000
+    : audio.playing ? syntheticStartMs + audio.elapsedMs*playbackSpeed : tabCurrentMs;
+}
+function activeSeekEndMs():number {
+  const song=currentSong();
+  if(importedSong(song) && Number.isFinite(originalPlayer.duration) && originalPlayer.duration>0)
+    return Math.round(originalPlayer.duration*1000);
+  return tabSongEnd(song);
+}
+function preciseTime(ms:number):string {
+  return (Math.max(0,ms)/1000).toFixed(3);
+}
+function syncTabTransport():void {
+  const song=currentSong(), maxMs=activeSeekEndMs();
+  const ms=Math.max(0,Math.min(tabCurrentMs,maxMs));
+  const seconds=$<HTMLInputElement>('tabSeekSeconds');
+  if(document.activeElement!==seconds)seconds.value=preciseTime(ms);
+  seconds.max=preciseTime(maxMs);
+  const slider=$<HTMLInputElement>('tabSeekSlider');
+  slider.max=preciseTime(maxMs);
+  if(document.activeElement!==slider)slider.value=preciseTime(ms);
+  $('tabSeekReadout').textContent=`${fmt(ms)} · ${preciseTime(ms)} s`;
+  const playing=importedSong(song) ? !originalPlayer.paused : audio.playing;
+  $('playBtn').textContent=playing?'⏸ Pauzë':'▶ Luaj';
+}
+/** Pause before seeking so the player cannot overwrite the clicked position. */
+function seekToMs(target:number):void {
+  const song=currentSong();if(!song)return;
+  const end=activeSeekEndMs();
+  const ms=Math.max(0,Math.min(end,Number.isFinite(target)?Math.round(target):0));
+  if(importedSong(song)){
+    originalPlayer.pause();
+    try {
+      if(originalPlayer.readyState>0){originalPlayer.currentTime=ms/1000;seekPendingUntilMetadata=null;}
+      else seekPendingUntilMetadata=ms;
+    }catch{seekPendingUntilMetadata=ms;}
+  }else{
+    playToken++;cancelAnimationFrame(playFrame);audio.stop();
+  }
+  activeGroupEndMs=null;currentPlayMode='all';
+  tabCurrentMs=ms;tabFollowPlayback=false;
+  const geom=visibleTab(),x=timelineX(ms,tabViewStartMs,geom.left,geom.scale);
+  if(x<geom.left || x>geom.width-geom.right){
+    tabViewStartMs=clampTimelineStart(ms-geom.visibleMs*.45,geom.visibleMs,tabSongEnd(song));
+  }
+  drawTab(song,ms);
+  $('timeLabel').textContent=`${fmt(ms)} / ${fmt(activeSeekEndMs())}`;
+  setStatus(`U ndal te ${preciseTime(ms)} s. Kliko telin në tablaturë për të vendosur notën.`);
+}
+/** For synthesized demos, play only notes after the chosen cursor. */
+async function playSynthFromCursor():Promise<void>{
+  const song=currentSong();if(!song||!song.notes.length)return;
+  const first=Math.max(0,tabCurrentMs);
+  const events=song.notes.filter(n=>n.time>=first);
+  if(!events.length){seekToMs(0);return;}
+  const clip:Song={...song,notes:events.map(e=>({...e,time:e.time-first}))};
+  playToken++;const token=playToken;syntheticStartMs=first;
+  try{
+    await audio.play(clip,playbackSpeed);
+    if(token!==playToken)return;
+    const frame=()=>{
+      if(token!==playToken||!audio.playing)return;
+      const ms=Math.min(activeSeekEndMs(),syntheticStartMs+audio.elapsedMs*playbackSpeed);
+      drawTab(song,ms);$('timeLabel').textContent=`${fmt(ms)} / ${fmt(activeSeekEndMs())}`;
+      const now=song.notes.filter(e=>Math.abs(e.time-ms)<70);if(now.length)showActive(now);
+      if(audio.done()){audio.stop();syncTabTransport();return;}
+      playFrame=requestAnimationFrame(frame);
+    };frame();
+  }catch(e){setStatus(`Luajtja nuk nisi: ${String(e)}`);syncTabTransport();}
+}
+/** Same Play/Pause button resumes from the chosen second; never resets unexpectedly. */
+async function toggleTabPlay():Promise<void>{
+  if(micActive){setStatus('Ndalo mikrofonin përpara luajtjes.');return;}
+  if(manualPending){setStatus('Vendos ose anulo notën e hapur para luajtjes.');return;}
+  const song=currentSong();if(!song)return;
+  if(importedSong(song)){
+    if(!originalPlayer.src){setStatus('Audioja origjinale nuk është gati.');return;}
+    if(!originalPlayer.paused){originalPlayer.pause();tabCurrentMs=originalPlayer.currentTime*1000;redrawTab();return;}
+    if(Number.isFinite(originalPlayer.duration) && originalPlayer.currentTime>=originalPlayer.duration-.02){seekToMs(0);}
+    configurePlaybackSpeed();
+    try{await originalPlayer.play();}catch(e){setStatus('Luajtja nuk nisi: '+String(e));}
+  }else{
+    if(audio.playing){const at=playbackPositionMs();playToken++;cancelAnimationFrame(playFrame);audio.stop();tabCurrentMs=at;redrawTab();return;}
+    await playSynthFromCursor();
+  }
+  syncTabTransport();
 }
 async function playCurrent():Promise<void> {
   if(micActive){setStatus('Ndalo mikrofonin para luajtjes.');return;}
@@ -464,13 +557,15 @@ function drawTab(song:Song|null,elapsed=tabCurrentMs):void {
   for(const y of [60,120]){c.beginPath();c.moveTo(left,y);c.lineTo(w-right,y);c.stroke();}
   c.fillStyle='#9baebc';c.font=w<430?'10px system-ui':'12px system-ui';
   c.fillText('LART',12,62);c.fillText('POSHTË',12,122);
-  // Seconds on the visible time ruler.
-  c.font='10px system-ui';c.fillStyle='#819bb0';
-  for(let sec=Math.ceil(tabViewStartMs/1000);sec*1000<=tabViewStartMs+visibleMs;sec++){
-    const sx=timelineX(sec*1000,tabViewStartMs,left,scale);
-    if(sx<left+7||sx>w-right-15)continue;
-    c.globalAlpha=.55;c.strokeStyle='#516477';c.beginPath();c.moveTo(sx,26);c.lineTo(sx,155);c.stroke();c.globalAlpha=1;
-    c.fillText(`${sec}s`,sx+3,170);
+  // Accurate 0.5 s grid, 0.1 s subdivisions; labels show decimal seconds.
+  c.font='10px system-ui';c.fillStyle='#9bb4c6';
+  for(let tick=Math.ceil(tabViewStartMs/100);tick*100<=tabViewStartMs+visibleMs;tick++){
+    const at=tick*100,sx=timelineX(at,tabViewStartMs,left,scale);
+    if(sx<left||sx>w-right)continue;
+    const major=tick%5===0, whole=tick%10===0;
+    c.strokeStyle=major?'#50677f':'#304154';c.lineWidth=major?1:.6;
+    c.globalAlpha=major?.65:.28;c.beginPath();c.moveTo(sx,major?26:146);c.lineTo(sx,155);c.stroke();c.globalAlpha=1;
+    if(major && sx<w-right-32)c.fillText(`${(at/1000).toFixed(whole?0:1)} s`,sx+3,170);
   }
   // Colored boundary lines and draggable handles. The first group starts at zero (fixed).
   for(let i=1;i<visualGroups.length;i++){
@@ -517,17 +612,16 @@ function drawTab(song:Song|null,elapsed=tabCurrentMs):void {
   c.fillStyle='#132437';c.fillRect(0,0,left-1,h);
   c.fillStyle='#a7bccc';c.font='bold 11px system-ui';c.fillText('TELI LART',7,47);c.fillText('TELI POSHTË',7,106);
   setTabControls(song,geom);
+  syncTabTransport();
 }
 function renderTimeline():void {
   drawTab(songForDisplay(),tabCurrentMs);
   const song=songForDisplay();
   $('timeLabel').textContent=`${fmt(tabCurrentMs)} / ${fmt(tabSongEnd(song))}`;
 }
-/** When playing, the audio clock is authoritative. When paused, the horizontal tap picks the time. */
+/** A click must use its own position, even if music was playing elsewhere. */
 function captureManualTime(x:number,geom:ReturnType<typeof timelineGeometry>):number {
-  const song=currentSong();const duration=tabSongEnd(song);
-  const playing=!originalPlayer.paused&&!originalPlayer.ended;
-  return manualTapTime(playing,originalPlayer.currentTime*1000,x,tabViewStartMs,geom.left,geom.scale,duration);
+  return manualTapTime(false,0,x,tabViewStartMs,geom.left,geom.scale,activeSeekEndMs());
 }
 function renderManualMode():void{
   const btn=$<HTMLButtonElement>('manualModeBtn');
@@ -537,7 +631,7 @@ function renderManualMode():void{
   $('manualEntryPanel').hidden=!manualPending;
   $('manualClearBtn').toggleAttribute('disabled',!editableTab()||!importedHits.length);
   $('tabHelp').textContent=manualMode
-    ?'Luaj regjistrimin. Kur dëgjon një notë, prek TELI POSHTË ose TELI LART në tablaturë; audioja ndalet, zgjedh perden dhe vazhdon. Kur është ndalur, prekja vendos kohën aty ku klikon.'
+    ?'Kliko te sekonda ku dëshiron notën: kënga ndalet në atë pozicion. Zgjidh perden dhe përdor Vendos & Vazhdo. Koha mund të rregullohet në 0.001 sekonda.'
     :'Tërhiq vijën e grupit për të korrigjuar kufirin. Përdor ✍ Shëno manualisht për të vendosur notat ndërsa dëgjon muzikën.';
 }
 function cancelManualNote():void{
@@ -548,16 +642,16 @@ function beginManualNote(x:number,y:number,geom:ReturnType<typeof timelineGeomet
     setStatus('Për shënim manual, importo një audio ose hap Redakto këngën.');return;
   }
   if(manualPending){setStatus('Përfundo ose anulo notën e mëparshme.');return;}
-  const wasPlaying=!originalPlayer.paused;
   const time=captureManualTime(x,geom);
   const string:1|2=y<90?2:1;
-  if(wasPlaying)originalPlayer.pause();
+  seekToMs(time);
   manualPending={time,string};
   const select=$<HTMLSelectElement>('manualFretSelect');
   select.value=string===2?'14':'';
   $<HTMLInputElement>('manualFCompanion').checked=string===1;
   $<HTMLInputElement>('manualFCompanion').disabled=string===2;
-  $('manualTimeLabel').textContent=`${fmt(time)} · ${string===2?'Teli lart':'Teli poshtë'}`;
+  $('manualTimeLabel').textContent=`${preciseTime(time)} s · ${string===2?'Teli lart':'Teli poshtë'}`;
+  $<HTMLInputElement>('manualTimeSeconds').value=preciseTime(time);
   renderManualMode();
   tabFollowPlayback=false;
   focusTimelineAt(time);
@@ -571,7 +665,13 @@ function commitManualNote(resume:boolean):void{
   if(!Number.isInteger(noteNumber)||noteNumber<1||noteNumber>15){
     setStatus('Zgjidh perden 1–13, F (14) ose telin e poshtëm të hapur (15).');return;
   }
-  const time=manualPending.time;
+  const entered=Number($<HTMLInputElement>('manualTimeSeconds').value);
+  if(!Number.isFinite(entered)||entered<0||entered*1000>activeSeekEndMs()){
+    setStatus('Shkruaj sekonda të vlefshme për notën.');return;
+  }
+  const time=Math.round(entered*1000);
+  // The saved note follows the precise user-selected second, not the old playback clock.
+  seekToMs(time);
   const groupStart=stanzas[groupAtTime(stanzas,time)]?.start??0;
   const h:GuessedHit=manualNote(noteNumber,time,$<HTMLInputElement>('manualFCompanion').checked,groupStart);
   importedHits.push(h);
@@ -599,25 +699,42 @@ function installTabInteraction():void{
   });
   $('tabMarkLeftBtn').addEventListener('click',()=>moveSelectedMarker(-50));
   $('tabMarkRightBtn').addEventListener('click',()=>moveSelectedMarker(50));
+  $('tabBackBtn').addEventListener('click',()=>seekToMs(playbackPositionMs()-1000));
+  $('tabNextBtn').addEventListener('click',()=>seekToMs(playbackPositionMs()+1000));
+  $('tabFineBackBtn').addEventListener('click',()=>seekToMs(playbackPositionMs()-100));
+  $('tabFineNextBtn').addEventListener('click',()=>seekToMs(playbackPositionMs()+100));
+  const seekSeconds=$<HTMLInputElement>('tabSeekSeconds');
+  const submitSeek=()=>{
+    if(!seekSeconds.value.trim()||!Number.isFinite(Number(seekSeconds.value)))return;
+    seekToMs(Number(seekSeconds.value)*1000);
+  };
+  $('tabSeekGoBtn').addEventListener('click',submitSeek);
+  seekSeconds.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitSeek();seekSeconds.blur();}});
+  seekSeconds.addEventListener('change',submitSeek);
+  const seekSlider=$<HTMLInputElement>('tabSeekSlider');
+  seekSlider.addEventListener('input',()=>seekToMs(Number(seekSlider.value)*1000));
+  seekSlider.addEventListener('change',()=>{seekSlider.blur();syncTabTransport();});
   canvas.addEventListener('pointerdown',(event:PointerEvent)=>{
     const song=songForDisplay();if(!song)return;
     const rect=canvas.getBoundingClientRect(),geom=visibleTab();
     const x=event.clientX-rect.left,y=event.clientY-rect.top;
-    if(y<17||y>162||x<geom.left-17||x>geom.width-geom.right+8)return;
-    const groups=tabCurrentGroups(song);
-    const index=findGroupBoundary(groups,x,tabViewStartMs,geom.left,geom.scale,19);
-    if(index<1){
-      if(manualMode && y>=37 && y<=146){beginManualNote(x,y,geom);event.preventDefault();}
-      return;
+    if(y<16||y>162||x<geom.left||x>geom.width-geom.right)return;
+    // In the string area, a tap ALWAYS selects the tapped second, not a nearby group marker.
+    if(y>=37){
+      if(manualMode && editableTab())beginManualNote(x,y,geom);
+      else seekToMs(timelineTime(x,tabViewStartMs,geom.left,geom.scale));
+      event.preventDefault();return;
     }
+    // Group boundaries can only be dragged by their top triangles.
+    const groups=tabCurrentGroups(song);
+    const index=findGroupBoundary(groups,x,tabViewStartMs,geom.left,geom.scale,13);
+    if(index<1){seekToMs(timelineTime(x,tabViewStartMs,geom.left,geom.scale));event.preventDefault();return;}
     if(!editableTab()){
       selectedGroupStart=groups[index].start;
       refreshGroupPicker(song);redrawTab();
-      setStatus('Për të tërhequr këtë vijë, shtyp Redakto këngën.');
-      return;
+      setStatus('Për të tërhequr këtë vijë, shtyp Redakto këngën.');return;
     }
-    selectedGroupStart=groups[index].start;
-    tabFollowPlayback=false;
+    selectedGroupStart=groups[index].start;tabFollowPlayback=false;
     tabDrag={pointerId:event.pointerId,index,oldStart:groups[index].start,previewMs:groups[index].start};
     canvas.setPointerCapture(event.pointerId);
     canvas.style.cursor='ew-resize';event.preventDefault();redrawTab();
@@ -959,16 +1076,16 @@ function init():void {
   $('songSelect').addEventListener('change',e=>{stopPlayback();manualPending=null;manualMode=false;renderManualMode();selectedGroupStart=0;tabViewStartMs=0;tabCurrentMs=0;tabFollowPlayback=true;selectedId=(e.target as HTMLSelectElement).value;renderSongs();renderImportedHits();void prepareOriginalForSelection();});
   $('recordBtn').addEventListener('click',recordKeyboard);
   $('micBtn').addEventListener('click',()=>void toggleMic());
-  $('playBtn').addEventListener('click',()=>void playCurrent());
+  $('playBtn').addEventListener('click',()=>void toggleTabPlay());
   $('groupPlayBtn').addEventListener('click',()=>void playSelectedGroup());
   $('selectedGroupSelect').addEventListener('change',e=>selectGroup(Number((e.target as HTMLSelectElement).value)));
   $('playbackSpeed').addEventListener('change',e=>{
-    if(audio.playing)stopPlayback(); // Ngjarjet tashmë të planifikuara nuk mund të ndryshohen në mes të këngës.
+    if(audio.playing)seekToMs(playbackPositionMs()); // Ndalo planifikimin e vjetër para ndryshimit të shpejtësisë.
     playbackSpeed=Number((e.target as HTMLSelectElement).value)===0.5?0.5:1;
     configurePlaybackSpeed();
     setStatus(`Shpejtësia: ${playbackSpeed.toFixed(2)}×`);
   });
-  $('stopBtn').addEventListener('click',()=>{stopPlayback();if(micActive)stopMic();if(keyboardRecordStart!==null)recordKeyboard();setStatus('Ndaluar.');});
+  $('stopBtn').addEventListener('click',()=>{stopPlayback();if(micActive)stopMic();if(keyboardRecordStart!==null)recordKeyboard();seekToMs(0);setStatus('Ndaluar në fillim.');});
   $('saveBtn').addEventListener('click',()=>void saveDraft());
   $('deleteBtn').addEventListener('click',()=>void deleteSong());
   $('exportBtn').addEventListener('click',()=>{const song=currentSong();if(song)exportSong(song);});
@@ -994,7 +1111,12 @@ function init():void {
     insertNoteBelow(selectedImportedHit);
   });
   $('analysisMoreBtn').addEventListener('click',()=>{analysisRowsVisible+=60;renderImportedHits();});
-  originalPlayer.addEventListener('loadedmetadata',redrawTab);
+  originalPlayer.addEventListener('loadedmetadata',()=>{
+    if(seekPendingUntilMetadata!==null){
+      originalPlayer.currentTime=Math.min(originalPlayer.duration,seekPendingUntilMetadata/1000);seekPendingUntilMetadata=null;
+    }
+    redrawTab();syncTabTransport();
+  });
   originalPlayer.addEventListener('play',()=>{
     const song=currentSong();if(!importedSong(song))return;
     audio.stop();cancelAnimationFrame(playFrame);const token=++playToken;
@@ -1011,7 +1133,7 @@ function init():void {
     };tick();
     setStatus('Po luhet regjistrimi origjinal. 220 Hz nuk shtohet artificialisht.');
   });
-  originalPlayer.addEventListener('pause',()=>{cancelAnimationFrame(playFrame);if(importedSong(currentSong())){$('playBtn').textContent='▶ Luaj';$('studioState').textContent='PAUZË';}});
+  originalPlayer.addEventListener('pause',()=>{cancelAnimationFrame(playFrame);if(importedSong(currentSong())){$('playBtn').textContent='▶ Luaj';$('studioState').textContent='PAUZË';syncTabTransport();}});
   originalPlayer.addEventListener('ended',()=>{stopPlayback();setStatus('Kënga origjinale përfundoi.');});
   originalPlayer.addEventListener('timeupdate',()=>{
     const song=currentSong();if(!importedSong(song))return;
@@ -1033,7 +1155,7 @@ function init():void {
   window.addEventListener('keydown',e=>{
     if(e.repeat||e.altKey||e.metaKey||e.ctrlKey||['INPUT','TEXTAREA','SELECT'].includes((document.activeElement?.tagName||'')))return;
     const index=KEYS.indexOf(e.key.toLowerCase());if(index>=0){e.preventDefault();void hit(index+1,1);}
-    if(e.code==='Space'){e.preventDefault();void playCurrent();}
+    if(e.code==='Space'){e.preventDefault();void toggleTabPlay();}
   });
   window.addEventListener('resize',()=>renderTimeline());
   window.addEventListener('pagehide',()=>{if(micActive)mic.stop();audio.stop();originalPlayer.pause();});
