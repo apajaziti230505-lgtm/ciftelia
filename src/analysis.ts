@@ -7,6 +7,7 @@ export interface GuessedHit {
   string: 1 | 2;
   confidence: number;
   detail: string;
+  withF?: boolean;
 }
 export interface AnalysisReport {
   hits: GuessedHit[];
