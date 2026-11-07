@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {notesAtMoment} from '../js/practice.js';
+import {groupForNote} from '../js/grouping.js';
+const notes=[{time:100,noteNumber:4,string:1},{time:330,noteNumber:5,string:1},{time:330,noteNumber:14,string:2}];
+assert.deepEqual(notesAtMoment(notes,50),[]);
+assert.deepEqual(notesAtMoment(notes,100).map(x=>x.noteNumber),[4]);
+assert.deepEqual(notesAtMoment(notes,289),[notes[0]]);
+assert.deepEqual(notesAtMoment(notes,290),[]);
+assert.deepEqual(notesAtMoment(notes,350).map(x=>x.noteNumber),[5,14]);
+assert.deepEqual(notesAtMoment(notes,600),[]);
+assert.deepEqual(notesAtMoment(notes,NaN),[]);
+const groups=[{start:0,color:'#e8b45a'},{start:320,color:'#42bdae'}];
+assert.equal(groups[groupForNote(groups,notes[1])].color,'#42bdae');
+console.log('OK V19: shenjat janë momentale, jo të ngjitura; ngjyra ndjek grupin.');

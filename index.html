@@ -155,6 +155,17 @@
           <g id="highlights" pointer-events="none"></g>
           <g id="hit-zones"></g>
         </svg></div></div>
+      <div class="practice-strip" aria-label="Ushtrime pranë çiftelisë">
+        <button id="practiceAllBtn" type="button" class="btn btn-primary">▶ Gjithë kënga</button>
+        <select id="practiceGroupSelect" aria-label="Grupi për ushtrim"><option value="0">Grupi 1</option></select>
+        <button id="practiceGroupBtn" type="button" class="btn btn-group-play">▶ Grupi</button>
+        <button id="practicePauseBtn" type="button" class="btn btn-minimal">⏸ Pauzë</button>
+        <button id="practiceStopBtn" type="button" class="btn btn-minimal">■ Ndalo</button>
+        <select id="practiceSpeedSelect" aria-label="Shpejtësia e ushtrimit">
+          <option value="1">1.00× Normal</option><option value="0.5">0.50× Ngadalë</option>
+        </select>
+        <span class="practice-indicator">Tani <strong id="practiceNoteNow">—</strong><span class="practice-arrow">→</span>Më pas <strong id="practiceNoteNext">—</strong></span>
+      </div>
     </section>
 
     <section class="transport" aria-label="Këngët dhe kontrollet">
@@ -195,6 +206,13 @@
         <button id="instantTabNoteBtn" type="button" class="btn btn-instant-note" aria-pressed="false" title="Prek kudo në tablaturë te sekonda që dëshiron dhe zgjidh perden">📍 Kliko kudo → Notë</button>
         <button id="manualClearBtn" type="button" class="btn btn-minimal" disabled>Pastro notat</button>
         <span class="manual-hint">Dy mënyra: cakto sekondën me Shko, ose aktivizo Kliko kudo → Notë.</span>
+      </div>
+      <div id="tabNoteEditBar" class="tab-note-editor" hidden role="group" aria-label="Redakto notën e zgjedhur">
+        <span>Nota: <strong id="tabNoteSelected">—</strong></span>
+        <button id="tabNoteLeftBtn" type="button" class="btn btn-minimal" title="Zhvendose notën 50 ms majtas">◀ −50 ms</button>
+        <button id="tabNoteRightBtn" type="button" class="btn btn-minimal" title="Zhvendose notën 50 ms djathtas">+50 ms ▶</button>
+        <button id="tabNoteDeleteBtn" type="button" class="btn btn-danger" title="Fshi vetëm këtë notë">Fshi notën</button>
+        <small>Ose tërhiq notën majtas/djathtas. Ruaj pas ndryshimit.</small>
       </div>
       <div class="tab-canvas-wrap"><canvas id="tabCanvas" tabindex="0" aria-label="Tablatura interaktive: cakto sekondën, ose aktivizo Kliko kudo për të shtuar notën në pozicionin horizontal të prekur." height="175"></canvas></div>
       <div id="manualEntryPanel" class="manual-entry" hidden>
@@ -297,6 +315,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v17/main.js"></script>
+  <script type="module" src="./js/v19/main.js"></script>
 </body>
 </html>

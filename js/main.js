@@ -7,6 +7,7 @@ import { putOriginal, getOriginal, deleteOriginal } from './local-audio.js';
 import { GROUP_COLORS, detectNoteGroups, groupAtTime, groupForNote } from './grouping.js';
 import { timelineGeometry, timelineX, timelineTime, clampTimelineStart, clampGroupBoundary, findGroupBoundary } from './timeline.js';
 import { manualAnywhereTime, manualNote } from './manual.js';
+import { notesAtMoment } from './practice.js';
 const $ = (id) => document.getElementById(id);
 const svg = document.getElementById('ciftelia');
 const fretLayer = document.getElementById('fret-layer');
@@ -49,6 +50,8 @@ let instantTabNoteMode = false;
 let manualPending = null;
 let syntheticStartMs = 0;
 let seekPendingUntilMetadata = null;
+let lastDisplayKey = '';
+let tabNoteDrag = null;
 const STANZA_COLORS = GROUP_COLORS;
 function importedSong(song) { return !!song?.originalAudioId; }
 function clearOriginalUrl() { seekPendingUntilMetadata = null; if (originalObjectUrl)
@@ -118,6 +121,10 @@ function refreshGroupPicker(song) {
         selectedGroupStart = groups[0].start;
     select.replaceChildren(...groups.map((g, i) => new Option(g.label, String(g.start))));
     select.value = String(selectedGroupStart);
+    const top = $('practiceGroupSelect');
+    top.replaceChildren(...groups.map((g, i) => new Option(g.label, String(g.start))));
+    top.value = String(selectedGroupStart);
+    $('practiceGroupBtn').toggleAttribute('disabled', !song || (!song.notes.length && !importedSong(song)));
     $('groupPlayBtn').toggleAttribute('disabled', !song || (!song.notes.length && !importedSong(song)));
 }
 function selectGroup(start) {
@@ -127,6 +134,7 @@ function selectGroup(start) {
         return;
     selectedGroupStart = group.start;
     $('selectedGroupSelect').value = String(group.start);
+    $('practiceGroupSelect').value = String(group.start);
     document.querySelectorAll('.stanza-entry').forEach(el => el.classList.toggle('group-active', el.dataset.groupStart === String(group.start)));
     focusTimelineAt(group.start);
     setStatus(`U zgjodh ${group.label}. Vija me ngjyrë shfaqet në tablaturë.`);
@@ -153,6 +161,7 @@ function renderSongs() {
     $('exportBtn').toggleAttribute('disabled', !selectedSong || !selectedSong.notes.length);
     $('songMeta').textContent = `${selectedSong?.notes.length ?? 0} nota · ${selectedSong ? fmt((selectedSong.notes.at(-1)?.time ?? 0) + 300) : '00:00.00'}`;
     refreshGroupPicker(selectedSong);
+    clearPlayedNote();
     renderTimeline();
 }
 function sEl(tag, attrs, text) {
@@ -192,23 +201,47 @@ function renderInstrument() {
         hitZones.append(cup);
     }
 }
-function showActive(events) {
-    highlights.replaceChildren();
+function showActive(events, groupColor = '#e8b45a') {
+    const lead = events.find(e => e.string === 1) ?? events[0];
     const visualEvents = withOpenF(events);
+    const key = visualEvents.map(e => `${e.string}/${e.noteNumber}`).join('|') + '@' + groupColor;
+    if (key === lastDisplayKey)
+        return;
+    lastDisplayKey = key;
+    highlights.replaceChildren();
     const shown = new Set();
     for (const ev of visualEvents) {
-        const key = `${ev.string}-${ev.noteNumber}`;
-        if (shown.has(key))
+        const id = `${ev.string}-${ev.noteNumber}`;
+        if (shown.has(id))
             continue;
-        shown.add(key);
+        shown.add(id);
         const cx = ev.noteNumber >= 14 ? 1175 : (fretXs[ev.noteNumber - 1] + fretXs[ev.noteNumber]) / 2;
         const cy = ev.string === 1 ? 240 : 219;
-        highlights.append(sEl('circle', { cx, cy, r: 17, fill: '#fbbf24', opacity: .32, filter: 'url(#glow)' }));
-        highlights.append(sEl('circle', { cx, cy, r: 7.7, fill: '#f59e0b', stroke: '#fef3c7', 'stroke-width': 2 }));
+        const color = ev.string === 2 ? '#63d9c9' : groupColor;
+        const label = ev.noteNumber === 14 ? 'F' : ev.noteNumber === 15 ? 'G' : String(ev.noteNumber);
+        highlights.append(sEl('circle', { cx, cy, r: 23, fill: color, opacity: .33, filter: 'url(#glow)' }));
+        highlights.append(sEl('circle', { cx, cy, r: 14.5, fill: color, stroke: '#fff4e0', 'stroke-width': 2.4 }));
+        highlights.append(sEl('text', { x: cx, y: cy + 5.4, 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 850, fill: '#122133', 'pointer-events': 'none' }, label));
     }
-    const last = [...events].reverse().find(e => e.noteNumber !== 14) ?? events.at(-1);
-    $('liveNote').textContent = last ? `${labelFor(last.noteNumber)}${last.noteNumber !== 14 && last.withF !== false ? ' + F' : ''}` : '—';
-    $('liveHz').textContent = last ? `${HZ[last.noteNumber - 1]} Hz${last.noteNumber !== 14 && last.withF !== false ? ' · F' : ''}` : '— Hz';
+    $('liveNote').textContent = lead ? (lead.noteNumber === 14 ? 'F' : lead.noteNumber === 15 ? 'G' : String(lead.noteNumber)) : '—';
+    $('liveHz').textContent = lead ? `${HZ[lead.noteNumber - 1]} Hz` : '— Hz';
+}
+/** Active markings represent the attack, not a latch that persists until another note. */
+function updatePlaybackNotes(song, ms) {
+    const active = notesAtMoment(song.notes, ms);
+    const lead = active.find(n => n.string === 1) ?? active[0];
+    const groups = activeSongGroups(song);
+    const color = lead ? groups[groupForNote(groups, lead)]?.color || GROUP_COLORS[0] : GROUP_COLORS[0];
+    showActive(active, color);
+    const following = song.notes.find(n => n.time > ms + 35 && n.noteNumber !== 14);
+    const descriptor = (n) => n ? n.noteNumber === 14 ? 'F' : n.noteNumber === 15 ? 'G' : `Perdja ${n.noteNumber}` : '—';
+    $('practiceNoteNow').textContent = descriptor(lead);
+    $('practiceNoteNext').textContent = descriptor(following);
+}
+function clearPlayedNote() {
+    showActive([]);
+    $('practiceNoteNow').textContent = '—';
+    $('practiceNoteNext').textContent = '—';
 }
 function renderKeys() {
     const root = $('keypad');
@@ -358,7 +391,7 @@ function stopPlayback() {
     originalPlayer.pause();
     activeGroupEndMs = null;
     currentPlayMode = 'all';
-    showActive([]);
+    clearPlayedNote();
     $('playBtn').textContent = '▶ Luaj';
     $('groupPlayBtn').textContent = '▶ Luaj grupin';
     $('studioState').textContent = 'GATI';
@@ -442,9 +475,7 @@ async function playSelectedGroup() {
             const ms = first + audio.elapsedMs * playbackSpeed;
             drawTab(song, ms);
             $('timeLabel').textContent = `${fmt(ms)} / ${fmt(range.end)}`;
-            const active = notes.filter(n => Math.abs(n.time - ms) < 75);
-            if (active.length)
-                showActive(active);
+            updatePlaybackNotes(song, ms);
             if (audio.done()) {
                 completeGroupPlayback();
                 return;
@@ -487,6 +518,8 @@ function syncTabTransport() {
     $('tabSeekReadout').textContent = `${fmt(ms)} · ${preciseTime(ms)} s`;
     const playing = importedSong(song) ? !originalPlayer.paused : audio.playing;
     $('playBtn').textContent = playing ? '⏸ Pauzë' : '▶ Luaj';
+    $('practicePauseBtn').textContent = playing ? '⏸ Pauzë' : '▶ Vazhdo';
+    $('practiceSpeedSelect').value = String(playbackSpeed);
 }
 /** Pause before seeking so the player cannot overwrite the clicked position. */
 function seekToMs(target) {
@@ -516,6 +549,7 @@ function seekToMs(target) {
     }
     activeGroupEndMs = null;
     currentPlayMode = 'all';
+    clearPlayedNote();
     tabCurrentMs = ms;
     tabFollowPlayback = false;
     const geom = visibleTab(), x = timelineX(ms, tabViewStartMs, geom.left, geom.scale);
@@ -551,11 +585,10 @@ async function playSynthFromCursor() {
             const ms = Math.min(activeSeekEndMs(), syntheticStartMs + audio.elapsedMs * playbackSpeed);
             drawTab(song, ms);
             $('timeLabel').textContent = `${fmt(ms)} / ${fmt(activeSeekEndMs())}`;
-            const now = song.notes.filter(e => Math.abs(e.time - ms) < 70);
-            if (now.length)
-                showActive(now);
+            updatePlaybackNotes(song, ms);
             if (audio.done()) {
                 audio.stop();
+                clearPlayedNote();
                 syncTabTransport();
                 return;
             }
@@ -588,6 +621,7 @@ async function toggleTabPlay() {
         }
         if (!originalPlayer.paused) {
             originalPlayer.pause();
+            clearPlayedNote();
             tabCurrentMs = originalPlayer.currentTime * 1000;
             redrawTab();
             return;
@@ -609,6 +643,7 @@ async function toggleTabPlay() {
             playToken++;
             cancelAnimationFrame(playFrame);
             audio.stop();
+            clearPlayedNote();
             tabCurrentMs = at;
             redrawTab();
             return;
@@ -668,9 +703,7 @@ async function playCurrent() {
             if (token !== playToken)
                 return;
             const ms = audio.elapsedMs * playbackSpeed;
-            const current = song.notes.filter(n => Math.abs(n.time - ms) < 75);
-            if (current.length)
-                showActive(current);
+            updatePlaybackNotes(song, ms);
             drawTab(song, ms);
             $('timeLabel').textContent = `${fmt(ms)} / ${fmt(song.notes.at(-1).time + 600)}`;
             if (audio.done()) {
@@ -964,7 +997,8 @@ function drawTab(song, elapsed = tabCurrentMs) {
     }
     if (song) {
         for (const e of withOpenF(song.notes)) {
-            const x = timelineX(e.time, tabViewStartMs, left, scale);
+            const drawTime = tabNoteDrag && selectedImportedHit && e.time === tabNoteDrag.startTime && e.noteNumber === tabNoteDrag.hit.noteNumber && e.string === tabNoteDrag.hit.string ? tabNoteDrag.previewMs : e.time;
+            const x = timelineX(drawTime, tabViewStartMs, left, scale);
             if (x < left - 11 || x > w - right + 11)
                 continue;
             const y = e.string === 1 ? 120 : 60;
@@ -977,6 +1011,13 @@ function drawTab(song, elapsed = tabCurrentMs) {
             c.strokeStyle = groupColor;
             c.lineWidth = 2;
             c.stroke();
+            if (selectedImportedHit && e.time === selectedImportedHit.time && e.noteNumber === selectedImportedHit.noteNumber && e.string === selectedImportedHit.string) {
+                c.beginPath();
+                c.arc(x, y, 15, 0, Math.PI * 2);
+                c.strokeStyle = '#f8f9fa';
+                c.lineWidth = 2;
+                c.stroke();
+            }
             c.fillStyle = Math.abs(e.time - tabCurrentMs) < 60 ? '#141e2b' : '#f6e6ca';
             c.font = 'bold 12px system-ui';
             c.textAlign = 'center';
@@ -1020,6 +1061,55 @@ function drawTab(song, elapsed = tabCurrentMs) {
     c.fillText('TELI POSHTË', 7, 106);
     setTabControls(song, geom);
     syncTabTransport();
+}
+/** Editing a note on the canvas never moves its neighbors. */
+function editSelectedTabNote(delta) {
+    const hit = selectedImportedHit;
+    if (!editableTab() || !hit || !importedHits.includes(hit))
+        return;
+    hit.time = Math.max(0, Math.min(activeSeekEndMs(), Math.round(hit.time + delta)));
+    hit.detail = 'Koha u korrigjua në tablaturë';
+    updateImportDraft();
+    renderImportedHits();
+    redrawTab();
+    setStatus(`Nota ${hit.noteNumber ?? '?'} u vendos te ${preciseTime(hit.time)} s. Shtyp Ruaj.`);
+}
+function deleteSelectedTabNote() {
+    const hit = selectedImportedHit;
+    if (!editableTab() || !hit || !importedHits.includes(hit))
+        return;
+    importedHits = importedHits.filter(n => n !== hit);
+    selectedImportedHit = null;
+    updateImportDraft();
+    renderImportedHits();
+    redrawTab();
+    setStatus('Nota e zgjedhur u fshi. Shtyp Ruaj që ndryshimi të mbetet.');
+}
+function refreshTabNoteEditor() {
+    const hit = selectedImportedHit;
+    const canEdit = editableTab() && !!hit && importedHits.includes(hit);
+    $('tabNoteEditBar').hidden = !canEdit;
+    if (canEdit)
+        $('tabNoteSelected').textContent = `Perdja ${hit.noteNumber ?? '?'} · ${preciseTime(hit.time)} s`;
+}
+function findExistingCanvasHit(x, y, geom) {
+    if (!editableTab() || x < geom.left || x > geom.width - geom.right)
+        return null;
+    const line = y >= 38 && y < 89 ? 2 : y >= 92 && y <= 146 ? 1 : 0;
+    if (!line)
+        return null;
+    let nearest = null, distance = 17;
+    for (const hit of importedHits) {
+        if (hit.string !== line || hit.noteNumber === null)
+            continue;
+        const px = timelineX(hit.time, tabViewStartMs, geom.left, geom.scale);
+        const d = Math.abs(px - x);
+        if (d < distance) {
+            nearest = hit;
+            distance = d;
+        }
+    }
+    return nearest;
 }
 function renderTimeline() {
     drawTab(songForDisplay(), tabCurrentMs);
@@ -1104,6 +1194,7 @@ function commitManualNote(resume) {
     updateImportDraft();
     renderImportedHits();
     renderManualMode();
+    selectImportedHit(h);
     redrawTab();
     setStatus(`Nota ${noteNumber === 14 ? 'F' : noteNumber === 15 ? 'G' : noteNumber} u vendos te ${fmt(time)}. ${resume ? 'Vazhdo dëgjimin.' : 'Mund të korrigjosh kohën në listë.'}`);
     if (resume) {
@@ -1156,6 +1247,18 @@ function installTabInteraction() {
             return;
         const rect = canvas.getBoundingClientRect(), geom = visibleTab();
         const x = event.clientX - rect.left, y = event.clientY - rect.top;
+        // Tap an existing marker to select it. Drag horizontally or use the precise buttons.
+        if (!manualPending) {
+            const note = findExistingCanvasHit(x, y, geom);
+            if (note) {
+                seekToMs(note.time);
+                selectImportedHit(note);
+                tabNoteDrag = { pointerId: event.pointerId, hit: note, startX: x, startTime: note.time, previewMs: note.time, moved: false };
+                canvas.setPointerCapture(event.pointerId);
+                event.preventDefault();
+                return;
+            }
+        }
         // Alternative direct mode: any visible pixel, including rulers, empty bands
         // and the left labels, selects the exact horizontal second. Marker triangles
         // remain reserved for intentionally dragging group boundaries.
@@ -1208,6 +1311,18 @@ function installTabInteraction() {
         redrawTab();
     });
     canvas.addEventListener('pointermove', (event) => {
+        if (tabNoteDrag && event.pointerId === tabNoteDrag.pointerId) {
+            const geom = visibleTab(), rect = canvas.getBoundingClientRect();
+            const dx = event.clientX - rect.left - tabNoteDrag.startX;
+            if (Math.abs(dx) > 5)
+                tabNoteDrag.moved = true;
+            if (tabNoteDrag.moved) {
+                tabNoteDrag.previewMs = Math.max(0, Math.min(activeSeekEndMs(), Math.round(tabNoteDrag.startTime + dx / geom.scale)));
+                redrawTab();
+            }
+            event.preventDefault();
+            return;
+        }
         if (!tabDrag || event.pointerId !== tabDrag.pointerId)
             return;
         const geom = visibleTab(), rect = canvas.getBoundingClientRect();
@@ -1219,6 +1334,22 @@ function installTabInteraction() {
         event.preventDefault();
     });
     canvas.addEventListener('pointerup', (event) => {
+        if (tabNoteDrag && event.pointerId === tabNoteDrag.pointerId) {
+            const drag = tabNoteDrag;
+            tabNoteDrag = null;
+            if (canvas.hasPointerCapture(event.pointerId))
+                canvas.releasePointerCapture(event.pointerId);
+            if (drag.moved) {
+                drag.hit.time = drag.previewMs;
+                updateImportDraft();
+                renderImportedHits();
+            }
+            else
+                refreshTabNoteEditor();
+            redrawTab();
+            event.preventDefault();
+            return;
+        }
         if (!tabDrag || event.pointerId !== tabDrag.pointerId)
             return;
         const drag = tabDrag;
@@ -1229,11 +1360,13 @@ function installTabInteraction() {
         applyGroupMarkerPosition(drag.index, drag.previewMs);
         event.preventDefault();
     });
-    canvas.addEventListener('pointercancel', () => { tabDrag = null; canvas.style.cursor = 'crosshair'; redrawTab(); });
+    canvas.addEventListener('pointercancel', () => { tabDrag = null; tabNoteDrag = null; canvas.style.cursor = 'crosshair'; redrawTab(); });
     canvas.addEventListener('keydown', (event) => {
         if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
             event.preventDefault();
-            if (event.shiftKey)
+            if (event.altKey && selectedImportedHit)
+                editSelectedTabNote(event.key === 'ArrowLeft' ? -50 : 50);
+            else if (event.shiftKey)
                 moveSelectedMarker(event.key === 'ArrowLeft' ? -50 : 50);
             else
                 moveTimeline(event.key === 'ArrowLeft' ? -1 : 1);
@@ -1454,6 +1587,8 @@ function selectImportedHit(hit) {
     $('analysisAddBtn').toggleAttribute('disabled', false);
     $('stanzaAddBtn').toggleAttribute('disabled', false);
     $('selectedNoteHint').textContent = `Nota e zgjedhur: ${hit.noteNumber ?? '?'} · ${fmt(hit.time)}. Butoni + shton notë poshtë këtij rreshti.`;
+    refreshTabNoteEditor();
+    redrawTab();
 }
 function insertNoteBelow(hit) {
     if (!draft?.originalAudioId)
@@ -1494,6 +1629,7 @@ function renderImportedHits() {
     if (!editable) {
         $('stanzaList').replaceChildren();
         $('selectedNoteHint').textContent = 'Prek një notë për ta zgjedhur.';
+        refreshTabNoteEditor();
         return;
     }
     $('selectedNoteHint').textContent = selectedImportedHit ? `Nota e zgjedhur: ${selectedImportedHit.noteNumber ?? '?'} · ${fmt(selectedImportedHit.time)}` : 'Prek një rresht note që ta zgjedhësh, pastaj shto notën poshtë saj.';
@@ -1622,6 +1758,7 @@ function renderImportedHits() {
         rows.append(row);
     });
     $('analysisMoreBtn').hidden = analysisRowsVisible >= grouped.length;
+    refreshTabNoteEditor();
 }
 async function importAudioFile(file) {
     if (analyzing)
@@ -1706,6 +1843,19 @@ function installAndroid() {
 }
 function init() {
     installTabInteraction();
+    $('practiceAllBtn').addEventListener('click', () => void playCurrent());
+    $('practiceGroupBtn').addEventListener('click', () => void playSelectedGroup());
+    $('practicePauseBtn').addEventListener('click', () => void toggleTabPlay());
+    $('practiceStopBtn').addEventListener('click', () => $('stopBtn').click());
+    $('practiceGroupSelect').addEventListener('change', e => selectGroup(Number(e.target.value)));
+    $('practiceSpeedSelect').addEventListener('change', e => {
+        const shared = $('playbackSpeed');
+        shared.value = e.target.value;
+        shared.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    $('tabNoteLeftBtn').addEventListener('click', () => editSelectedTabNote(-50));
+    $('tabNoteRightBtn').addEventListener('click', () => editSelectedTabNote(50));
+    $('tabNoteDeleteBtn').addEventListener('click', deleteSelectedTabNote);
     $('instantTabNoteBtn').addEventListener('click', () => {
         if (!instantTabNoteMode && !editableTab()) {
             const song = currentSong();
@@ -1846,15 +1996,13 @@ function init() {
             }
             drawTab(song, ms);
             $('timeLabel').textContent = `${fmt(ms)} / ${fmt((originalPlayer.duration || 0) * 1000)}`;
-            const now = song.notes.filter(n => Math.abs(n.time - ms) < 70);
-            if (now.length)
-                showActive(now);
+            updatePlaybackNotes(song, ms);
             playFrame = requestAnimationFrame(tick);
         };
         tick();
         setStatus('Po luhet regjistrimi origjinal. 220 Hz nuk shtohet artificialisht.');
     });
-    originalPlayer.addEventListener('pause', () => { cancelAnimationFrame(playFrame); if (importedSong(currentSong())) {
+    originalPlayer.addEventListener('pause', () => { cancelAnimationFrame(playFrame); clearPlayedNote(); if (importedSong(currentSong())) {
         $('playBtn').textContent = '▶ Luaj';
         $('studioState').textContent = 'PAUZË';
         syncTabTransport();
@@ -1871,9 +2019,8 @@ function init() {
         }
         drawTab(song, ms);
         $('timeLabel').textContent = `${fmt(ms)} / ${fmt((originalPlayer.duration || 0) * 1000)}`;
-        const active = song.notes.filter(n => Math.abs(n.time - ms) < 65);
-        if (active.length)
-            showActive(active);
+        if (!originalPlayer.paused)
+            updatePlaybackNotes(song, ms);
     });
     $('installBtn').addEventListener('click', installAndroid);
     window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstall = e; $('installBtn').hidden = false; });

@@ -145,3 +145,17 @@
 .tab-canvas-wrap.instant-note-active canvas{cursor:crosshair;touch-action:manipulation}
 .tab-canvas-wrap.instant-note-active{outline:1px solid rgba(113,221,188,.48);outline-offset:2px}
 @media(max-width:680px){.btn-instant-note{flex:1 1 150px}}
+
+/* V19: minimal, focused practice tools while preserving the V17 layout */
+.practice-strip{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:8px 0 12px;padding:10px 11px;background:#10243a;border:1px solid #36516a;border-radius:11px}
+.practice-strip .btn{padding:7px 11px;min-height:36px}
+.practice-strip select{background:#162d42;color:#e8f2f6;border:1px solid #456178;border-radius:9px;padding:7px 9px;font-size:12px;max-width:165px;min-height:36px}
+.practice-indicator{margin-left:auto;color:#a8bfd1;font-size:11px;white-space:nowrap}
+.practice-indicator strong{font-size:13px;color:#eeb85e;margin:0 4px}
+.practice-arrow{margin:0 3px;color:#66d8ce}
+.tab-note-editor{margin:10px 0;display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:10px;background:#193147;border:1px solid #5d8296;border-radius:10px;font-size:12px}
+.tab-note-editor[hidden]{display:none}
+.tab-note-editor strong{color:#f5d68e}
+.tab-note-editor small{color:#adc3d4}
+.tab-canvas-wrap canvas{touch-action:none;cursor:crosshair}
+@media(max-width:700px){.practice-strip .btn{flex:1;min-width:92px}.practice-strip select{flex:1;min-width:125px}.practice-indicator{width:100%;margin-left:0;text-align:center}.tab-note-editor small{flex-basis:100%}}

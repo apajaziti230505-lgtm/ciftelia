@@ -128,3 +128,10 @@ Modulet JavaScript ngarkohen nga `js/v12/` që të mos përzihen skedarët e rin
 - Mënyra e re **Kliko kudo → Notë** zgjedh kohën nga pozicioni horizontal në çdo zonë të tablaturës, përfshirë shiritin e grupeve dhe sekondat poshtë.
 - Klikimi ndalon luajtjen, shfaq një shenjë ? në sekondën e zgjedhur, pastaj zgjedh perden dhe Vendos/Vendos & Vazhdo.
 - Pamja horizontale nuk zhvendoset automatikisht pas klikimit. Trekëndëshat sipër kufijve të grupeve mbeten për tërheqjen e tyre.
+
+
+## V19 — Ushtrim i thjeshtë (mban pamjen V17)
+- Shirit kompakt pranë çiftelisë: kënga e plotë, grupi i zgjedhur, pauzë/vazhdo, ndalo, shpejtësia normale dhe 0.50×.
+- Ndriçimi i notave zgjat vetëm rreth 190 ms pas goditjes; pauza/ndalimi i fik menjëherë. Perdja aktive është me numër të madh dhe ngjyrë sipas grupit; F dallohet më vete.
+- Në tablaturë, prek një notë ekzistuese për ta zgjedhur; mund ta tërheqësh majtas/djathtas ose përdor ±50ms dhe Fshi notën. Ndryshimet nuk i zhvendosin notat e tjera dhe ruhen vetëm me Ruaj.
+- Onset Detection, shënimi manual dhe audioja origjinale ruhen si në V17.
