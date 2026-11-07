@@ -639,3 +639,4 @@ function init():void {
   void audio.prepare();
 }
 init();
+window.dispatchEvent(new Event('ciftelia-studio-ready'));

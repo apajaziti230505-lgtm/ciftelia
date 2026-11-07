@@ -81,3 +81,6 @@ Ngarkimi i parë në internet mund të marrë pak kohë për 30 mostrat audio (r
 
 ## V11 — Zhvendosje e notës në grupin pasardhës
 Në redaktues, butoni “→ Grupi 2” (ose emri i grupit pasardhës) zhvendos **vetëm notën e zgjedhur** te grupi pasardhës. Koha, audioja dhe notat e tjera mbeten të paprekura; ndryshon ngjyra dhe përkatësia e grupit. Ruaj këngën që ndryshimi të mbetet në shfletues dhe në eksportin JSON. Nëse mungon grupi pasardhës, krijoje me “+ Krijo grup”.
+
+## V12 – Rregullim i butonave dhe cache-it
+Modulet JavaScript ngarkohen nga `js/v12/` që të mos përzihen skedarët e rinj me skedarët e vjetër të ruajtur nga aplikacioni Android/Safari. Shtuar sinjalizim dhe buton rikuperimi nëse moduli kryesor dështon të ngarkohet. Nuk ndryshojnë funksionet e grupimit ose tingujt realë.

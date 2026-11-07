@@ -1058,3 +1058,4 @@ function init() {
     void audio.prepare();
 }
 init();
+window.dispatchEvent(new Event('ciftelia-studio-ready'));
