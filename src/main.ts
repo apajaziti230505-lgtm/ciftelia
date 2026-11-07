@@ -2,6 +2,8 @@ import {AudioEngine} from './audio-engine.js';
 import {MicrophoneRecorder,DetectedHit,FilterOptions} from './microphone.js';
 import {KEYS,HZ,DEMO,Song,NoteEvent,labelFor,fmt,withOpenF} from './constants.js';
 import {allSongs,loadSongs,newSong,saveSongs,exportSong} from './songs.js';
+import {analyzeAudio,GuessedHit} from './analysis.js';
+import {putOriginal,getOriginal,deleteOriginal} from './local-audio.js';
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const svg=document.getElementById('ciftelia') as unknown as SVGSVGElement;
 const fretLayer=document.getElementById('fret-layer')!;
@@ -18,6 +20,37 @@ let micHits:DetectedHit[]=[];
 let micActive=false;
 let playToken=0;
 let playFrame=0;
+const originalPlayer=$<HTMLAudioElement>('originalPlayer');
+let importFile:File|null=null;
+let importedHits:GuessedHit[]=[];
+let originalObjectUrl:string|null=null;
+let originalSourceId:string|null=null;
+let analysisRowsVisible=60;
+let audioSelectToken=0;
+let analyzing=false;
+function importedSong(song:Song|null):boolean{return !!song?.originalAudioId;}
+function clearOriginalUrl():void { if(originalObjectUrl)URL.revokeObjectURL(originalObjectUrl);originalObjectUrl=null;originalSourceId=null;originalPlayer.removeAttribute('src');originalPlayer.load(); }
+function showOriginalBlob(blob:Blob,id:string):void {
+  clearOriginalUrl();originalObjectUrl=URL.createObjectURL(blob);originalSourceId=id;
+  originalPlayer.src=originalObjectUrl;originalPlayer.hidden=false;originalPlayer.load();
+}
+async function prepareOriginalForSelection():Promise<void> {
+  const song=currentSong();const token=++audioSelectToken;
+  if(!importedSong(song)){originalPlayer.pause();originalPlayer.hidden=true;clearOriginalUrl();return;}
+  if(song!.originalAudioId==='__draft' && importFile){
+    if(originalSourceId!=='__draft')showOriginalBlob(importFile,'__draft');
+    return;
+  }
+  if(originalSourceId===song!.originalAudioId)return;
+  originalPlayer.pause();originalPlayer.hidden=true;clearOriginalUrl();
+  try {
+    const blob=await getOriginal(song!.originalAudioId!);
+    if(token!==audioSelectToken)return;
+    if(!blob){setStatus('Nuk gjendet audioja e kësaj kënge në këtë pajisje. JSON ruan notat, jo skedarin audio.');return;}
+    showOriginalBlob(blob,song!.originalAudioId!);
+  }catch(e){if(token===audioSelectToken)setStatus('Audioja e ruajtur nuk u lexua: '+String(e));}
+}
+
 const fretXs:number[]=[201];
 const denom=1-Math.pow(2,-13/12);
 for(let i=1;i<=13;i++){fretXs.push(201+808*(1-Math.pow(2,-i/12))/denom);}
@@ -77,7 +110,7 @@ function renderInstrument():void {
 }
 function showActive(events:NoteEvent[]):void {
   highlights.replaceChildren();
-  const visualEvents=withOpenF(events);
+  const visualEvents=importedSong(currentSong())?events:withOpenF(events);
   const shown=new Set<string>();
   for(const ev of visualEvents){
     const key=`${ev.string}-${ev.noteNumber}`;
@@ -183,14 +216,20 @@ mic.onHit=(hit)=>{
   if(hit.noteNumber)showActive([hit as NoteEvent]);
   renderMicHits();
 };
-function stopPlayback():void {playToken++;cancelAnimationFrame(playFrame);audio.stop();showActive([]);$('playBtn').textContent='▶ Luaj';$('studioState').textContent='GATI';}
+function stopPlayback():void {playToken++;cancelAnimationFrame(playFrame);audio.stop();originalPlayer.pause();showActive([]);$('playBtn').textContent='▶ Luaj';$('studioState').textContent='GATI';}
 async function playCurrent():Promise<void> {
   if(micActive){setStatus('Ndalo mikrofonin para luajtjes.');return;}
   if(keyboardRecordStart!==null)recordKeyboard();
   stopPlayback();
   const song=currentSong();if(!song){setStatus('Zgjidh këngën.');return;}
-  if(!song.notes.length){setStatus('Kënga nuk ka nota të njohura. Korrigjo notat ? te regjistrimi.');return;}
+  if(!song.notes.length && !importedSong(song)){setStatus('Kënga nuk ka nota të njohura. Korrigjo notat ? te regjistrimi.');return;}
   const token=++playToken;
+  if(importedSong(song)){
+    if(!originalPlayer.src){setStatus('Mungon audioja origjinale në këtë pajisje. Zgjidh këngën sërish.');return;}
+    try {await originalPlayer.play();}
+    catch(e){setStatus('Shfletuesi nuk nisi audion: '+String(e));$('playBtn').textContent='▶ Luaj';}
+    return;
+  }
   $('playBtn').textContent='… Po ngarkohet';$('studioState').textContent='NGARKIM';
   try {
     await audio.play(song);
@@ -209,24 +248,30 @@ async function playCurrent():Promise<void> {
     };loop();
   }catch(e){$('playBtn').textContent='▶ Luaj';$('studioState').textContent='GABIM';setStatus(`Audio: ${e instanceof Error?e.message:String(e)}`);}
 }
-function saveDraft():void {
+async function saveDraft():Promise<void> {
   if(!draft||!draft.notes.length){setStatus('Nuk ka këngë provë për ruajtje.');return;}
   const title=prompt('Emri i këngës:',draft.name);
   if(title===null)return;
   if(!title.trim()){setStatus('Vendos një emër për këngën.');return;}
   const saved={...draft,id:newSong(title,[]).id,name:title.trim()};
+  if(draft.originalAudioId==='__draft' && importFile){
+    try {await putOriginal(saved.id,importFile);saved.originalAudioId=saved.id;}
+    catch(e){setStatus(`Audioja nuk u ruajt në këtë pajisje: ${String(e)}. Liro hapësirë dhe provo përsëri.`);return;}
+  }
   const next=[...savedSongs,saved];
-  if(!saveSongs(next)){setStatus('Ruajtja dështoi: hapësira e shfletuesit është plot ose ruajtja është çaktivizuar. Eksporto JSON.');return;}
-  savedSongs=next;draft=null;selectedId=saved.id;renderSongs();setStatus(`Kënga “${saved.name}” u ruajt në këtë shfletues.`);
+  if(!saveSongs(next)){if(saved.originalAudioId)void deleteOriginal(saved.id).catch(()=>{});setStatus('Ruajtja dështoi: hapësira e shfletuesit është plot. Eksporto JSON.');return;}
+  savedSongs=next;draft=null;selectedId=saved.id;importedHits=[];importFile=null;renderImportedHits();renderSongs();void prepareOriginalForSelection();setStatus(`Kënga “${saved.name}” u ruajt në këtë shfletues.`);
 }
-function deleteSong():void {
+async function deleteSong():Promise<void> {
   if(selectedId==='__draft'){
-    if(confirm('Ta fshijmë këngën provë?')){draft=null;selectedId=DEMO[0].id;renderSongs();setStatus('Prova u fshi.');}
+    if(confirm('Ta fshijmë këngën provë?')){draft=null;importFile=null;importedHits=[];renderImportedHits();selectedId=DEMO[0].id;renderSongs();void prepareOriginalForSelection();setStatus('Prova u fshi.');}
     return;
   }
   const song=currentSong();if(!song||DEMO.some(d=>d.id===song.id))return;
   if(!confirm(`Ta fshijmë këngën “${song.name}”?`))return;
-  savedSongs=savedSongs.filter(s=>s.id!==song.id);saveSongs(savedSongs);selectedId=DEMO[0].id;renderSongs();setStatus('Kënga u fshi nga ky shfletues.');
+  const next=savedSongs.filter(s=>s.id!==song.id);if(!saveSongs(next)){setStatus('Fshirja nuk u ruajt.');return;}savedSongs=next;
+  if(song.originalAudioId)try{await deleteOriginal(song.originalAudioId);}catch{}
+  selectedId=DEMO[0].id;renderSongs();void prepareOriginalForSelection();setStatus('Kënga u fshi nga ky shfletues.');
 }
 const canvas=$<HTMLCanvasElement>('tabCanvas');
 function drawTab(song:Song|null,elapsed=0):void {
@@ -241,7 +286,7 @@ function drawTab(song:Song|null,elapsed=0):void {
   c.fillStyle='#95a4b5';c.font='12px system-ui';c.fillText('TELI 2 · LART',14,45);c.fillText('TELI 1 · POSHTË',14,106);
   c.strokeStyle='#fac35f';c.lineWidth=2;c.beginPath();c.moveTo(x0,20);c.lineTo(x0,160);c.stroke();
   if(song){
-    for(const e of withOpenF(song.notes)){
+    for(const e of importedSong(song)?song.notes:withOpenF(song.notes)){
       const x=x0+(e.time-elapsed)*pxPerMs;
       if(x<8||x>w-8)continue;
       const y=e.string===1?120:60;
@@ -271,6 +316,73 @@ async function importSongFile(file:File):Promise<void> {
     setStatus('Kënga u importua si PROVË. Shtyp Luaj dhe pastaj Ruaj nëse dëshiron.');
   }catch(e){setStatus(`Importimi dështoi: ${e instanceof Error?e.message:String(e)}`)}
 }
+/** Importimi ruan skedarin e plotë, ndërsa notat e zbuluara mbeten propozime të korrigjueshme. */
+function updateImportDraft():void {
+  if(!draft || draft.originalAudioId!=='__draft')return;
+  draft.notes=importedHits.filter(h=>h.noteNumber!==null).map(h=>({
+    time:Math.round(h.time),noteNumber:h.noteNumber!,string:h.noteNumber===14?2:h.string,confidence:h.confidence
+  })).sort((a,b)=>a.time-b.time || a.string-b.string);
+  renderSongs();
+}
+function renderImportedHits():void {
+  const editor=$('analysisEdit');const rows=$('analysisRows');rows.replaceChildren();
+  editor.hidden=!importedHits.length;
+  $('analysisAddBtn').toggleAttribute('disabled',!importFile);
+  if(!importedHits.length)return;
+  const unknown=importedHits.filter(h=>h.noteNumber===null).length;
+  $('analysisCount').textContent=`${importedHits.length} shënime · ${unknown} të paqarta`;
+  importedHits.sort((a,b)=>a.time-b.time||a.string-b.string);
+  importedHits.slice(0,analysisRowsVisible).forEach((hit)=>{
+    const row=document.createElement('div');row.className='analysis-note-row';
+    if(hit.noteNumber===null)row.classList.add('unknown');
+    const ms=document.createElement('input');ms.type='number';ms.min='0';ms.step='1';
+    ms.max=String(Math.round((originalPlayer.duration || 150)*1000));ms.value=String(hit.time);
+    ms.setAttribute('aria-label','Koha e notës në milisekonda');
+    const sel=document.createElement('select');sel.setAttribute('aria-label','Zgjidh notën');
+    sel.add(new Option('? - e pasigurt',''));
+    KEYS.forEach((key,i)=>sel.add(new Option(i===13?'F · lart 220 Hz':i===14?'G · poshtë i hapur':`${i+1} · ${key.toUpperCase()}`,String(i+1))));
+    sel.value=hit.noteNumber===null?'':String(hit.noteNumber);
+    const str=document.createElement('select');str.setAttribute('aria-label','Teli');
+    str.add(new Option('Poshtë','1'));str.add(new Option('Lart','2'));str.value=String(hit.string);
+    const status=document.createElement('span');status.className='analysis-confidence';
+    status.textContent=hit.noteNumber===null?'?':hit.confidence<.65?'Kontrollo':'Propozim';status.title=hit.detail;
+    const seek=document.createElement('button');seek.type='button';seek.className='btn btn-minimal';seek.textContent='Dëgjo';
+    seek.addEventListener('click',()=>{originalPlayer.currentTime=hit.time/1000;void originalPlayer.play().catch(e=>setStatus(String(e)));});
+    const remove=document.createElement('button');remove.type='button';remove.className='btn btn-minimal';remove.textContent='×';remove.setAttribute('aria-label','Fshi këtë shënim');
+    remove.addEventListener('click',()=>{importedHits=importedHits.filter(x=>x!==hit);updateImportDraft();renderImportedHits();});
+    ms.addEventListener('change',()=>{hit.time=Math.min(Math.round((originalPlayer.duration||150)*1000),Math.max(0,Math.round(Number(ms.value)||0)));updateImportDraft();renderImportedHits();});
+    sel.addEventListener('change',()=>{hit.noteNumber=sel.value?Number(sel.value):null;hit.string=hit.noteNumber===14?2:1;hit.confidence=1;updateImportDraft();renderImportedHits();});
+    str.addEventListener('change',()=>{hit.string=hit.noteNumber===14?2:Number(str.value) as 1|2;updateImportDraft();});
+    row.append(ms,sel,str,status,seek,remove);rows.append(row);
+  });
+  $('analysisMoreBtn').hidden=analysisRowsVisible>=importedHits.length;
+}
+async function importAudioFile(file:File):Promise<void>{
+  if(analyzing)return;
+  if(file.size>25_000_000){setStatus('Audioja është mbi 25 MB. Përdor regjistrim më të shkurtër.');return;}
+  if(!file.type.startsWith('audio/') && !/\.(wav|m4a|mp3|ogg)$/i.test(file.name)){setStatus('Zgjidh skedar audio WAV, M4A ose MP3.');return;}
+  stopPlayback();importFile=file;importedHits=[];analysisRowsVisible=60;
+  draft=newSong(file.name.replace(/\.[^.]+$/,''),[]);draft.originalAudioId='__draft';selectedId='__draft';
+  renderSongs();renderImportedHits();showOriginalBlob(file,'__draft');
+  $('analyzeBtn').removeAttribute('disabled');$('analysisProgress').setAttribute('value','0');
+  $('analysisStatus').textContent='Audioja u ngarkua. Shtyp Analizo notat.';
+  setStatus('Dëgjo origjinalin ose shtyp Analizo notat. Asgjë nuk ruhet pa shtypur Ruaj.');
+}
+async function analyzeImported():Promise<void>{
+  if(!importFile||analyzing)return;
+  analyzing=true;$('analyzeBtn').setAttribute('disabled','');$('audioImportFile').setAttribute('disabled','');
+  try{
+    const ctx=await audio.unlock();
+    const decoded=await ctx.decodeAudioData((await importFile.arrayBuffer()).slice(0));
+    const report=await analyzeAudio(decoded,(n,intensity)=>audio.loadNote(n,intensity),(s,pct)=>{
+      $('analysisStatus').textContent=s;$<HTMLProgressElement>('analysisProgress').value=pct;
+    });
+    importedHits=report.hits;analysisRowsVisible=60;
+    updateImportDraft();renderImportedHits();
+    setStatus(`U gjetën ${report.detectedOnsets} goditje të mundshme. ${report.uncertainCount} janë të pasigurta. Kontrollo para Ruaj.`);
+  }catch(e){$('analysisStatus').textContent='Analiza nuk përfundoi.';setStatus('Gabim në analizë: '+String(e));}
+  finally{analyzing=false;$('analyzeBtn').toggleAttribute('disabled',!importFile);$('audioImportFile').removeAttribute('disabled');}
+}
 let deferredInstall:Event|null=null;
 function installAndroid():void {
   const promptEvent=deferredInstall as (Event & {prompt:()=>Promise<void>;userChoice:Promise<{outcome:string}>})|null;
@@ -281,16 +393,48 @@ function installAndroid():void {
 function init():void {
   renderInstrument();renderKeys();renderSongs();renderMicHits();
   audio.setVolume(Number($<HTMLInputElement>('volume').value)/100);
-  $('songSelect').addEventListener('change',e=>{stopPlayback();selectedId=(e.target as HTMLSelectElement).value;renderSongs();});
+  $('songSelect').addEventListener('change',e=>{stopPlayback();selectedId=(e.target as HTMLSelectElement).value;renderSongs();void prepareOriginalForSelection();});
   $('recordBtn').addEventListener('click',recordKeyboard);
   $('micBtn').addEventListener('click',()=>void toggleMic());
   $('playBtn').addEventListener('click',()=>void playCurrent());
   $('stopBtn').addEventListener('click',()=>{stopPlayback();if(micActive)stopMic();if(keyboardRecordStart!==null)recordKeyboard();setStatus('Ndaluar.');});
-  $('saveBtn').addEventListener('click',saveDraft);
-  $('deleteBtn').addEventListener('click',deleteSong);
+  $('saveBtn').addEventListener('click',()=>void saveDraft());
+  $('deleteBtn').addEventListener('click',()=>void deleteSong());
   $('exportBtn').addEventListener('click',()=>{const song=currentSong();if(song)exportSong(song);});
   $('importBtn').addEventListener('click',()=>$<HTMLInputElement>('importFile').click());
   $('importFile').addEventListener('change',()=>{const input=$<HTMLInputElement>('importFile');if(input.files?.[0])void importSongFile(input.files[0]);input.value='';});
+  $('audioImportFile').addEventListener('change',()=>{const input=$<HTMLInputElement>('audioImportFile');if(input.files?.[0])void importAudioFile(input.files[0]);input.value='';});
+  $('analyzeBtn').addEventListener('click',()=>void analyzeImported());
+  $('analysisAddBtn').addEventListener('click',()=>{
+    if(!importFile)return;
+    importedHits.push({time:Math.max(0,Math.round(originalPlayer.currentTime*1000)),noteNumber:null,string:1,confidence:0,detail:'Shtuar manualisht'});
+    analysisRowsVisible=Math.max(analysisRowsVisible,importedHits.length);updateImportDraft();renderImportedHits();
+  });
+  $('analysisMoreBtn').addEventListener('click',()=>{analysisRowsVisible+=60;renderImportedHits();});
+  originalPlayer.addEventListener('play',()=>{
+    const song=currentSong();if(!importedSong(song))return;
+    audio.stop();cancelAnimationFrame(playFrame);const token=++playToken;
+    $('playBtn').textContent='▶ Po luhet';$('studioState').textContent='ORIGJINAL';
+    const tick=()=>{
+      if(token!==playToken||originalPlayer.paused)return;
+      const ms=originalPlayer.currentTime*1000;
+      drawTab(song,ms);
+      $('timeLabel').textContent=`${fmt(ms)} / ${fmt((originalPlayer.duration||0)*1000)}`;
+      const now=song!.notes.filter(n=>Math.abs(n.time-ms)<70);
+      if(now.length)showActive(now);
+      playFrame=requestAnimationFrame(tick);
+    };tick();
+    setStatus('Po luhet regjistrimi origjinal. 220 Hz nuk shtohet artificialisht.');
+  });
+  originalPlayer.addEventListener('pause',()=>{cancelAnimationFrame(playFrame);if(importedSong(currentSong())){$('playBtn').textContent='▶ Luaj';$('studioState').textContent='PAUZË';}});
+  originalPlayer.addEventListener('ended',()=>{stopPlayback();setStatus('Kënga origjinale përfundoi.');});
+  originalPlayer.addEventListener('timeupdate',()=>{
+    const song=currentSong();if(!importedSong(song))return;
+    const ms=originalPlayer.currentTime*1000;drawTab(song,ms);
+    $('timeLabel').textContent=`${fmt(ms)} / ${fmt((originalPlayer.duration||0)*1000)}`;
+    const active=song!.notes.filter(n=>Math.abs(n.time-ms)<65);
+    if(active.length)showActive(active);
+  });
   $('installBtn').addEventListener('click',installAndroid);
   window.addEventListener('beforeinstallprompt',(e:Event)=>{e.preventDefault();deferredInstall=e;$('installBtn').hidden=false;});
   if('serviceWorker' in navigator)window.addEventListener('load',()=>{void navigator.serviceWorker.register('./sw.js').catch(()=>{});});
@@ -305,7 +449,7 @@ function init():void {
     if(e.code==='Space'){e.preventDefault();void playCurrent();}
   });
   window.addEventListener('resize',()=>renderTimeline());
-  window.addEventListener('pagehide',()=>{if(micActive)mic.stop();audio.stop();});
+  window.addEventListener('pagehide',()=>{if(micActive)mic.stop();audio.stop();originalPlayer.pause();});
   $('status').textContent='Gati për të luajtur.';
   // Marrja e regjistrimeve nuk nis zërin pa një veprim të përdoruesit.
   void audio.prepare();

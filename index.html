@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=5-real-20261106">
+  <link rel="stylesheet" href="app.css?v=6-import-20261107">
 </head>
 <body>
   <main class="container">
@@ -170,6 +170,24 @@
       
     </section>
 
+    <section class="panel analysis-panel" aria-labelledby="analysisTitle">
+      <div class="panel-heading"><div><h2 id="analysisTitle">Nga audio në tablaturë</h2><p>Importo regjistrimin origjinal, analizo goditjet, korrigjo notat dhe ruaje.</p></div></div>
+      <div class="analysis-actions">
+        <label class="btn btn-primary analysis-upload" for="audioImportFile">＋ Importo këngë audio</label>
+        <input id="audioImportFile" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" hidden>
+        <button id="analyzeBtn" class="btn" type="button" disabled>Analizo notat</button>
+        <button id="analysisAddBtn" class="btn btn-minimal" type="button" disabled>+ Shto notë te koha aktuale</button>
+      </div>
+      <audio id="originalPlayer" controls preload="metadata" class="original-player" hidden aria-label="Luaj regjistrimin origjinal"></audio>
+      <div class="analysis-status-row"><progress id="analysisProgress" max="100" value="0"></progress><span id="analysisStatus" role="status">Zgjidh një audio për analizë.</span></div>
+      <p class="analysis-hint">Kënga dëgjohet si regjistrim origjinal, pa shtuar automatikisht telin 220 Hz. Analiza jep propozime; goditjet e paqarta mbeten ?. Korrigjo milisekondat dhe perdet para Ruaj. Maksimumi 150 sekonda / 25 MB.</p>
+      <div id="analysisEdit" class="analysis-edit" hidden>
+        <div class="analysis-edit-header"><strong>Korrigjo notat dhe kohët</strong><span id="analysisCount"></span></div>
+        <div id="analysisRows" class="analysis-rows"></div>
+        <button type="button" class="btn btn-minimal" id="analysisMoreBtn" hidden>Shfaq 60 të tjera</button>
+      </div>
+    </section>
+
     <div class="workspace-grid">
       <section class="panel mic-panel" aria-label="Mikrofoni dhe filtrat">
         <div class="panel-heading"><div><h2>Mikrofoni</h2><p>Njohje e notave ±15 Hz</p></div><button type="button" id="micBtn" class="btn btn-mic">🎙 Nis mikrofonin</button></div>
@@ -192,7 +210,6 @@
     </div>
     <div class="footer"><p id="status" role="status">Gati për të luajtur.</p></div>
   </main>
-  <script type="module" src="./js/main.js?v=5-real-20261106"></script>
-  <script type="module" src="./js/audio-transcriber.js?v=20261107"></script>
+  <script type="module" src="./js/main.js?v=6-import-20261107"></script>
 </body>
 </html>

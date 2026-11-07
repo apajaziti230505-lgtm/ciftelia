@@ -1,6 +1,6 @@
 # Çiftelia Studio — 15 nota reale × 2 goditje
 
-**Version lokal për provë, nuk është publikuar në GitHub.**
+**Version V6: importo audio, zbulo goditjet, korrigjo perdet dhe ruaj tablaturën.**
 
 Burimi: `Strimnitsa 2(2).m4a`, regjistrimi i çiftelisë që dërgoi përdoruesi.
 Regjistrimi 115.86 s, mono AAC, 48 kHz, përmban saktësisht **30 goditje** sipas rendit:
@@ -42,13 +42,14 @@ Ngarkimi i parë në internet mund të marrë pak kohë për 30 mostrat audio (r
 **Kufizim:** njohja e goditjeve me mikrofon dhe audioja në iPhone/Android real duhen provuar në pajisje. Njohja e 220 Hz mund të ngatërrohet me harmonikën 440 Hz kur telat tingëllojnë njëkohësisht. Matjet janë orientuese nga regjistrimi, jo certifikim akordimi.
 
 
-## Analiza nga audio origjinale – paneli i ri
+## Analizo audio të plotë → korrigjo → ruaj tablaturën (V6)
 
-- Në panelin **Analizo një këngë**, importo MP3/M4A/WAV (deri 25 MB dhe 150 sekonda).
-- **Analizo notat** kërkon goditjet dhe përpiqet t'i identifikojë nga 30 regjistrimet reale të çiftelisë. Në rastet e paqarta shfaq **?** dhe kërkon korrigjim.
-- Mund të ndryshosh milisekondën, perden, telin, të dëgjosh notën nga audioja origjinale, si dhe të shtosh/fshish shënime.
-- Audioja origjinale luhet **pa përzier automatikisht telin 220 Hz**. Tablatura lëviz sipas audios.
-- **Ruaj këngën + tablaturën** përdor IndexedDB në shfletuesin lokal. Këngët nuk sinkronizohen me pajisje të tjera dhe nuk ngarkohen automatikisht në GitHub.
-- **Eksporto tablaturën JSON** ruan vetëm shënimet; për ta transferuar duhet ruajtur veçmas edhe skedari audio origjinal.
-- Kjo është analizë ndihmëse, jo transkriptim 100% i garantuar. Dy telat, jehona, instrumentet e tjerë dhe goditjet e shpejta kërkojnë kontroll manual.
-- Kodi: \`src/audio-transcriber.ts\` → \`js/audio-transcriber.js\`; përpilohet me \`tsc -p tsconfig.json\`.
+- Kliko **Importo këngë audio**, zgjidh MP3/M4A/WAV deri në 25 MB dhe 150 sekonda.
+- **Analizo notat** zbulon goditje dhe i krahason me 30 regjistrimet reale të çiftelisë. **Nuk është transkriptim i garantuar**; figurat e paqarta mbeten `?`.
+- Në panelin **Korrigjo notat dhe kohët**, mund të ndryshosh milisekondën, telin dhe perden, të dëgjosh pjesën dhe të shtosh/fshish shënime.
+- Në **Luaj**, kënga e importuar dëgjohet si **audioja origjinale**, me tablaturën e sinkronizuar. Nuk shtohet automatikisht 220 Hz.
+- **Ruaj** ruan notat në localStorage dhe audion origjinale në IndexedDB, vetëm në pajisjen/shfletuesin ku përdoret. JSON ruan tablaturën, **jo audion**; në pajisje tjetër duhet edhe skedari audio origjinal.
+- Për muzikë me disa instrumente, shumë zhurmë ose dy tela në një goditje, analiza mund të ngatërrojë notat. Kontrolli manual është pjesë e domosdoshme e procesit.
+- Kodi i redaktueshëm: `src/analysis.ts`, `src/local-audio.ts`, `src/main.ts`; përpilo me `tsc -p tsconfig.json`.
+
+**Kontrolle të zhvillimit:** `npm run build` dhe `npm test` verifikojnë TypeScript, notat, luajtjen dhe zbulimin e goditjeve me sinjale prove.
