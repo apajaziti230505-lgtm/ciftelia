@@ -2,7 +2,7 @@
  * Nuk imponon grupe fikse çdo katër nota dhe nuk pretendon të njohë strukturën muzikore perfekte.
  */
 export const GROUP_COLORS = ['#e8b45a', '#42bdae', '#b894f6', '#f08097', '#79aaf0', '#86c870', '#f2a36d', '#57cad4'];
-export function detectNoteGroups(hits, minNotes = 3) {
+export function detectNoteGroups(hits, minNotes = 3, sensitivity = 'more') {
     const sorted = [...new Set(hits.filter(h => Number.isFinite(h.time) && h.time >= 0)
             .map(h => Math.round(h.time)))].sort((a, b) => a - b);
     const groups = [{ start: 0, label: 'Grupi 1', color: GROUP_COLORS[0] }];
@@ -11,7 +11,10 @@ export function detectNoteGroups(hits, minNotes = 3) {
     const gaps = sorted.slice(1).map((v, i) => v - sorted[i]).filter(g => g >= 60 && g <= 1100).sort((a, b) => a - b);
     // Mediana ndaj artefakteve; një pauzë reale është dukshëm më e gjatë se ritmi normal.
     const typical = gaps.length ? gaps[Math.floor((gaps.length - 1) / 2)] : 300;
-    const threshold = Math.max(480, Math.min(1200, Math.round(typical * 1.85)));
+    // Lower threshold finds smaller musical breaths; no 1-note automatic groups.
+    const factor = sensitivity === 'more' ? 1.35 : sensitivity === 'less' ? 2.35 : 1.8;
+    const floor = sensitivity === 'more' ? 300 : sensitivity === 'less' ? 650 : 450;
+    const threshold = Math.max(floor, Math.min(1400, Math.round(typical * factor)));
     let startIndex = 0;
     for (let i = 1; i < sorted.length; i++) {
         const gap = sorted[i] - sorted[i - 1];

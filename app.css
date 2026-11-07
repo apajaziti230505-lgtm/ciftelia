@@ -81,3 +81,16 @@
 .move-to-next-group:disabled{opacity:.32}
 .analysis-note-row.group-moved{box-shadow:inset 0 0 0 1px var(--group-color)}
 @media(max-width:760px){.analysis-note-row{grid-template-columns:minmax(70px,1fr) minmax(70px,1fr) 54px 42px;gap:6px}.analysis-note-row .move-to-next-group{grid-column:span 2;min-height:35px}.analysis-note-row .stanza-split{grid-column:span 2}}
+
+/* V13: grup i zgjedhur, redaktim lart/poshtë dhe shpejtësia */
+#selectedGroupSelect,#playbackSpeed,#groupSensitivity {background:#172a40;color:#f0f5fa;border:1px solid #496178;border-radius:9px;padding:9px 10px;font-size:12px;min-height:39px;max-width:100%;}
+#selectedGroupSelect{max-width:165px}#playbackSpeed{max-width:180px}
+.btn-group-play{background:#234c46;color:#d5fff0;border-color:#60c4a4}
+.group-sensitivity-label{font-size:12px;color:#aec5d6;margin-left:9px}
+.stanza-entry{grid-template-columns:minmax(90px,1fr) 95px 42px 92px 32px;}
+.stanza-entry.group-active{outline:2px solid var(--stanza-color);background:color-mix(in srgb,var(--stanza-color) 16%,#102237)}
+.group-choose{padding:7px 8px!important;min-width:75px!important;font-size:11px}
+.stanza-divider{cursor:pointer}.stanza-divider.group-active{outline:1px solid var(--stanza-color)}
+.analysis-note-row{grid-template-columns:minmax(70px,90px) minmax(64px,75px) 43px 57px repeat(5,minmax(34px,auto)) 55px;}
+.move-group{font-size:17px!important;font-weight:800;min-width:33px}
+@media(max-width:950px){.stanza-entry{grid-template-columns:minmax(90px,1fr) 85px 38px 75px 32px}.analysis-note-row{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.analysis-note-row .btn{min-width:32px}.transport-actions #selectedGroupSelect{flex:1 1 125px}.transport-actions #playbackSpeed{flex:1 1 145px}}

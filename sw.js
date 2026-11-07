@@ -1,8 +1,8 @@
-const CACHE='ciftelia-studio-v12-stable-modules-20261107';
+const CACHE='ciftelia-studio-v13-group-speed-20261107';
 const CORE=['./','./index.html','./app.css','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png',
-  './js/v12/main.js','./js/v12/constants.js','./js/v12/audio-engine.js','./js/v12/pitch.js',
-  './js/v12/microphone.js','./js/v12/mic-onset-worklet.js','./js/v12/songs.js',
-  './js/v12/analysis.js','./js/v12/local-audio.js','./js/v12/grouping.js'];
+  './js/v13/main.js','./js/v13/constants.js','./js/v13/audio-engine.js','./js/v13/pitch.js',
+  './js/v13/microphone.js','./js/v13/mic-onset-worklet.js','./js/v13/songs.js',
+  './js/v13/analysis.js','./js/v13/local-audio.js','./js/v13/grouping.js'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('ciftelia-studio-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',event=>{

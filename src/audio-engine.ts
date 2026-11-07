@@ -131,9 +131,10 @@ export class AudioEngine {
     for(const s of this.sources){try{s.stop();}catch{}}
     this.sources.clear();this.lastByString.clear();
   }
-  async play(song:Song):Promise<number>{
+  async play(song:Song,tempo=1):Promise<number>{
     await this.unlock();this.stop();
     if(!song.notes.length)throw Error('Kënga nuk ka nota.');
+    if(!Number.isFinite(tempo)||tempo<=0)throw Error('Shpejtësi e pavlefshme.');
     const events=withOpenF(song.notes).sort((a,b)=>a.time-b.time || a.string-b.string);
     const strengthFor=(e:typeof events[number]):Strength=>e.velocity!==undefined?(e.velocity<.56?'lehte':'fort'):(e.string===2?'lehte':this.strength);
     const keys=new Map<string,{n:number;strength:Strength}>();
@@ -145,7 +146,7 @@ export class AudioEngine {
     let finish=this.playbackStart;
     for(const e of events){
       const strength=strengthFor(e);const buffer=loaded.get(this.key(e.noteNumber,strength));if(!buffer)continue;
-      const at=this.playbackStart+e.time/1000;
+      const at=this.playbackStart+e.time/(1000*tempo);
       const base=e.string===2?.48:.9;
       const level=base*(strength==='lehte'?.82:1);
       const duration=this.schedule(buffer,at,e.string,level);

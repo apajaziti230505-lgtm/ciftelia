@@ -84,3 +84,13 @@ Në redaktues, butoni “→ Grupi 2” (ose emri i grupit pasardhës) zhvendos 
 
 ## V12 – Rregullim i butonave dhe cache-it
 Modulet JavaScript ngarkohen nga `js/v12/` që të mos përzihen skedarët e rinj me skedarët e vjetër të ruajtur nga aplikacioni Android/Safari. Shtuar sinjalizim dhe buton rikuperimi nëse moduli kryesor dështon të ngarkohet. Nuk ndryshojnë funksionet e grupimit ose tingujt realë.
+
+## V13 — Grupi i zgjedhur, lëvizja e notave dhe slow motion
+
+- `Nda grupet sipas pauzave`: **Më shumë grupe** (parazgjedhja), **Normale** ose **Më pak grupe**. Janë kufij heuristikë, jo ndarje e garantuar muzikologjike.
+- **↑ / ↓** e çojnë një notë në grupin paraardhës ose pasardhës dhe e shfaqin nën titullin/ngjyrën e grupit ku është caktuar; koha e regjistrimit nuk ndryshon.
+- **Krijo grup** te nota e zgjedhur kontrollon kufijtë ekzistues që të mos krijohen dy grupe në të njëjtën kohë. Mund të zgjidhet grupi edhe nga lista.
+- **▶ Luaj grupin** luan segmentin kohor midis fillimit të grupit dhe fillimit të grupit tjetër kur kënga përdor audion origjinale. **▶ Luaj** luan këngën e plotë nga fillimi.
+- **Shpejtësia**: Normal 1.00× ose Slow Motion 0.50×. Audioja origjinale ngadalësohet pa ndryshuar qëllimisht lartësinë (nëse shfletuesi mbështet `preservesPitch`). Për këngët e krijuara me mostra, ngadalësohen intervalet mes goditjeve pa transpozuar mostrat.
+
+**Kufizim i rëndësishëm:** Në një regjistrim audio të vetëm, një notë e zhvendosur vizualisht te grupi tjetër nuk mund të izolohet fizikisht nga tingujt e tjerë të regjistruar në të njëjtin moment. Luajtja e grupit për audion origjinale ndjek kufijtë kohorë të grupeve; lëvizja manuale e një note ndryshon tablaturën dhe ngjyrën, jo skedarin audio. Për këtë duhet analizë/redaktim audio më i avancuar.

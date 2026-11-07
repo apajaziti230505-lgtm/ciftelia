@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=12-hotfix-20261107">
+  <link rel="stylesheet" href="app.css?v=13-group-speed-20261107">
 </head>
 <body>
   <main class="container">
@@ -159,7 +159,7 @@
 
     <section class="transport" aria-label="Këngët dhe kontrollet">
       <div class="transport-song"><label for="songSelect">KËNGA E ZGJEDHUR</label><select id="songSelect"></select><div id="songMeta" class="song-meta">0 nota</div></div>
-      <div class="transport-actions"><button type="button" class="btn btn-record" id="recordBtn">＋ Regjistro</button><button type="button" class="btn btn-primary" id="playBtn">▶ Luaj</button><button type="button" class="btn" id="stopBtn">■ Ndalo</button><button type="button" class="btn" id="saveBtn" disabled>▣ Ruaj</button><button type="button" class="btn btn-danger" id="deleteBtn" disabled>Fshi</button><button type="button" class="btn btn-minimal" id="exportBtn">Eksporto JSON</button><button type="button" class="btn btn-minimal" id="importBtn">Importo JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button type="button" class="btn btn-minimal" id="installBtn" hidden>Instalo Android</button></div>
+      <div class="transport-actions"><button type="button" class="btn btn-record" id="recordBtn">＋ Regjistro</button><button type="button" class="btn btn-primary" id="playBtn">▶ Luaj</button><select id="selectedGroupSelect" aria-label="Zgjidh grupin për luajtje"><option value="0">Grupi 1</option></select><button type="button" class="btn btn-group-play" id="groupPlayBtn">▶ Luaj grupin</button><select id="playbackSpeed" aria-label="Shpejtësia e muzikës"><option value="1">Normal · 1.00×</option><option value="0.5">Slow Motion · 0.50×</option></select><button type="button" class="btn" id="stopBtn">■ Ndalo</button><button type="button" class="btn" id="saveBtn" disabled>▣ Ruaj</button><button type="button" class="btn btn-danger" id="deleteBtn" disabled>Fshi</button><button type="button" class="btn btn-minimal" id="exportBtn">Eksporto JSON</button><button type="button" class="btn btn-minimal" id="importBtn">Importo JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button type="button" class="btn btn-minimal" id="installBtn" hidden>Instalo Android</button></div>
       <span id="recordCounter" class="record-counter">GATI</span>
     </section>
 
@@ -183,7 +183,7 @@
       <div id="analysisEdit" class="analysis-edit" hidden>
         <div class="analysis-edit-header"><strong>Grupet e notave dhe perdet</strong><span id="analysisCount"></span></div>
         <div class="stanza-actions"><button id="stanzaAddBtn" type="button" class="btn btn-minimal" disabled>＋ Krijo grup nga nota e zgjedhur</button><span id="selectedNoteHint">Prek një rresht note që ta zgjedhësh, pastaj shto notën menjëherë poshtë saj.</span></div>
-        <button id="groupAutoBtn" type="button" class="btn btn-minimal" disabled>↻ Nda grupet sipas pauzave</button><p class="group-tip">Pas një pauze të dallueshme, 3 ose më shumë nota mund të formojnë grup të ri. Prek një notë për ta filluar vetë grupin. Ngjyra zbatohet te notat e grupit. Për një notë në grupin e gabuar, shtyp “→ Grupi pasardhës”: zhvendoset vetëm ajo, pa ndryshuar kohën e muzikës.</p><div id="stanzaList" class="stanza-list"></div><div class="analysis-column-hint">Koha (ms) · <strong>Perdja (1–13)</strong> · F · Dëgjo · Shto · Fshi · <strong>→ Grupi pasardhës</strong> · Krijo grup</div>
+        <button id="groupAutoBtn" type="button" class="btn btn-minimal" disabled>↻ Nda grupet sipas pauzave</button><label class="group-sensitivity-label" for="groupSensitivity">Ndarja</label><select id="groupSensitivity" aria-label="Sa të ndjeshme janë pauzat"><option value="more">Më shumë grupe</option><option value="normal">Normale</option><option value="less">Më pak grupe</option></select><p class="group-tip">Pas një pauze të dallueshme, 3 ose më shumë nota mund të formojnë grup të ri. Prek një notë për ta filluar vetë grupin. Ngjyra zbatohet te notat e grupit. Nëse një notë është në grupin e gabuar, përdor “↑” ose “↓” për ta çuar lart ose poshtë. Shfaqet në grupin e ri dhe merr ngjyrën e tij; koha e audios nuk ndryshon.</p><div id="stanzaList" class="stanza-list"></div><div class="analysis-column-hint">Koha (ms) · <strong>Perdja (1–13)</strong> · F · Dëgjo · Shto · Fshi · <strong>↑ / ↓ Grupi</strong> · Krijo grup</div>
         <div id="analysisRows" class="analysis-rows"></div>
         <button type="button" class="btn btn-minimal" id="analysisMoreBtn" hidden>Shfaq 60 të tjera</button>
       </div>
@@ -237,7 +237,7 @@
           }
         } catch (e) { console.warn('Pastrimi i cache nuk përfundoi:', e); }
         const url = new URL(window.location.href);
-        url.searchParams.set('version', '12-recovery');
+        url.searchParams.set('version', '13-group-speed');
         url.searchParams.set('r', String(Date.now()));
         window.location.replace(url.href);
       });
@@ -250,6 +250,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v12/main.js"></script>
+  <script type="module" src="./js/v13/main.js"></script>
 </body>
 </html>

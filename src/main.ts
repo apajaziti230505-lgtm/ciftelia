@@ -4,7 +4,7 @@ import {KEYS,HZ,DEMO,Song,NoteEvent,Stanza,labelFor,fmt,withOpenF} from './const
 import {allSongs,loadSongs,newSong,saveSongs,exportSong} from './songs.js';
 import {analyzeAudio,GuessedHit} from './analysis.js';
 import {putOriginal,getOriginal,deleteOriginal} from './local-audio.js';
-import {GROUP_COLORS,detectNoteGroups,groupAtTime,groupForNote} from './grouping.js';
+import {GROUP_COLORS,detectNoteGroups,groupAtTime,groupForNote,GroupSensitivity} from './grouping.js';
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const svg=document.getElementById('ciftelia') as unknown as SVGSVGElement;
 const fretLayer=document.getElementById('fret-layer')!;
@@ -32,6 +32,10 @@ let analyzing=false;
 let editingSongId:string|null=null;
 let stanzas:Stanza[]=[{start:0,label:'Grupi 1',color:GROUP_COLORS[0]}];
 let selectedImportedHit:GuessedHit|null=null;
+let selectedGroupStart=0;
+let activeGroupEndMs:number|null=null;
+let playbackSpeed=1;
+let currentPlayMode:'all'|'group'='all';
 const STANZA_COLORS=GROUP_COLORS;
 function importedSong(song:Song|null):boolean{return !!song?.originalAudioId;}
 function clearOriginalUrl():void { if(originalObjectUrl)URL.revokeObjectURL(originalObjectUrl);originalObjectUrl=null;originalSourceId=null;originalPlayer.removeAttribute('src');originalPlayer.load(); }
@@ -66,6 +70,26 @@ function currentSong():Song|null {
   return allSongs(savedSongs).find(s=>s.id===selectedId)||null;
 }
 function songForDisplay():Song|null{return currentSong();}
+function activeSongGroups(song:Song|null):Stanza[]{
+  return sanitizeStanzas(song?.stanzas);
+}
+function refreshGroupPicker(song:Song|null):void{
+  const select=$<HTMLSelectElement>('selectedGroupSelect');
+  const groups=activeSongGroups(song);
+  if(!groups.some(g=>g.start===selectedGroupStart))selectedGroupStart=groups[0].start;
+  select.replaceChildren(...groups.map((g,i)=>new Option(g.label,String(g.start))));
+  select.value=String(selectedGroupStart);
+  $('groupPlayBtn').toggleAttribute('disabled',!song || (!song.notes.length&&!importedSong(song)));
+}
+function selectGroup(start:number):void{
+  const groups=activeSongGroups(currentSong());
+  const group=groups.find(g=>g.start===start);
+  if(!group)return;
+  selectedGroupStart=group.start;
+  $<HTMLSelectElement>('selectedGroupSelect').value=String(group.start);
+  document.querySelectorAll('.stanza-entry').forEach(el=>el.classList.toggle('group-active',(el as HTMLElement).dataset.groupStart===String(group.start)));
+  setStatus(`U zgjodh ${group.label}. Shtyp ▶ Luaj grupin.`);
+}
 function renderSongs():void {
   const selected=selectedId;
   const select=$<HTMLSelectElement>('songSelect');select.replaceChildren();
@@ -81,6 +105,7 @@ function renderSongs():void {
   $('deleteBtn').toggleAttribute('disabled',!isUserSong && selectedId!=='__draft');
   $('exportBtn').toggleAttribute('disabled',!selectedSong || !selectedSong.notes.length);
   $('songMeta').textContent=`${selectedSong?.notes.length??0} nota · ${selectedSong?fmt((selectedSong.notes.at(-1)?.time??0)+300):'00:00.00'}`;
+  refreshGroupPicker(selectedSong);
   renderTimeline();
 }
 function sEl(tag:string,attrs:Record<string,string|number>,text?:string):SVGElement{
@@ -220,7 +245,64 @@ mic.onHit=(hit)=>{
   if(hit.noteNumber)showActive([hit as NoteEvent]);
   renderMicHits();
 };
-function stopPlayback():void {playToken++;cancelAnimationFrame(playFrame);audio.stop();originalPlayer.pause();showActive([]);$('playBtn').textContent='▶ Luaj';$('studioState').textContent='GATI';}
+function stopPlayback():void {
+  playToken++;cancelAnimationFrame(playFrame);audio.stop();originalPlayer.pause();
+  activeGroupEndMs=null;currentPlayMode='all';showActive([]);
+  $('playBtn').textContent='▶ Luaj';$('groupPlayBtn').textContent='▶ Luaj grupin';$('studioState').textContent='GATI';
+}
+function selectedGroupRange(song:Song):{start:number;end:number;name:string;index:number}{
+  const groups=activeSongGroups(song);
+  const i=Math.max(0,groups.findIndex(g=>g.start===selectedGroupStart));
+  const start=groups[i].start;
+  const audioEnd=importedSong(song)&&Number.isFinite(originalPlayer.duration)?Math.round(originalPlayer.duration*1000):Math.max(start+600,...song.notes.map(n=>n.time+500));
+  const end=Math.max(start+100,Math.min(audioEnd,groups[i+1]?.start??audioEnd));
+  return {start,end,name:groups[i].label,index:i};
+}
+function configurePlaybackSpeed():void{
+  originalPlayer.playbackRate=playbackSpeed;
+  if('preservesPitch' in originalPlayer)originalPlayer.preservesPitch=true;
+}
+function completeGroupPlayback():void{
+  stopPlayback();setStatus('Luajtja e grupit përfundoi.');
+}
+async function playSelectedGroup():Promise<void>{
+  if(micActive){setStatus('Ndalo mikrofonin përpara luajtjes.');return;}
+  if(keyboardRecordStart!==null)recordKeyboard();
+  const song=currentSong();if(!song){setStatus('Zgjidh një këngë.');return;}
+  const range=selectedGroupRange(song);
+  stopPlayback();currentPlayMode='group';
+  if(importedSong(song)){
+    if(!originalPlayer.src){setStatus('Mungon audioja origjinale në këtë pajisje.');return;}
+    activeGroupEndMs=range.end;
+    configurePlaybackSpeed();
+    try{
+      originalPlayer.currentTime=range.start/1000;
+      await originalPlayer.play();
+      $('groupPlayBtn').textContent='▶ Po luhet grupi';
+      setStatus(`Po luhet vetëm ${range.name} · ${playbackSpeed.toFixed(2)}×`);
+    }catch(e){stopPlayback();setStatus('Gabim gjatë luajtjes së grupit: '+String(e));}
+    return;
+  }
+  const notes=song.notes.filter(n=>groupForNote(activeSongGroups(song),n)===range.index);
+  if(!notes.length){stopPlayback();setStatus('Grupi i zgjedhur nuk ka nota.');return;}
+  const first=Math.min(...notes.map(n=>n.time));
+  const clip:Song={...song,notes:notes.map(n=>({...n,time:n.time-first}))};
+  const token=++playToken;
+  try{
+    await audio.play(clip,playbackSpeed);
+    if(token!==playToken){audio.stop();return;}
+    $('groupPlayBtn').textContent='▶ Po luhet grupi';$('studioState').textContent='GRUPI';
+    const loop=()=>{
+      if(token!==playToken)return;
+      const ms=first+audio.elapsedMs*playbackSpeed;
+      drawTab(song,ms);$('timeLabel').textContent=`${fmt(ms)} / ${fmt(range.end)}`;
+      const active=notes.filter(n=>Math.abs(n.time-ms)<75);
+      if(active.length)showActive(active);
+      if(audio.done()){completeGroupPlayback();return;}
+      playFrame=requestAnimationFrame(loop);
+    };loop();
+  }catch(e){stopPlayback();setStatus('Gabim gjatë luajtjes së grupit: '+String(e));}
+}
 async function playCurrent():Promise<void> {
   if(micActive){setStatus('Ndalo mikrofonin para luajtjes.');return;}
   if(keyboardRecordStart!==null)recordKeyboard();
@@ -228,21 +310,22 @@ async function playCurrent():Promise<void> {
   const song=currentSong();if(!song){setStatus('Zgjidh këngën.');return;}
   if(!song.notes.length && !importedSong(song)){setStatus('Kënga nuk ka nota të njohura. Korrigjo notat ? te regjistrimi.');return;}
   const token=++playToken;
+  currentPlayMode='all';configurePlaybackSpeed();
   if(importedSong(song)){
     if(!originalPlayer.src){setStatus('Mungon audioja origjinale në këtë pajisje. Zgjidh këngën sërish.');return;}
-    try {await originalPlayer.play();}
+    try {originalPlayer.currentTime=0;await originalPlayer.play();}
     catch(e){setStatus('Shfletuesi nuk nisi audion: '+String(e));$('playBtn').textContent='▶ Luaj';}
     return;
   }
   $('playBtn').textContent='… Po ngarkohet';$('studioState').textContent='NGARKIM';
   try {
-    await audio.play(song);
+    await audio.play(song,playbackSpeed);
     if(token!==playToken)return;
     $('playBtn').textContent='▶ Po luhet';$('studioState').textContent='DUKE LUAJTUR';
     setStatus(`Po luhet ${song.name} · ${song.notes.length} nota`);
     const loop=()=>{
       if(token!==playToken)return;
-      const ms=audio.elapsedMs;
+      const ms=audio.elapsedMs*playbackSpeed;
       const current=song.notes.filter(n=>Math.abs(n.time-ms)<75);
       if(current.length)showActive(current);
       drawTab(song,ms);
@@ -357,7 +440,8 @@ function sanitizeStanzas(value:Stanza[]|undefined):Stanza[]{
     ...unique.filter(s=>s.start>0).map((s,i)=>({...s,color:s.color||GROUP_COLORS[(i+1)%GROUP_COLORS.length]}))].slice(0,90);
 }
 function autoStanzas(hits:GuessedHit[]):Stanza[]{
-  return detectNoteGroups(hits,3);
+  const sensitivity=$<HTMLSelectElement>('groupSensitivity').value as GroupSensitivity;
+  return detectNoteGroups(hits,3,sensitivity);
 }
 function groupColorAt(time:number):string{
   const i=groupAtTime(stanzas,time);
@@ -367,20 +451,45 @@ function colorForHit(hit:GuessedHit):string{
   const i=groupForNote(stanzas,hit);
   return stanzas[i]?.color||STANZA_COLORS[i%STANZA_COLORS.length];
 }
-function moveHitToNextGroup(hit:GuessedHit):void{
-  const current=groupForNote(stanzas,hit);
-  const next=stanzas[current+1];
-  if(!next){setStatus('Kjo notë është tashmë në grupin e fundit.');return;}
-  hit.groupStart=next.start;
-  selectedImportedHit=hit;
+function moveHitGroup(hit:GuessedHit,direction:-1|1):void{
+  const index=groupForNote(stanzas,hit);
+  const destination=stanzas[index+direction];
+  if(!destination){setStatus(direction<0?'Kjo notë është në grupin e parë.':'Kjo notë është në grupin e fundit.');return;}
+  hit.groupStart=destination.start;
+  selectedImportedHit=hit;selectedGroupStart=destination.start;
+  const groupOrder=stanzas.flatMap((_,i)=>importedHits.filter(h=>groupForNote(stanzas,h)===i).sort((a,b)=>a.time-b.time));
+  analysisRowsVisible=Math.max(analysisRowsVisible,groupOrder.indexOf(hit)+1);
   updateImportDraft();renderImportedHits();
-  setStatus(`Nota në ${fmt(hit.time)} kaloi vetëm te ${next.label}. Koha dhe notat e tjera nuk ndryshuan; shtyp Ruaj.`);
+  document.querySelector<HTMLElement>('.analysis-note-row.is-selected')?.scrollIntoView({block:'nearest'});
+  setStatus(`Nota u zhvendos te ${destination.label} dhe mori ngjyrën e tij. Koha mbeti ${fmt(hit.time)}.`);
+}
+function createGroupAtHit(hit:GuessedHit):void{
+  const start=Math.round(hit.time);
+  if(!draft?.originalAudioId || !importedHits.includes(hit))return;
+  if(start<=0){setStatus('Grupi i parë fillon në 0 ms. Zgjidh një notë tjetër.');return;}
+  if(stanzas.length>=90){setStatus('U arrit numri maksimal i grupeve.');return;}
+  const existing=stanzas.find(s=>s.start===start);
+  if(existing){hit.groupStart=existing.start;selectedGroupStart=existing.start;setStatus('Grupi ekziston tashmë. U zgjodh ai grup.');}
+  else{
+    const index=stanzas.findIndex(s=>s.start>start);
+    const position=index<0?stanzas.length:index;
+    stanzas.push({start,label:`Grupi ${stanzas.length+1}`,color:GROUP_COLORS[position%GROUP_COLORS.length]});
+    stanzas=sanitizeStanzas(stanzas);
+    hit.groupStart=start;selectedGroupStart=start;
+    setStatus(`U krijua grupi i ri në ${fmt(start)}. Mund t'i zhvendosësh notat me ↑ / ↓.`);
+  }
+  selectedImportedHit=hit;
+  const groupOrder=stanzas.flatMap((_,i)=>importedHits.filter(h=>groupForNote(stanzas,h)===i).sort((a,b)=>a.time-b.time));
+  analysisRowsVisible=Math.max(analysisRowsVisible,groupOrder.indexOf(hit)+1);
+  updateImportDraft();renderImportedHits();
 }
 function renderStanzas():void{
   const target=$('stanzaList');target.replaceChildren();
   stanzas=sanitizeStanzas(stanzas);
+  if(!stanzas.some(g=>g.start===selectedGroupStart))selectedGroupStart=stanzas[0].start;
   for(let i=0;i<stanzas.length;i++){
     const s=stanzas[i];const row=document.createElement('div');row.className='stanza-entry';row.style.setProperty('--stanza-color',s.color||STANZA_COLORS[i%STANZA_COLORS.length]);
+    row.dataset.groupStart=String(s.start);row.classList.toggle('group-active',s.start===selectedGroupStart);
     const label=document.createElement('input');label.type='text';label.maxLength=65;label.value=s.label;
     label.setAttribute('aria-label',`Emri i grupit ${i+1}`);
     label.addEventListener('change',()=>{s.label=label.value.trim()||`Grupi ${i+1}`;updateImportDraft();renderImportedHits();});
@@ -388,7 +497,12 @@ function renderStanzas():void{
     time.setAttribute('aria-label',`Fillimi i grupit ${i+1} në milisekonda`);
     time.addEventListener('change',()=>{
       const oldStart=s.start;
-      s.start=Math.max(0,Math.round(Number(time.value)||0));
+      const proposed=Math.max(1,Math.round(Number(time.value)||0));
+      if(stanzas.some(other=>other!==s&&other.start===proposed)){
+        setStatus('Ekziston një grup tjetër në këtë kohë. Vendos një kohë tjetër.');time.value=String(oldStart);return;
+      }
+      s.start=proposed;
+      if(selectedGroupStart===oldStart)selectedGroupStart=s.start;
       // Ruaj lidhjen e notave që u zhvendosën manualisht në këtë grup.
       for(const hit of importedHits)if(hit.groupStart===oldStart)hit.groupStart=s.start;
       updateImportDraft();renderImportedHits();
@@ -400,9 +514,12 @@ function renderStanzas():void{
       for(const hit of importedHits)if(hit.groupStart===s.start)delete hit.groupStart;
       stanzas=stanzas.filter(x=>x!==s);updateImportDraft();renderImportedHits();
     });
+    const choose=document.createElement('button');choose.type='button';choose.className='btn btn-minimal group-choose';
+    choose.textContent=s.start===selectedGroupStart?'✓ Zgjedhur':'Zgjidh';choose.setAttribute('aria-label',`Zgjidh ${s.label}`);
+    choose.addEventListener('click',()=>{selectGroup(s.start);renderStanzas();});
     const color=document.createElement('input');color.type='color';color.className='group-color-picker';color.value=s.color||GROUP_COLORS[i%GROUP_COLORS.length];color.setAttribute('aria-label',`Ngjyra e grupit ${i+1}`);
     color.addEventListener('change',()=>{s.color=color.value;updateImportDraft();renderImportedHits();});
-    row.append(label,time,color,remove);target.append(row);
+    row.append(label,time,color,choose,remove);target.append(row);
   }
 }
 /** Importimi ruan skedarin e plotë, ndërsa notat e zbuluara mbeten propozime të korrigjueshme. */
@@ -419,6 +536,9 @@ function updateImportDraft():void {
 /** Notat shtohen te pozicioni i zgjedhur në listë, jo te koha e riprodhuesit. */
 function selectImportedHit(hit:GuessedHit):void {
   selectedImportedHit=hit;
+  selectedGroupStart=stanzas[groupForNote(stanzas,hit)]?.start??0;
+  $<HTMLSelectElement>('selectedGroupSelect').value=String(selectedGroupStart);
+  document.querySelectorAll('.stanza-entry').forEach(el=>el.classList.toggle('group-active',(el as HTMLElement).dataset.groupStart===String(selectedGroupStart)));
   document.querySelectorAll('.analysis-note-row.is-selected').forEach(row=>row.classList.remove('is-selected'));
   document.querySelectorAll('.analysis-note-row').forEach(row=>{
     if((row as HTMLElement).dataset.noteIndex===String(importedHits.indexOf(hit)))row.classList.add('is-selected');
@@ -432,7 +552,8 @@ function insertNoteBelow(hit:GuessedHit):void {
   importedHits.sort((a,b)=>a.time-b.time);
   const index=importedHits.indexOf(hit);
   if(index<0)return;
-  const following=importedHits[index+1];
+  const sameGroup=importedHits.filter(h=>groupForNote(stanzas,h)===groupForNote(stanzas,hit)).sort((a,b)=>a.time-b.time);
+  const following=sameGroup[sameGroup.indexOf(hit)+1]||importedHits[index+1];
   // Koha vendoset mes dy goditjeve; nëse janë njëkohësisht, ruajmë të njëjtën kohë.
   const durationMs=Number.isFinite(originalPlayer.duration)?Math.round(originalPlayer.duration*1000):3_600_000;
   const nextTime=following?(following.time>hit.time+1?Math.floor((hit.time+following.time)/2):hit.time):Math.min(durationMs,hit.time+200);
@@ -463,19 +584,26 @@ function renderImportedHits():void {
   $('analysisCount').textContent=`${importedHits.length} goditje · ${unknown} për t’u plotësuar`;
   importedHits.sort((a,b)=>a.time-b.time);
   renderStanzas();
+  // Shfaq notat brenda grupit ku i ka vendosur përdoruesi, edhe kur audioja është më herët.
+  const grouped=stanzas.flatMap((_,groupIndex)=>importedHits
+    .filter(hit=>groupForNote(stanzas,hit)===groupIndex).sort((a,b)=>a.time-b.time));
+  const visible=grouped.slice(0,analysisRowsVisible);
   let previousStanza=-1;
-  importedHits.slice(0,analysisRowsVisible).forEach((hit)=>{
-    const index=groupAtTime(stanzas,hit.time);
-    if(index!==previousStanza){
-      const title=document.createElement('div');title.className='stanza-divider';title.style.setProperty('--stanza-color',groupColorAt(hit.time));title.textContent=`${stanzas[index].label} · ${fmt(stanzas[index].start)}`;
-      rows.append(title);previousStanza=index;
+  visible.forEach((hit)=>{
+    const assignedGroup=groupForNote(stanzas,hit);
+    if(assignedGroup!==previousStanza){
+      const group=stanzas[assignedGroup];
+      const title=document.createElement('div');title.className='stanza-divider';title.style.setProperty('--stanza-color',group.color||STANZA_COLORS[assignedGroup%STANZA_COLORS.length]);
+      title.textContent=`${group.label} · ${fmt(group.start)}`;
+      title.classList.toggle('group-active',group.start===selectedGroupStart);
+      title.addEventListener('click',()=>{selectGroup(group.start);renderImportedHits();});
+      rows.append(title);previousStanza=assignedGroup;
     }
     const row=document.createElement('div');row.className='analysis-note-row';
-    const assignedGroup=groupForNote(stanzas,hit);
     row.style.setProperty('--group-color',colorForHit(hit));
-    if(assignedGroup!==index){
+    if(groupAtTime(stanzas,hit.time)!==assignedGroup){
       row.classList.add('group-moved');
-      row.title=`Kjo notë është zhvendosur te ${stanzas[assignedGroup].label}; koha e saj nuk ndryshoi.`;
+      row.title=`Nota është në ${stanzas[assignedGroup].label}, me kohën origjinale ${fmt(hit.time)}.`;
     }
     row.dataset.noteIndex=String(importedHits.indexOf(hit));
     if(hit===selectedImportedHit)row.classList.add('is-selected');
@@ -501,34 +629,30 @@ function renderImportedHits():void {
     plus.addEventListener('click',()=>insertNoteBelow(hit));
     const remove=document.createElement('button');remove.type='button';remove.className='btn btn-minimal';remove.textContent='×';remove.title='Fshi goditjen';
     remove.addEventListener('click',()=>{if(selectedImportedHit===hit)selectedImportedHit=null;importedHits=importedHits.filter(x=>x!==hit);updateImportDraft();renderImportedHits();});
-    const move=document.createElement('button');move.type='button';move.className='btn btn-minimal move-to-next-group';
-    const nextGroup=stanzas[assignedGroup+1];
-    move.textContent=nextGroup?`→ ${nextGroup.label}`:'→ Grupi';
-    move.disabled=!nextGroup;
-    move.title=nextGroup?`Kalo vetëm këtë notë te ${nextGroup.label}, pa ndryshuar kohën`:'Kjo notë është në grupin e fundit';
-    move.setAttribute('aria-label',move.title);
-    move.addEventListener('click',()=>moveHitToNextGroup(hit));
+    const up=document.createElement('button');up.type='button';up.className='btn btn-minimal move-group';
+    up.textContent='↑';up.disabled=assignedGroup===0;up.title='Kalo notën te grupi sipër';up.setAttribute('aria-label',up.title);
+    up.addEventListener('click',()=>moveHitGroup(hit,-1));
+    const down=document.createElement('button');down.type='button';down.className='btn btn-minimal move-group';
+    down.textContent='↓';down.disabled=assignedGroup===stanzas.length-1;down.title='Kalo notën te grupi poshtë';down.setAttribute('aria-label',down.title);
+    down.addEventListener('click',()=>moveHitGroup(hit,1));
     const split=document.createElement('button');split.type='button';split.className='btn btn-minimal stanza-split';split.textContent='Grup';split.title='Krijo grup të ri me këtë notë si fillim';
-    split.addEventListener('click',()=>{
-      if(hit.time===0||stanzas.some(s=>s.start===hit.time))return;
-      stanzas.push({start:hit.time,label:`Grupi ${stanzas.length+1}`,color:GROUP_COLORS[stanzas.length%GROUP_COLORS.length]});updateImportDraft();renderImportedHits();
-    });
-    ms.addEventListener('change',()=>{const oldTime=hit.time;hit.time=Math.max(0,Math.min(Math.round((originalPlayer.duration||150)*1000),Math.round(Number(ms.value)||0)));const mark=stanzas.find(st=>st.start===oldTime&&st.start>0);if(mark)mark.start=hit.time;updateImportDraft();renderImportedHits();});
+    split.addEventListener('click',()=>createGroupAtHit(hit));
+    ms.addEventListener('change',()=>{hit.time=Math.max(0,Math.min(Math.round((originalPlayer.duration||150)*1000),Math.round(Number(ms.value)||0)));updateImportDraft();renderImportedHits();});
     fret.addEventListener('change',()=>{
       const value=fret.value.trim(),n=value===''?null:Number(value);
       if(n!==null&&(!Number.isInteger(n)||n<1||n>15)){setStatus('Zgjidh perden 1–13, 14 (F), ose 15 (i hapur).');fret.value=hit.noteNumber===null?'':String(hit.noteNumber);return;}
       hit.noteNumber=n;hit.string=n===14?2:1;hit.confidence=n===null?0:1;
       hit.detail=n===null?'Pa notë':'Korrigjuar manualisht';updateImportDraft();renderImportedHits();
     });
-    row.append(ms,fret,fLabel,status,seek,plus,remove,move,split);rows.append(row);
+    row.append(ms,fret,fLabel,status,seek,plus,remove,up,down,split);rows.append(row);
   });
-  $('analysisMoreBtn').hidden=analysisRowsVisible>=importedHits.length;
+  $('analysisMoreBtn').hidden=analysisRowsVisible>=grouped.length;
 }
 async function importAudioFile(file:File):Promise<void>{
   if(analyzing)return;
   if(file.size>25_000_000){setStatus('Audioja është mbi 25 MB. Përdor regjistrim më të shkurtër.');return;}
   if(!file.type.startsWith('audio/') && !/\.(wav|m4a|mp3|ogg)$/i.test(file.name)){setStatus('Zgjidh skedar audio WAV, M4A ose MP3.');return;}
-  stopPlayback();importFile=file;importedHits=[];selectedImportedHit=null;stanzas=[{start:0,label:'Grupi 1',color:GROUP_COLORS[0]}];editingSongId=null;analysisRowsVisible=60;
+  stopPlayback();selectedGroupStart=0;importFile=file;importedHits=[];selectedImportedHit=null;stanzas=[{start:0,label:'Grupi 1',color:GROUP_COLORS[0]}];editingSongId=null;analysisRowsVisible=60;
   draft=newSong(file.name.replace(/\.[^.]+$/,''),[]);draft.originalAudioId='__draft';draft.stanzas=stanzas;selectedId='__draft';
   renderSongs();renderImportedHits();showOriginalBlob(file,'__draft');
   $('analyzeBtn').removeAttribute('disabled');$('analysisProgress').setAttribute('value','0');
@@ -563,10 +687,18 @@ function installAndroid():void {
 function init():void {
   renderInstrument();renderKeys();renderSongs();renderMicHits();
   audio.setVolume(Number($<HTMLInputElement>('volume').value)/100);
-  $('songSelect').addEventListener('change',e=>{stopPlayback();selectedId=(e.target as HTMLSelectElement).value;renderSongs();renderImportedHits();void prepareOriginalForSelection();});
+  $('songSelect').addEventListener('change',e=>{stopPlayback();selectedGroupStart=0;selectedId=(e.target as HTMLSelectElement).value;renderSongs();renderImportedHits();void prepareOriginalForSelection();});
   $('recordBtn').addEventListener('click',recordKeyboard);
   $('micBtn').addEventListener('click',()=>void toggleMic());
   $('playBtn').addEventListener('click',()=>void playCurrent());
+  $('groupPlayBtn').addEventListener('click',()=>void playSelectedGroup());
+  $('selectedGroupSelect').addEventListener('change',e=>selectGroup(Number((e.target as HTMLSelectElement).value)));
+  $('playbackSpeed').addEventListener('change',e=>{
+    if(audio.playing)stopPlayback(); // Ngjarjet tashmë të planifikuara nuk mund të ndryshohen në mes të këngës.
+    playbackSpeed=Number((e.target as HTMLSelectElement).value)===0.5?0.5:1;
+    configurePlaybackSpeed();
+    setStatus(`Shpejtësia: ${playbackSpeed.toFixed(2)}×`);
+  });
   $('stopBtn').addEventListener('click',()=>{stopPlayback();if(micActive)stopMic();if(keyboardRecordStart!==null)recordKeyboard();setStatus('Ndaluar.');});
   $('saveBtn').addEventListener('click',()=>void saveDraft());
   $('deleteBtn').addEventListener('click',()=>void deleteSong());
@@ -578,16 +710,14 @@ function init():void {
   $('analysisEditSavedBtn').addEventListener('click',()=>void editSavedAudio());
   $('stanzaAddBtn').addEventListener('click',()=>{
     if(!draft?.originalAudioId||!selectedImportedHit)return;
-    const start=selectedImportedHit.time;
-    if(start===0||stanzas.some(s=>s.start===start)){setStatus('Kjo notë është tashmë fillim grupi. Zgjidh një notë tjetër.');return;}
-    stanzas.push({start,label:`Grupi ${stanzas.length+1}`,color:GROUP_COLORS[stanzas.length%GROUP_COLORS.length]});updateImportDraft();renderImportedHits();
+    createGroupAtHit(selectedImportedHit);
   });
   $('groupAutoBtn').addEventListener('click',()=>{
     if(!draft?.originalAudioId || !importedHits.length)return;
     if(stanzas.length>1 && !confirm('Të zëvendësohen ndarjet e grupeve me ato të zbuluara nga pauzat?'))return;
     // Rigrupimi automatik e rivendos anëtarësinë sipas kohës; zgjedhjet manuale zëvendësohen.
     importedHits.forEach(h=>delete h.groupStart);
-    stanzas=autoStanzas(importedHits);updateImportDraft();renderImportedHits();
+    stanzas=autoStanzas(importedHits);selectedGroupStart=0;updateImportDraft();renderImportedHits();
     setStatus(`U ndanë ${stanzas.length} grupe sipas pauzave. Mund t’i korrigjosh vetë.`);
   });
   $('analysisAddBtn').addEventListener('click',()=>{
@@ -598,10 +728,11 @@ function init():void {
   originalPlayer.addEventListener('play',()=>{
     const song=currentSong();if(!importedSong(song))return;
     audio.stop();cancelAnimationFrame(playFrame);const token=++playToken;
-    $('playBtn').textContent='▶ Po luhet';$('studioState').textContent='ORIGJINAL';
+    $('playBtn').textContent=currentPlayMode==='group'?'▶ Luaj':'▶ Po luhet';$('studioState').textContent=currentPlayMode==='group'?'GRUPI':'ORIGJINAL';
     const tick=()=>{
       if(token!==playToken||originalPlayer.paused)return;
       const ms=originalPlayer.currentTime*1000;
+      if(currentPlayMode==='group'&&activeGroupEndMs!==null&&ms>=activeGroupEndMs-12){completeGroupPlayback();return;}
       drawTab(song,ms);
       $('timeLabel').textContent=`${fmt(ms)} / ${fmt((originalPlayer.duration||0)*1000)}`;
       const now=song!.notes.filter(n=>Math.abs(n.time-ms)<70);
@@ -614,7 +745,9 @@ function init():void {
   originalPlayer.addEventListener('ended',()=>{stopPlayback();setStatus('Kënga origjinale përfundoi.');});
   originalPlayer.addEventListener('timeupdate',()=>{
     const song=currentSong();if(!importedSong(song))return;
-    const ms=originalPlayer.currentTime*1000;drawTab(song,ms);
+    const ms=originalPlayer.currentTime*1000;
+    if(currentPlayMode==='group'&&activeGroupEndMs!==null&&ms>=activeGroupEndMs-12){completeGroupPlayback();return;}
+    drawTab(song,ms);
     $('timeLabel').textContent=`${fmt(ms)} / ${fmt((originalPlayer.duration||0)*1000)}`;
     const active=song!.notes.filter(n=>Math.abs(n.time-ms)<65);
     if(active.length)showActive(active);
