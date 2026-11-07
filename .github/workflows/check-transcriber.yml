@@ -5,6 +5,13 @@ on:
     paths:
       - 'js/audio-transcriber.js'
       - 'src/audio-transcriber.ts'
+      - 'src/main.ts'
+      - 'js/main.js'
+      - 'src/analysis.ts'
+      - 'js/analysis.js'
+      - 'src/constants.ts'
+      - 'js/constants.js'
+      - 'tests/test-stanzas.mjs'
       - 'index.html'
       - 'sw.js'
       - '.github/workflows/check-transcriber.yml'
@@ -20,4 +27,4 @@ jobs:
       - run: node --check js/audio-transcriber.js
       - run: npm install --no-package-lock --no-audit --no-fund
       - run: npm run build
-      - run: node tests/test-notes.mjs
+      - run: npm test
