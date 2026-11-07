@@ -103,3 +103,11 @@ Modulet JavaScript ngarkohen nga `js/v12/` që të mos përzihen skedarët e rin
 - **◎ Ndiq muzikën** rikthen ndjekjen automatike gjatë luajtjes. Shpejtësitë 1× dhe 0.50× ruhen.
 - Korrigjimet ndryshojnë kufirin e grupit dhe ngjyrat në tablaturë, por **nuk zhvendosin goditjet apo audio-n**. Notat që janë zhvendosur manualisht në një grup tjetër mbajnë ngjyrën dhe anëtarësinë e tij, edhe nëse koha e tyre origjinale ndodhet jashtë segmentit kohor të grupit.
 - Shtyp **Ruaj** që ndryshimi të mbetet në pajisjen tënde.
+
+
+## V15 — Shënim manual i notave
+- Importimi i audios nis me tablaturë bosh, pa krijuar automatikisht nota të mundshme. **Onset Detection** është opsional.
+- Zgjidh **Shëno manualisht**, luaj audion dhe prek telin përkatës në tablaturë kur dëgjon një goditje. Audioja ndalet në kohën reale të prekjes; zgjidh notën 1–13, F ose G, pastaj **Vendos** ose **Vendos & Vazhdo**.
+- Kur audioja është në pauzë, prek pozicionin kohor në tablaturë për ta futur një notë që të ka ikur. Kohën e korrigjon në milisekonda në listën e notave.
+- Për regjistrime të ruajtura, kliko **Redakto këngën** ose **Shëno manualisht** dhe ruaji korrigjimet me **Ruaj**.
+- **Pastro notat** kërkon konfirmim dhe nuk prek audion. Shënimi manual nuk ndryshon mostrën origjinale ose 30 tingujt.

@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=14-group-speed-20261107">
+  <link rel="stylesheet" href="app.css?v=15-manual-20261107">
 </head>
 <body>
   <main class="container">
@@ -170,13 +170,33 @@
         <div class="tab-nav-set"><span>VIJA E GRUPIT</span><button id="tabMarkLeftBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms majtas">−50 ms</button><button id="tabMarkRightBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms djathtas">+50 ms</button></div>
         <strong id="tabViewRange" aria-live="polite">00:00 – 00:00</strong>
       </div>
-      <div class="tab-canvas-wrap"><canvas id="tabCanvas" tabindex="0" aria-label="Tablatura me dy tela. Tërhiq vijën me ngjyrë të grupit majtas ose djathtas për të ndryshuar fillimin e grupit. Përdor shigjetat e pamjes për të lëvizur në këngë." height="175"></canvas></div>
+      <div class="manual-toolbar" role="group" aria-label="Shënimi manual i notave">
+        <button id="manualModeBtn" type="button" class="btn btn-manual" aria-pressed="false">✍ Shëno manualisht</button>
+        <button id="manualClearBtn" type="button" class="btn btn-minimal" disabled>Pastro notat</button>
+        <span class="manual-hint">Dëgjo këngën dhe prek tablaturën kur fillon nota.</span>
+      </div>
+      <div class="tab-canvas-wrap"><canvas id="tabCanvas" tabindex="0" aria-label="Tablatura. Në mënyrën manuale, prek telin kur dëgjon një goditje, pastaj zgjidh perden." height="175"></canvas></div>
+      <div id="manualEntryPanel" class="manual-entry" hidden>
+        <strong id="manualTimeLabel">00:00.00</strong>
+        <label for="manualFretSelect">Perdja / nota</label>
+        <select id="manualFretSelect" aria-label="Zgjidh perden e notës së re">
+          <option value="">? — Zgjidh notën</option>
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+          <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+          <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option>
+          <option value="14">F · teli lart hapur</option><option value="15">G · teli poshtë hapur</option>
+        </select>
+        <label class="manual-f-label"><input id="manualFCompanion" type="checkbox" checked> F shoqëron</label>
+        <button id="manualSetBtn" type="button" class="btn">Vendos</button>
+        <button id="manualContinueBtn" type="button" class="btn btn-primary">▶ Vendos &amp; Vazhdo</button>
+        <button id="manualCancelBtn" type="button" class="btn btn-minimal">Anulo</button>
+      </div>
       <p class="tab-help" id="tabHelp">Zgjidh një grup. Në mënyrën Redakto këngën, tërhiq vijën e tij me ngjyrë në tablaturë për të ndryshuar kufirin; shigjetat lëvizin pamjen.</p>
       
     </section>
 
     <section class="panel analysis-panel" aria-labelledby="analysisTitle">
-      <div class="panel-heading"><div><h2 id="analysisTitle">Nga audio në tablaturë</h2><p>Importo regjistrimin origjinal, analizo goditjet, korrigjo notat dhe ruaje.</p></div></div>
+      <div class="panel-heading"><div><h2 id="analysisTitle">Nga audio në tablaturë</h2><p>Dëgjo regjistrimin, prek tablaturën te çdo notë dhe vendos perden. Analiza automatike mbetet opsionale.</p></div></div>
       <div class="analysis-actions">
         <label class="btn btn-primary analysis-upload" for="audioImportFile">＋ Importo këngë audio</label>
         <input id="audioImportFile" type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" hidden>
@@ -184,8 +204,8 @@
         <button id="analysisAddBtn" class="btn btn-minimal" type="button" disabled>＋ Shto poshtë notës së zgjedhur</button>
       </div>
       <audio id="originalPlayer" controls preload="metadata" class="original-player" hidden aria-label="Luaj regjistrimin origjinal"></audio>
-      <div class="analysis-status-row"><progress id="analysisProgress" max="100" value="0"></progress><span id="analysisStatus" role="status">Zgjidh një audio për analizë.</span></div>
-      <p class="analysis-hint">Onset Detection gjen goditjet dhe pauzat për të propozuar grupe notash. Plotëso perdet 1–13, 14 = F ose 15 = teli poshtë i hapur. F shtohet në tablaturë për çdo notë poshtë; hiqe vetëm kur duhet. Audioja origjinale nuk ndryshohet.</p>
+      <div class="analysis-status-row"><progress id="analysisProgress" max="100" value="0"></progress><span id="analysisStatus" role="status">Ngarko një audio për të filluar shënimin manual.</span></div>
+      <p class="analysis-hint">Shëno notat me dorë ndërsa dëgjon; nëse dëshiron, Onset Detection mund të propozojë fillimet e goditjeve. Plotëso perdet 1–13, 14 = F ose 15 = teli poshtë i hapur. F shtohet në tablaturë për çdo notë poshtë; hiqe vetëm kur duhet. Audioja origjinale nuk ndryshohet.</p>
       <div id="analysisEdit" class="analysis-edit" hidden>
         <div class="analysis-edit-header"><strong>Grupet e notave dhe perdet</strong><span id="analysisCount"></span></div>
         <div class="stanza-actions"><button id="stanzaAddBtn" type="button" class="btn btn-minimal" disabled>＋ Krijo grup nga nota e zgjedhur</button><span id="selectedNoteHint">Prek një rresht note që ta zgjedhësh, pastaj shto notën menjëherë poshtë saj.</span></div>
@@ -256,6 +276,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v14/main.js"></script>
+  <script type="module" src="./js/v15/main.js"></script>
 </body>
 </html>

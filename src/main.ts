@@ -6,6 +6,7 @@ import {analyzeAudio,GuessedHit} from './analysis.js';
 import {putOriginal,getOriginal,deleteOriginal} from './local-audio.js';
 import {GROUP_COLORS,detectNoteGroups,groupAtTime,groupForNote,GroupSensitivity} from './grouping.js';
 import {timelineGeometry,timelineX,timelineTime,clampTimelineStart,clampGroupBoundary,findGroupBoundary} from './timeline.js';
+import {manualTapTime,manualNote} from './manual.js';
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const svg=document.getElementById('ciftelia') as unknown as SVGSVGElement;
 const fretLayer=document.getElementById('fret-layer')!;
@@ -42,6 +43,9 @@ let tabCurrentMs=0;
 let tabViewStartMs=0;
 let tabFollowPlayback=true;
 let tabDrag:{pointerId:number;index:number;oldStart:number;previewMs:number}|null=null;
+// Manual transcription: a tap captures the audio playback time; the user chooses the fret.
+let manualMode=false;
+let manualPending:{time:number;string:1|2}|null=null;
 
 const STANZA_COLORS=GROUP_COLORS;
 function importedSong(song:Song|null):boolean{return !!song?.originalAudioId;}
@@ -347,6 +351,7 @@ async function playCurrent():Promise<void> {
   }catch(e){$('playBtn').textContent='▶ Luaj';$('studioState').textContent='GABIM';setStatus(`Audio: ${e instanceof Error?e.message:String(e)}`);}
 }
 async function saveDraft():Promise<void> {
+  if(manualPending){setStatus('Vendos ose anulo notën e hapur para ruajtjes.');return;}
   if(!draft||!draft.notes.length){setStatus('Nuk ka këngë provë për ruajtje.');return;}
   const title=prompt('Emri i këngës:',draft.name);
   if(title===null)return;
@@ -493,13 +498,22 @@ function drawTab(song:Song|null,elapsed=tabCurrentMs):void {
       const groupColor=groups[gi]?.color||STANZA_COLORS[gi%STANZA_COLORS.length];
       c.beginPath();c.arc(x,y,11,0,Math.PI*2);c.fillStyle=Math.abs(e.time-tabCurrentMs)<60?groupColor:'#203f4f';c.fill();
       c.strokeStyle=groupColor;c.lineWidth=2;c.stroke();
-      c.fillStyle=Math.abs(e.time-tabCurrentMs)<60?'#141e2b':'#f6e6ca';c.font='bold 12px system-ui';c.textAlign='center';c.fillText(labelFor(e.noteNumber),x,y+4);c.textAlign='start';
+      c.fillStyle=Math.abs(e.time-tabCurrentMs)<60?'#141e2b':'#f6e6ca';c.font='bold 12px system-ui';c.textAlign='center';c.fillText(importedSong(song)&&e.noteNumber<=13?String(e.noteNumber):labelFor(e.noteNumber),x,y+4);c.textAlign='start';
       // Notes manually moved between groups keep their original time but take their target group's color.
       if(Number.isFinite(e.groupStart) && gi!==groupAtTime(groups,e.time)){
         c.fillStyle=groupColor;c.fillRect(x+6,y-15,5,5);
       }
     }
   }else{c.font='13px system-ui';c.fillStyle='#8d9bac';c.fillText('Zgjidh këngën.',left+20,92);}
+  if(manualPending && editableTab()){
+    const px=timelineX(manualPending.time,tabViewStartMs,left,scale);
+    if(px>=left&&px<=w-right){
+      const py=manualPending.string===2?60:120;
+      c.beginPath();c.arc(px,py,14,0,Math.PI*2);c.fillStyle='#f0b75b';c.fill();
+      c.strokeStyle='#fff4db';c.lineWidth=2;c.stroke();
+      c.fillStyle='#1b2532';c.textAlign='center';c.font='bold 14px system-ui';c.fillText('?',px,py+5);c.textAlign='start';
+    }
+  }
   c.fillStyle='#132437';c.fillRect(0,0,left-1,h);
   c.fillStyle='#a7bccc';c.font='bold 11px system-ui';c.fillText('TELI LART',7,47);c.fillText('TELI POSHTË',7,106);
   setTabControls(song,geom);
@@ -508,6 +522,74 @@ function renderTimeline():void {
   drawTab(songForDisplay(),tabCurrentMs);
   const song=songForDisplay();
   $('timeLabel').textContent=`${fmt(tabCurrentMs)} / ${fmt(tabSongEnd(song))}`;
+}
+/** When playing, the audio clock is authoritative. When paused, the horizontal tap picks the time. */
+function captureManualTime(x:number,geom:ReturnType<typeof timelineGeometry>):number {
+  const song=currentSong();const duration=tabSongEnd(song);
+  const playing=!originalPlayer.paused&&!originalPlayer.ended;
+  return manualTapTime(playing,originalPlayer.currentTime*1000,x,tabViewStartMs,geom.left,geom.scale,duration);
+}
+function renderManualMode():void{
+  const btn=$<HTMLButtonElement>('manualModeBtn');
+  btn.classList.toggle('is-on',manualMode);
+  btn.setAttribute('aria-pressed',String(manualMode));
+  btn.textContent=manualMode?'✍ Shënim manual: AKTIV':'✍ Shëno manualisht';
+  $('manualEntryPanel').hidden=!manualPending;
+  $('manualClearBtn').toggleAttribute('disabled',!editableTab()||!importedHits.length);
+  $('tabHelp').textContent=manualMode
+    ?'Luaj regjistrimin. Kur dëgjon një notë, prek TELI POSHTË ose TELI LART në tablaturë; audioja ndalet, zgjedh perden dhe vazhdon. Kur është ndalur, prekja vendos kohën aty ku klikon.'
+    :'Tërhiq vijën e grupit për të korrigjuar kufirin. Përdor ✍ Shëno manualisht për të vendosur notat ndërsa dëgjon muzikën.';
+}
+function cancelManualNote():void{
+  manualPending=null;renderManualMode();redrawTab();
+}
+function beginManualNote(x:number,y:number,geom:ReturnType<typeof timelineGeometry>):void{
+  if(!editableTab()||!importedSong(currentSong())||!originalPlayer.src){
+    setStatus('Për shënim manual, importo një audio ose hap Redakto këngën.');return;
+  }
+  if(manualPending){setStatus('Përfundo ose anulo notën e mëparshme.');return;}
+  const wasPlaying=!originalPlayer.paused;
+  const time=captureManualTime(x,geom);
+  const string:1|2=y<90?2:1;
+  if(wasPlaying)originalPlayer.pause();
+  manualPending={time,string};
+  const select=$<HTMLSelectElement>('manualFretSelect');
+  select.value=string===2?'14':'';
+  $<HTMLInputElement>('manualFCompanion').checked=string===1;
+  $<HTMLInputElement>('manualFCompanion').disabled=string===2;
+  $('manualTimeLabel').textContent=`${fmt(time)} · ${string===2?'Teli lart':'Teli poshtë'}`;
+  renderManualMode();
+  tabFollowPlayback=false;
+  focusTimelineAt(time);
+  setStatus(`Shënim në ${fmt(time)}. Zgjidh perden dhe shtyp Vendos ose Vendos & Vazhdo.`);
+  $<HTMLElement>('manualEntryPanel').scrollIntoView({block:'nearest',behavior:'smooth'});
+  select.focus({preventScroll:true});
+}
+function commitManualNote(resume:boolean):void{
+  if(!manualPending||!editableTab())return;
+  const noteNumber=Number($<HTMLSelectElement>('manualFretSelect').value);
+  if(!Number.isInteger(noteNumber)||noteNumber<1||noteNumber>15){
+    setStatus('Zgjidh perden 1–13, F (14) ose telin e poshtëm të hapur (15).');return;
+  }
+  const time=manualPending.time;
+  const groupStart=stanzas[groupAtTime(stanzas,time)]?.start??0;
+  const h:GuessedHit=manualNote(noteNumber,time,$<HTMLInputElement>('manualFCompanion').checked,groupStart);
+  importedHits.push(h);
+  selectedImportedHit=h;
+  const count=stanzas.flatMap((_,i)=>importedHits.filter(v=>groupForNote(stanzas,v)===i)).indexOf(h);
+  analysisRowsVisible=Math.max(analysisRowsVisible,count+1);
+  manualPending=null;
+  updateImportDraft();renderImportedHits();renderManualMode();redrawTab();
+  setStatus(`Nota ${noteNumber===14?'F':noteNumber===15?'G':noteNumber} u vendos te ${fmt(time)}. ${resume?'Vazhdo dëgjimin.':'Mund të korrigjosh kohën në listë.'}`);
+  if(resume){
+    configurePlaybackSpeed();
+    void originalPlayer.play().catch(e=>setStatus('Audioja nuk vazhdoi: '+String(e)));
+  }
+}
+function setManualMode(on:boolean):void{
+  if(!on)cancelManualNote();
+  manualMode=on;renderManualMode();
+  setStatus(on?'Shënim manual aktiv. Shtyp Luaj; prek tablaturën në goditjen që dëgjon.':'Shënimi manual u çaktivizua.');
 }
 function installTabInteraction():void{
   $('tabLeftBtn').addEventListener('click',()=>moveTimeline(-1));
@@ -524,7 +606,10 @@ function installTabInteraction():void{
     if(y<17||y>162||x<geom.left-17||x>geom.width-geom.right+8)return;
     const groups=tabCurrentGroups(song);
     const index=findGroupBoundary(groups,x,tabViewStartMs,geom.left,geom.scale,19);
-    if(index<1)return;
+    if(index<1){
+      if(manualMode && y>=37 && y<=146){beginManualNote(x,y,geom);event.preventDefault();}
+      return;
+    }
     if(!editableTab()){
       selectedGroupStart=groups[index].start;
       refreshGroupPicker(song);redrawTab();
@@ -591,8 +676,8 @@ async function editSavedAudio():Promise<void>{
   draft={...song,notes:song.notes.map(n=>({...n}))};
   stanzas=sanitizeStanzas(song.stanzas);
   importedHits=song.notes.map(n=>({time:n.time,noteNumber:n.noteNumber,string:n.string,confidence:n.confidence??1,withF:n.withF!==false,groupStart:n.groupStart,detail:'Ruajtur'}));
-  analysisRowsVisible=60; selectedId='__draft';
-  renderSongs();renderImportedHits();await prepareOriginalForSelection();
+  analysisRowsVisible=60; selectedId='__draft';manualPending=null;manualMode=true;
+  renderSongs();renderImportedHits();renderManualMode();await prepareOriginalForSelection();
   setStatus('Po redakton këngën e ruajtur. Ndryshimet ruhen vetëm kur shtyp Ruaj.');
 }
 function sanitizeStanzas(value:Stanza[]|undefined):Stanza[]{
@@ -688,7 +773,7 @@ function updateImportDraft():void {
     ...(Number.isFinite(h.groupStart)?{groupStart:h.groupStart}:{})
   })).sort((a,b)=>a.time-b.time||a.string-b.string);
   draft.stanzas=sanitizeStanzas(stanzas);
-  renderSongs();
+  renderSongs();renderManualMode();
 }
 /** Notat shtohen te pozicioni i zgjedhur në listë, jo te koha e riprodhuesit. */
 function selectImportedHit(hit:GuessedHit):void {
@@ -809,18 +894,18 @@ async function importAudioFile(file:File):Promise<void>{
   if(analyzing)return;
   if(file.size>25_000_000){setStatus('Audioja është mbi 25 MB. Përdor regjistrim më të shkurtër.');return;}
   if(!file.type.startsWith('audio/') && !/\.(wav|m4a|mp3|ogg)$/i.test(file.name)){setStatus('Zgjidh skedar audio WAV, M4A ose MP3.');return;}
-  stopPlayback();selectedGroupStart=0;tabCurrentMs=0;tabViewStartMs=0;tabFollowPlayback=true;importFile=file;importedHits=[];selectedImportedHit=null;stanzas=[{start:0,label:'Grupi 1',color:GROUP_COLORS[0]}];editingSongId=null;analysisRowsVisible=60;
+  stopPlayback();manualPending=null;manualMode=true;selectedGroupStart=0;tabCurrentMs=0;tabViewStartMs=0;tabFollowPlayback=true;importFile=file;importedHits=[];selectedImportedHit=null;stanzas=[{start:0,label:'Grupi 1',color:GROUP_COLORS[0]}];editingSongId=null;analysisRowsVisible=60;
   draft=newSong(file.name.replace(/\.[^.]+$/,''),[]);draft.originalAudioId='__draft';draft.stanzas=stanzas;selectedId='__draft';
   renderSongs();renderImportedHits();showOriginalBlob(file,'__draft');
   $('analyzeBtn').removeAttribute('disabled');$('analysisProgress').setAttribute('value','0');
-  $('analysisStatus').textContent='Onset Detection: po kërkohen fillimet e goditjeve…';
-  setStatus('Audioja është ngarkuar; analiza nis automatikisht. Mund të korrigjosh çdo notë.');
-  void analyzeImported();
+  $('analysisStatus').textContent='Audioja është gati. Luaj dhe prek tablaturën te çdo notë. Onset Detection është opsionale.';
+  renderManualMode();
+  setStatus('Audioja është ngarkuar. Shënimi manual është aktiv: Luaj, prek tablaturën dhe zgjidh perden.');
 }
 async function analyzeImported():Promise<void>{
   if(!importFile||analyzing)return;
   if(importedHits.length && !confirm('Ta analizojmë përsëri? Korrigjimet manuale të paruajtura do të zëvendësohen.'))return;
-  analyzing=true;$('analyzeBtn').setAttribute('disabled','');$('audioImportFile').setAttribute('disabled','');
+  cancelManualNote();analyzing=true;$('analyzeBtn').setAttribute('disabled','');$('audioImportFile').setAttribute('disabled','');
   try{
     const ctx=await audio.unlock();
     const decoded=await ctx.decodeAudioData((await importFile.arrayBuffer()).slice(0));
@@ -843,9 +928,35 @@ function installAndroid():void {
 
 function init():void {
   installTabInteraction();
+  $('manualModeBtn').addEventListener('click',()=>{
+    if(!editableTab()){
+      const song=currentSong();
+      if(importedSong(song)&&selectedId!=='__draft'){
+        void editSavedAudio().then(()=>{manualMode=true;renderManualMode();setStatus('Shënimi manual është aktiv te kënga e ruajtur.');});
+      }else setStatus('Importo këngë audio që të shënosh notat me dorë.');
+      return;
+    }
+    setManualMode(!manualMode);
+  });
+  $('manualFretSelect').addEventListener('change',()=>{
+    const n=Number($<HTMLSelectElement>('manualFretSelect').value);
+    const f=$<HTMLInputElement>('manualFCompanion');const wasDisabled=f.disabled;
+    f.disabled=n===14;if(n===14)f.checked=false;
+    else if(n>0&&wasDisabled)f.checked=true;
+  });
+  $('manualSetBtn').addEventListener('click',()=>commitManualNote(false));
+  $('manualContinueBtn').addEventListener('click',()=>commitManualNote(true));
+  $('manualCancelBtn').addEventListener('click',cancelManualNote);
+  $('manualClearBtn').addEventListener('click',()=>{
+    if(!editableTab()||!importedHits.length)return;
+    if(!confirm('Të fshihen të gjitha notat e kësaj prove? Audioja origjinale dhe grupet mbeten.'))return;
+    cancelManualNote();importedHits=[];selectedImportedHit=null;updateImportDraft();renderImportedHits();renderManualMode();
+    setStatus('U pastruan notat e provës. Ndryshimi ruhet vetëm kur shtyp Ruaj.');
+  });
+  renderManualMode();
   renderInstrument();renderKeys();renderSongs();renderMicHits();
   audio.setVolume(Number($<HTMLInputElement>('volume').value)/100);
-  $('songSelect').addEventListener('change',e=>{stopPlayback();selectedGroupStart=0;tabViewStartMs=0;tabCurrentMs=0;tabFollowPlayback=true;selectedId=(e.target as HTMLSelectElement).value;renderSongs();renderImportedHits();void prepareOriginalForSelection();});
+  $('songSelect').addEventListener('change',e=>{stopPlayback();manualPending=null;manualMode=false;renderManualMode();selectedGroupStart=0;tabViewStartMs=0;tabCurrentMs=0;tabFollowPlayback=true;selectedId=(e.target as HTMLSelectElement).value;renderSongs();renderImportedHits();void prepareOriginalForSelection();});
   $('recordBtn').addEventListener('click',recordKeyboard);
   $('micBtn').addEventListener('click',()=>void toggleMic());
   $('playBtn').addEventListener('click',()=>void playCurrent());

@@ -107,3 +107,18 @@
 .tab-canvas-wrap canvas{touch-action:pan-y;cursor:crosshair;outline-offset:3px}
 .tab-canvas-wrap canvas:focus-visible{outline:2px solid #65d6c1}
 @media(max-width:680px){.tab-nav{gap:8px;padding:8px}.tab-nav-set{gap:5px}.tab-nav .btn{padding:7px 8px}#tabViewRange{width:100%;margin:1px 0 0}.tab-help{font-size:10px}}
+
+/* V15 — manual transcription. The controls are visible without covering the tab. */
+.manual-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:8px 0 10px}
+.manual-hint{font-size:11px;color:#acc5cf}
+.btn-manual{border:1px solid #d6ac62;color:#e9c583;background:#263743}
+.btn-manual.is-on{border-color:#69ddbd;background:#164438;color:#f4fff7}
+.manual-entry[hidden]{display:none}
+.manual-entry{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 0 6px;padding:14px;border-radius:12px;border:1px solid #57b99c;background:#132c36}
+.manual-entry strong{font-size:14px;color:#f4d18c;min-width:120px;font-variant-numeric:tabular-nums}
+.manual-entry label{font-size:12px;color:#c8dae4}
+.manual-entry select{min-width:150px;max-width:230px;background:#102239;color:white;border-radius:8px;border:1px solid #567088;padding:9px}
+.manual-f-label{display:flex;align-items:center;gap:6px}
+.manual-f-label input{accent-color:#e3ae58}
+#tabCanvas{touch-action:pan-y}
+@media(max-width:680px){.manual-entry{align-items:stretch}.manual-entry select{max-width:100%;flex:1}.manual-entry .btn{flex:1}.manual-hint{flex-basis:100%}}
