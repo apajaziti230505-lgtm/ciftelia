@@ -7,7 +7,6 @@ import {putOriginal,getOriginal,deleteOriginal} from './local-audio.js';
 import {GROUP_COLORS,detectNoteGroups,groupAtTime,groupForNote,GroupSensitivity} from './grouping.js';
 import {timelineGeometry,timelineX,timelineTime,clampTimelineStart,clampGroupBoundary,findGroupBoundary} from './timeline.js';
 import {manualTapTime,manualAnywhereTime,manualNote} from './manual.js';
-import {currentPluck,nextMelodyNote} from './practice.js';
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const svg=document.getElementById('ciftelia') as unknown as SVGSVGElement;
 const fretLayer=document.getElementById('fret-layer')!;
@@ -50,8 +49,6 @@ let instantTabNoteMode=false;
 let manualPending:{time:number;string:1|2}|null=null;
 let syntheticStartMs=0;
 let seekPendingUntilMetadata:number|null=null;
-let manualNoteFadeTimer:number|undefined;
-let lastPracticeVisualKey='';
 
 const STANZA_COLORS=GROUP_COLORS;
 function importedSong(song:Song|null):boolean{return !!song?.originalAudioId;}
@@ -96,12 +93,7 @@ function refreshGroupPicker(song:Song|null):void{
   if(!groups.some(g=>g.start===selectedGroupStart))selectedGroupStart=groups[0].start;
   select.replaceChildren(...groups.map((g,i)=>new Option(g.label,String(g.start))));
   select.value=String(selectedGroupStart);
-  const heroSelect=$<HTMLSelectElement>('practiceGroupSelect');
-  heroSelect.replaceChildren(...groups.map((g,i)=>new Option(g.label,String(g.start))));
-  heroSelect.value=String(selectedGroupStart);
-  const disabled=!song || (!song.notes.length&&!importedSong(song));
-  $('groupPlayBtn').toggleAttribute('disabled',disabled);
-  $('practiceGroupPlayBtn').toggleAttribute('disabled',disabled);
+  $('groupPlayBtn').toggleAttribute('disabled',!song || (!song.notes.length&&!importedSong(song)));
 }
 function selectGroup(start:number):void{
   const groups=activeSongGroups(currentSong());
@@ -109,7 +101,6 @@ function selectGroup(start:number):void{
   if(!group)return;
   selectedGroupStart=group.start;
   $<HTMLSelectElement>('selectedGroupSelect').value=String(group.start);
-  $<HTMLSelectElement>('practiceGroupSelect').value=String(group.start);
   document.querySelectorAll('.stanza-entry').forEach(el=>el.classList.toggle('group-active',(el as HTMLElement).dataset.groupStart===String(group.start)));
   focusTimelineAt(group.start);
   setStatus(`U zgjodh ${group.label}. Vija me ngjyrë shfaqet në tablaturë.`);
@@ -161,50 +152,22 @@ function renderInstrument():void {
     hitZones.append(cup);
   }
 }
-/** Qartëson notat që luhen. Teli i poshtëm merr ngjyrën e grupit;
- * F e hapur shfaqet me ngjyrë të veçantë. Kur nuk luhet notë, nuk mbetet
- * asnjë shenjë e shtypur në instrument.
- */
-function clearNoteFadeTimer():void {if(manualNoteFadeTimer!==undefined){clearTimeout(manualNoteFadeTimer);manualNoteFadeTimer=undefined;}}
-function noteCaption(note:NoteEvent):string {
-  if(note.noteNumber===14)return 'F · Teli lart';
-  if(note.noteNumber===15)return 'G · I hapur';
-  return `Perdja ${note.noteNumber} · ${labelFor(note.noteNumber)}`;
-}
-function showActive(events:NoteEvent[],song:Song|null=currentSong(),ms:number|null=null):void {
-  const main=events.find(e=>e.noteNumber!==14)??events[0];
-  const groups=activeSongGroups(song);
-  const idx=main&&song?groupForNote(groups,main):Math.max(0,groups.findIndex(g=>g.start===selectedGroupStart));
-  const color=main&&song ? (groups[idx]?.color||GROUP_COLORS[idx%GROUP_COLORS.length]) : '#e8b45a';
-  const visualEvents=events.length?withOpenF(events):[];
-  const signature=visualEvents.map(e=>`${e.string}-${e.noteNumber}`).sort().join(',')+'|'+color;
-  if(signature!==lastPracticeVisualKey){
-    lastPracticeVisualKey=signature;
-    highlights.replaceChildren();
-    const shown=new Set<string>();
-    for(const ev of visualEvents){
-      const key=`${ev.string}-${ev.noteNumber}`;
-      if(shown.has(key))continue;shown.add(key);
-      const cx=ev.noteNumber>=14?1175:(fretXs[ev.noteNumber-1]+fretXs[ev.noteNumber])/2;
-      const cy=ev.string===1?240:219;
-      const tint=ev.string===2?'#5ce0db':color;
-      const rad=ev.string===2?12.5:15;
-      highlights.append(sEl('circle',{cx,cy,r:rad+8,fill:tint,opacity:.25,filter:'url(#glow)'}));
-      highlights.append(sEl('circle',{cx,cy,r:rad,fill:tint,stroke:'#f7fbff','stroke-width':2.8}));
-      highlights.append(sEl('text',{x:cx,y:cy+4,'text-anchor':'middle',fill:'#142238','font-size':ev.string===1?12:10,'font-weight':850},ev.noteNumber===14?'F':ev.noteNumber===15?'G':String(ev.noteNumber)));
-    }
+function showActive(events:NoteEvent[]):void {
+  highlights.replaceChildren();
+  const visualEvents=withOpenF(events);
+  const shown=new Set<string>();
+  for(const ev of visualEvents){
+    const key=`${ev.string}-${ev.noteNumber}`;
+    if(shown.has(key))continue;
+    shown.add(key);
+    const cx=ev.noteNumber>=14?1175:(fretXs[ev.noteNumber-1]+fretXs[ev.noteNumber])/2;
+    const cy=ev.string===1?240:219;
+    highlights.append(sEl('circle',{cx,cy,r:17,fill:'#fbbf24',opacity:.32,filter:'url(#glow)'}));
+    highlights.append(sEl('circle',{cx,cy,r:7.7,fill:'#f59e0b',stroke:'#fef3c7','stroke-width':2}));
   }
-  $('liveNote').textContent=main?`${main.noteNumber<=13?main.noteNumber:labelFor(main.noteNumber)}`:'—';
-  $('liveHz').textContent=main?`${HZ[main.noteNumber-1]} Hz`:'— Hz';
-  $('practiceNote').textContent=main?`${noteCaption(main)}${main.noteNumber!==14&&main.withF!==false?' + F':''}`:'—';
-  $('practiceGroup').textContent=main?(groups[idx]?.label||'Nota e zgjedhur'):'Zgjidh këngën dhe luaj';
-  $('practiceCurrent').style.setProperty('--practice-color',color);
-  const upcoming=song&&ms!==null?nextMelodyNote(song.notes,ms):undefined;
-  $('practiceNext').textContent=upcoming?noteCaption(upcoming):'—';
-}
-function renderPlaybackNotes(song:Song,ms:number):void {
-  const current=currentPluck(song.notes,ms);
-  showActive(current,song,ms);
+  const last=[...events].reverse().find(e=>e.noteNumber!==14) ?? events.at(-1);
+  $('liveNote').textContent=last?`${labelFor(last.noteNumber)}${last.noteNumber!==14&&last.withF!==false?' + F':''}`:'—';
+  $('liveHz').textContent=last?`${HZ[last.noteNumber-1]} Hz${last.noteNumber!==14&&last.withF!==false?' · F':''}`:'— Hz';
 }
 function renderKeys():void {
   const root=$('keypad');root.replaceChildren();
@@ -218,9 +181,7 @@ async function hit(noteNumber:number,string:1|2):Promise<void> {
   if(micActive){setStatus('Mikrofoni është aktiv. Ndaloje për të luajtur notat në shfletues.');return;}
   try {void audio.hit(noteNumber).catch(e=>setStatus(String(e.message||e)));}
   catch(e){setStatus(String(e));}
-  clearNoteFadeTimer();
-  showActive([{string,noteNumber,time:0}],null);
-  manualNoteFadeTimer=window.setTimeout(()=>{if(!audio.playing&&originalPlayer.paused)showActive([]);manualNoteFadeTimer=undefined;},430);
+  showActive([{string,noteNumber,time:0}]);
   if(keyboardRecordStart!==null){
     const now=performance.now();
     if(keyboardEvents.length===0)keyboardRecordStart=now;
@@ -300,9 +261,9 @@ mic.onHit=(hit)=>{
   renderMicHits();
 };
 function stopPlayback():void {
-  playToken++;cancelAnimationFrame(playFrame);audio.stop();originalPlayer.pause();clearNoteFadeTimer();
+  playToken++;cancelAnimationFrame(playFrame);audio.stop();originalPlayer.pause();
   activeGroupEndMs=null;currentPlayMode='all';showActive([]);
-  $('playBtn').textContent='▶ Luaj';$('groupPlayBtn').textContent='▶ Luaj grupin';$('practicePauseBtn').textContent='▶ Vazhdo';$('studioState').textContent='GATI';
+  $('playBtn').textContent='▶ Luaj';$('groupPlayBtn').textContent='▶ Luaj grupin';$('studioState').textContent='GATI';
   syncTabTransport();
 }
 function selectedGroupRange(song:Song):{start:number;end:number;name:string;index:number}{
@@ -312,14 +273,6 @@ function selectedGroupRange(song:Song):{start:number;end:number;name:string;inde
   const audioEnd=importedSong(song)&&Number.isFinite(originalPlayer.duration)?Math.round(originalPlayer.duration*1000):Math.max(start+600,...song.notes.map(n=>n.time+500));
   const end=Math.max(start+100,Math.min(audioEnd,groups[i+1]?.start??audioEnd));
   return {start,end,name:groups[i].label,index:i};
-}
-function applyPlaybackSpeed(value:number):void {
-  if(audio.playing)seekToMs(playbackPositionMs()); // Audio e sintetizuar kërkon planifikim të ri.
-  playbackSpeed=value===0.5?0.5:1;
-  $<HTMLSelectElement>('playbackSpeed').value=String(playbackSpeed);
-  $<HTMLSelectElement>('practiceSpeed').value=String(playbackSpeed);
-  configurePlaybackSpeed();
-  setStatus(`Shpejtësia: ${playbackSpeed.toFixed(2)}×`);
 }
 function configurePlaybackSpeed():void{
   originalPlayer.playbackRate=playbackSpeed;
@@ -344,7 +297,7 @@ async function playSelectedGroup():Promise<void>{
     try{
       originalPlayer.currentTime=range.start/1000;
       await originalPlayer.play();
-      $('groupPlayBtn').textContent='▶ Po luhet grupi';syncTabTransport();
+      $('groupPlayBtn').textContent='▶ Po luhet grupi';
       setStatus(`Po luhet vetëm ${range.name} · ${playbackSpeed.toFixed(2)}×`);
     }catch(e){stopPlayback();setStatus('Gabim gjatë luajtjes së grupit: '+String(e));}
     return;
@@ -357,12 +310,13 @@ async function playSelectedGroup():Promise<void>{
   try{
     await audio.play(clip,playbackSpeed);
     if(token!==playToken){audio.stop();return;}
-    $('groupPlayBtn').textContent='▶ Po luhet grupi';$('studioState').textContent='GRUPI';syncTabTransport();
+    $('groupPlayBtn').textContent='▶ Po luhet grupi';$('studioState').textContent='GRUPI';
     const loop=()=>{
       if(token!==playToken)return;
       const ms=first+audio.elapsedMs*playbackSpeed;
       drawTab(song,ms);$('timeLabel').textContent=`${fmt(ms)} / ${fmt(range.end)}`;
-      renderPlaybackNotes(song,ms);
+      const active=notes.filter(n=>Math.abs(n.time-ms)<75);
+      if(active.length)showActive(active);
       if(audio.done()){completeGroupPlayback();return;}
       playFrame=requestAnimationFrame(loop);
     };loop();
@@ -395,11 +349,7 @@ function syncTabTransport():void {
   $('tabSeekReadout').textContent=`${fmt(ms)} · ${preciseTime(ms)} s`;
   const playing=importedSong(song) ? !originalPlayer.paused : audio.playing;
   $('playBtn').textContent=playing?'⏸ Pauzë':'▶ Luaj';
-  $('practicePauseBtn').textContent=playing?'⏸ Pauzë':'▶ Vazhdo';
-  $<HTMLSelectElement>('practiceSpeed').value=String(playbackSpeed);
-  $<HTMLSelectElement>('practiceGroupSelect').value=String(selectedGroupStart);
 }
-
 /** Pause before seeking so the player cannot overwrite the clicked position. */
 function seekToMs(target:number):void {
   const song=currentSong();if(!song)return;
@@ -415,7 +365,6 @@ function seekToMs(target:number):void {
     playToken++;cancelAnimationFrame(playFrame);audio.stop();
   }
   activeGroupEndMs=null;currentPlayMode='all';
-  clearNoteFadeTimer();showActive([]);
   tabCurrentMs=ms;tabFollowPlayback=false;
   const geom=visibleTab(),x=timelineX(ms,tabViewStartMs,geom.left,geom.scale);
   if(x<geom.left || x>geom.width-geom.right){
@@ -440,8 +389,8 @@ async function playSynthFromCursor():Promise<void>{
       if(token!==playToken||!audio.playing)return;
       const ms=Math.min(activeSeekEndMs(),syntheticStartMs+audio.elapsedMs*playbackSpeed);
       drawTab(song,ms);$('timeLabel').textContent=`${fmt(ms)} / ${fmt(activeSeekEndMs())}`;
-      renderPlaybackNotes(song,ms);
-      if(audio.done()){audio.stop();showActive([]);syncTabTransport();return;}
+      const now=song.notes.filter(e=>Math.abs(e.time-ms)<70);if(now.length)showActive(now);
+      if(audio.done()){audio.stop();syncTabTransport();return;}
       playFrame=requestAnimationFrame(frame);
     };frame();
   }catch(e){setStatus(`Luajtja nuk nisi: ${String(e)}`);syncTabTransport();}
@@ -453,12 +402,12 @@ async function toggleTabPlay():Promise<void>{
   const song=currentSong();if(!song)return;
   if(importedSong(song)){
     if(!originalPlayer.src){setStatus('Audioja origjinale nuk është gati.');return;}
-    if(!originalPlayer.paused){originalPlayer.pause();showActive([]);tabCurrentMs=originalPlayer.currentTime*1000;redrawTab();return;}
+    if(!originalPlayer.paused){originalPlayer.pause();tabCurrentMs=originalPlayer.currentTime*1000;redrawTab();return;}
     if(Number.isFinite(originalPlayer.duration) && originalPlayer.currentTime>=originalPlayer.duration-.02){seekToMs(0);}
     configurePlaybackSpeed();
     try{await originalPlayer.play();}catch(e){setStatus('Luajtja nuk nisi: '+String(e));}
   }else{
-    if(audio.playing){const at=playbackPositionMs();playToken++;cancelAnimationFrame(playFrame);audio.stop();showActive([]);tabCurrentMs=at;redrawTab();return;}
+    if(audio.playing){const at=playbackPositionMs();playToken++;cancelAnimationFrame(playFrame);audio.stop();tabCurrentMs=at;redrawTab();return;}
     await playSynthFromCursor();
   }
   syncTabTransport();
@@ -486,7 +435,8 @@ async function playCurrent():Promise<void> {
     const loop=()=>{
       if(token!==playToken)return;
       const ms=audio.elapsedMs*playbackSpeed;
-      renderPlaybackNotes(song,ms);
+      const current=song.notes.filter(n=>Math.abs(n.time-ms)<75);
+      if(current.length)showActive(current);
       drawTab(song,ms);
       $('timeLabel').textContent=`${fmt(ms)} / ${fmt(song.notes.at(-1)!.time+600)}`;
       if(audio.done()){stopPlayback();setStatus('Kënga përfundoi.');return;}
@@ -1161,15 +1111,13 @@ function init():void {
   $('micBtn').addEventListener('click',()=>void toggleMic());
   $('playBtn').addEventListener('click',()=>void toggleTabPlay());
   $('groupPlayBtn').addEventListener('click',()=>void playSelectedGroup());
-  $('practiceAllBtn').addEventListener('click',()=>void playCurrent());
-  $('practiceGroupPlayBtn').addEventListener('click',()=>void playSelectedGroup());
-  $('practicePauseBtn').addEventListener('click',()=>void toggleTabPlay());
-  $('practiceStopBtn').addEventListener('click',()=>{stopPlayback();seekToMs(0);showActive([]);setStatus('Ndaluar.');});
-  $('practiceGroupSelect').addEventListener('change',e=>selectGroup(Number((e.target as HTMLSelectElement).value)));
-  $('practiceSpeed').addEventListener('change',e=>applyPlaybackSpeed(Number((e.target as HTMLSelectElement).value)));
-
   $('selectedGroupSelect').addEventListener('change',e=>selectGroup(Number((e.target as HTMLSelectElement).value)));
-  $('playbackSpeed').addEventListener('change',e=>applyPlaybackSpeed(Number((e.target as HTMLSelectElement).value)));
+  $('playbackSpeed').addEventListener('change',e=>{
+    if(audio.playing)seekToMs(playbackPositionMs()); // Ndalo planifikimin e vjetër para ndryshimit të shpejtësisë.
+    playbackSpeed=Number((e.target as HTMLSelectElement).value)===0.5?0.5:1;
+    configurePlaybackSpeed();
+    setStatus(`Shpejtësia: ${playbackSpeed.toFixed(2)}×`);
+  });
   $('stopBtn').addEventListener('click',()=>{stopPlayback();if(micActive)stopMic();if(keyboardRecordStart!==null)recordKeyboard();seekToMs(0);setStatus('Ndaluar në fillim.');});
   $('saveBtn').addEventListener('click',()=>void saveDraft());
   $('deleteBtn').addEventListener('click',()=>void deleteSong());
@@ -1213,12 +1161,12 @@ function init():void {
       drawTab(song,ms);
       $('timeLabel').textContent=`${fmt(ms)} / ${fmt((originalPlayer.duration||0)*1000)}`;
       const now=song!.notes.filter(n=>Math.abs(n.time-ms)<70);
-      renderPlaybackNotes(song!,ms);
+      if(now.length)showActive(now);
       playFrame=requestAnimationFrame(tick);
     };tick();
     setStatus('Po luhet regjistrimi origjinal. 220 Hz nuk shtohet artificialisht.');
   });
-  originalPlayer.addEventListener('pause',()=>{cancelAnimationFrame(playFrame);showActive([]);if(importedSong(currentSong())){$('playBtn').textContent='▶ Luaj';$('studioState').textContent='PAUZË';syncTabTransport();}});
+  originalPlayer.addEventListener('pause',()=>{cancelAnimationFrame(playFrame);if(importedSong(currentSong())){$('playBtn').textContent='▶ Luaj';$('studioState').textContent='PAUZË';syncTabTransport();}});
   originalPlayer.addEventListener('ended',()=>{stopPlayback();setStatus('Kënga origjinale përfundoi.');});
   originalPlayer.addEventListener('timeupdate',()=>{
     const song=currentSong();if(!importedSong(song))return;
@@ -1227,7 +1175,7 @@ function init():void {
     drawTab(song,ms);
     $('timeLabel').textContent=`${fmt(ms)} / ${fmt((originalPlayer.duration||0)*1000)}`;
     const active=song!.notes.filter(n=>Math.abs(n.time-ms)<65);
-    if(!originalPlayer.paused)renderPlaybackNotes(song!,ms);else showActive([]);
+    if(active.length)showActive(active);
   });
   $('installBtn').addEventListener('click',installAndroid);
   window.addEventListener('beforeinstallprompt',(e:Event)=>{e.preventDefault();deferredInstall=e;$('installBtn').hidden=false;});

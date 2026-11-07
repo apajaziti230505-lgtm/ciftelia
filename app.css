@@ -145,25 +145,3 @@
 .tab-canvas-wrap.instant-note-active canvas{cursor:crosshair;touch-action:manipulation}
 .tab-canvas-wrap.instant-note-active{outline:1px solid rgba(113,221,188,.48);outline-offset:2px}
 @media(max-width:680px){.btn-instant-note{flex:1 1 150px}}
-
-/* V18: Mëso çiftelinë - kontrollet te instrumenti. */
-.practice-workspace {display:grid;gap:11px;margin:6px 0 16px;padding:15px;background:linear-gradient(110deg,#13283a,#102034);border:1px solid #345166;border-radius:15px}
-.practice-head{display:grid;grid-template-columns:minmax(220px,1.35fr) minmax(175px,1fr) minmax(130px,.75fr);align-items:stretch;gap:12px}
-.practice-head .transport-song{min-width:0;flex:auto;display:grid;align-content:center}
-.practice-head .transport-song select {width:100%;background:#183048;border:1px solid #40607a;border-radius:9px;padding:10px;color:#f4f7fb;font-size:13px}
-.practice-current,.practice-next{display:flex;flex-direction:column;justify-content:center;gap:3px;min-height:72px;border-radius:12px;padding:10px 14px;background:#14253a;border:1px solid #385169;border-left:6px solid var(--practice-color,#e8b45a)}
-.practice-next{border-left:3px solid #57758d}
-.practice-kicker{font-weight:800;letter-spacing:.08em;font-size:10px;color:#a7bed0}
-.practice-current strong{font-size:22px;color:var(--practice-color,#e8b45a);line-height:1.2}
-.practice-next strong{font-size:16px;color:#e6f0f6;line-height:1.3}
-.practice-current small{font-size:11px;color:#c9dbe8}
-.practice-controls{display:flex;gap:9px;align-items:end;flex-wrap:wrap}
-.practice-controls .btn{min-height:42px;padding:10px 14px;font-size:12px}
-.practice-controls label{display:flex;flex-direction:column;gap:5px;color:#aec3d2;font-size:10px;font-weight:750;letter-spacing:.05em}
-.practice-controls select{min-width:142px;min-height:42px;border-radius:9px;border:1px solid #446079;background:#14293f;color:#f2f6fa;padding:8px 10px;font-weight:750;font-size:12px}
-.practice-controls .btn-group-play{background:#1e5f50;border-color:#60bf9f;color:#e4fff3}
-.practice-controls .btn-stop-practice{background:#2c2837;border-color:#7a5263;color:#ffd6db}
-.practice-tip{margin:0;font-size:11px;color:#a7bdcd;line-height:1.4}
-.practice-head .transport-song label{display:block;color:#aec3d2;font-size:10px;font-weight:800;letter-spacing:.08em;margin-bottom:6px}
-@media(max-width:960px){.practice-head{grid-template-columns:minmax(210px,1fr) minmax(170px,1fr)}.practice-next{grid-column:2}}
-@media(max-width:680px){.practice-workspace{padding:10px}.practice-head{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7px}.practice-head .transport-song{grid-column:1/-1}.practice-next{grid-column:auto}.practice-current,.practice-next{padding:9px;min-height:76px}.practice-current strong{font-size:18px}.practice-next strong{font-size:15px}.practice-controls{gap:7px}.practice-controls .btn{flex:1 1 42%;min-width:0}.practice-controls label{flex:1 1 45%;min-width:0}.practice-controls select{width:100%;min-width:0}.practice-tip{font-size:10px}}

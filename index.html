@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=18-practice-20261107">
+  <link rel="stylesheet" href="app.css?v=17-seek-20261107">
 </head>
 <body>
   <main class="container">
@@ -155,34 +155,10 @@
           <g id="highlights" pointer-events="none"></g>
           <g id="hit-zones"></g>
         </svg></div></div>
-      <div class="practice-workspace" aria-label="Ushtrime me çifteli">
-        <div class="practice-head">
-          <div class="transport-song"><label for="songSelect">KËNGA E ZGJEDHUR</label><select id="songSelect"></select><div id="songMeta" class="song-meta">0 nota</div></div>
-          <div class="practice-current" id="practiceCurrent" aria-live="off">
-            <span class="practice-kicker">NOTA QË LUHET</span>
-            <strong id="practiceNote">—</strong>
-            <small id="practiceGroup">Zgjidh këngën dhe luaj</small>
-          </div>
-          <div class="practice-next" aria-live="off"><span class="practice-kicker">NOTA TJETËR</span><strong id="practiceNext">—</strong></div>
-        </div>
-        <div class="practice-controls" role="group" aria-label="Luajtja dhe ushtrimet te çiftelia">
-          <button type="button" id="practiceAllBtn" class="btn btn-primary">▶ Gjithë kënga</button>
-          <button type="button" id="practicePauseBtn" class="btn">⏸ Pauzë / Vazhdo</button>
-          <button type="button" id="practiceStopBtn" class="btn btn-stop-practice">■ Ndalo</button>
-          <label for="practiceGroupSelect">Grupi
-            <select id="practiceGroupSelect" aria-label="Zgjidh grupin që do të ushtrosh"><option value="0">Grupi 1</option></select>
-          </label>
-          <button type="button" id="practiceGroupPlayBtn" class="btn btn-group-play">▶ Luaj grupin</button>
-          <label for="practiceSpeed">Shpejtësia
-            <select id="practiceSpeed" aria-label="Shpejtësia e ushtrimit"><option value="1">Normal · 1.00×</option><option value="0.5">Ngadalë · 0.50×</option></select>
-          </label>
-        </div>
-        <p class="practice-tip">Notat ndriçojnë sipas grupit. Për të mësuar më lehtë, zgjidh grupin dhe provo 0.50×.</p>
-      </div>
     </section>
 
     <section class="transport" aria-label="Këngët dhe kontrollet">
-
+      <div class="transport-song"><label for="songSelect">KËNGA E ZGJEDHUR</label><select id="songSelect"></select><div id="songMeta" class="song-meta">0 nota</div></div>
       <div class="transport-actions"><button type="button" class="btn btn-record" id="recordBtn">＋ Regjistro</button><button type="button" class="btn" id="saveBtn" disabled>▣ Ruaj</button><button type="button" class="btn btn-danger" id="deleteBtn" disabled>Fshi</button><button type="button" class="btn btn-minimal" id="exportBtn">Eksporto JSON</button><button type="button" class="btn btn-minimal" id="importBtn">Importo JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button type="button" class="btn btn-minimal" id="installBtn" hidden>Instalo Android</button></div>
       <span id="recordCounter" class="record-counter">GATI</span>
     </section>
@@ -308,7 +284,7 @@
           }
         } catch (e) { console.warn('Pastrimi i cache nuk përfundoi:', e); }
         const url = new URL(window.location.href);
-        url.searchParams.set('version', '18-practice');
+        url.searchParams.set('version', '14-tablature');
         url.searchParams.set('r', String(Date.now()));
         window.location.replace(url.href);
       });
@@ -321,6 +297,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v18/main.js"></script>
+  <script type="module" src="./js/v17/main.js"></script>
 </body>
 </html>
