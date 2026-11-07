@@ -7,6 +7,7 @@ import { putOriginal, getOriginal, deleteOriginal } from './local-audio.js';
 import { GROUP_COLORS, detectNoteGroups, groupAtTime, groupForNote } from './grouping.js';
 import { timelineGeometry, timelineX, timelineTime, clampTimelineStart, clampGroupBoundary, findGroupBoundary } from './timeline.js';
 import { manualAnywhereTime, manualNote } from './manual.js';
+import { currentPluck, nextMelodyNote } from './practice.js';
 const $ = (id) => document.getElementById(id);
 const svg = document.getElementById('ciftelia');
 const fretLayer = document.getElementById('fret-layer');
@@ -49,6 +50,8 @@ let instantTabNoteMode = false;
 let manualPending = null;
 let syntheticStartMs = 0;
 let seekPendingUntilMetadata = null;
+let manualNoteFadeTimer;
+let lastPracticeVisualKey = '';
 const STANZA_COLORS = GROUP_COLORS;
 function importedSong(song) { return !!song?.originalAudioId; }
 function clearOriginalUrl() { seekPendingUntilMetadata = null; if (originalObjectUrl)
@@ -118,7 +121,12 @@ function refreshGroupPicker(song) {
         selectedGroupStart = groups[0].start;
     select.replaceChildren(...groups.map((g, i) => new Option(g.label, String(g.start))));
     select.value = String(selectedGroupStart);
-    $('groupPlayBtn').toggleAttribute('disabled', !song || (!song.notes.length && !importedSong(song)));
+    const heroSelect = $('practiceGroupSelect');
+    heroSelect.replaceChildren(...groups.map((g, i) => new Option(g.label, String(g.start))));
+    heroSelect.value = String(selectedGroupStart);
+    const disabled = !song || (!song.notes.length && !importedSong(song));
+    $('groupPlayBtn').toggleAttribute('disabled', disabled);
+    $('practiceGroupPlayBtn').toggleAttribute('disabled', disabled);
 }
 function selectGroup(start) {
     const groups = activeSongGroups(currentSong());
@@ -127,6 +135,7 @@ function selectGroup(start) {
         return;
     selectedGroupStart = group.start;
     $('selectedGroupSelect').value = String(group.start);
+    $('practiceGroupSelect').value = String(group.start);
     document.querySelectorAll('.stanza-entry').forEach(el => el.classList.toggle('group-active', el.dataset.groupStart === String(group.start)));
     focusTimelineAt(group.start);
     setStatus(`U zgjodh ${group.label}. Vija me ngjyrë shfaqet në tablaturë.`);
@@ -192,23 +201,57 @@ function renderInstrument() {
         hitZones.append(cup);
     }
 }
-function showActive(events) {
-    highlights.replaceChildren();
-    const visualEvents = withOpenF(events);
-    const shown = new Set();
-    for (const ev of visualEvents) {
-        const key = `${ev.string}-${ev.noteNumber}`;
-        if (shown.has(key))
-            continue;
-        shown.add(key);
-        const cx = ev.noteNumber >= 14 ? 1175 : (fretXs[ev.noteNumber - 1] + fretXs[ev.noteNumber]) / 2;
-        const cy = ev.string === 1 ? 240 : 219;
-        highlights.append(sEl('circle', { cx, cy, r: 17, fill: '#fbbf24', opacity: .32, filter: 'url(#glow)' }));
-        highlights.append(sEl('circle', { cx, cy, r: 7.7, fill: '#f59e0b', stroke: '#fef3c7', 'stroke-width': 2 }));
+/** Qartëson notat që luhen. Teli i poshtëm merr ngjyrën e grupit;
+ * F e hapur shfaqet me ngjyrë të veçantë. Kur nuk luhet notë, nuk mbetet
+ * asnjë shenjë e shtypur në instrument.
+ */
+function clearNoteFadeTimer() { if (manualNoteFadeTimer !== undefined) {
+    clearTimeout(manualNoteFadeTimer);
+    manualNoteFadeTimer = undefined;
+} }
+function noteCaption(note) {
+    if (note.noteNumber === 14)
+        return 'F · Teli lart';
+    if (note.noteNumber === 15)
+        return 'G · I hapur';
+    return `Perdja ${note.noteNumber} · ${labelFor(note.noteNumber)}`;
+}
+function showActive(events, song = currentSong(), ms = null) {
+    const main = events.find(e => e.noteNumber !== 14) ?? events[0];
+    const groups = activeSongGroups(song);
+    const idx = main && song ? groupForNote(groups, main) : Math.max(0, groups.findIndex(g => g.start === selectedGroupStart));
+    const color = main && song ? (groups[idx]?.color || GROUP_COLORS[idx % GROUP_COLORS.length]) : '#e8b45a';
+    const visualEvents = events.length ? withOpenF(events) : [];
+    const signature = visualEvents.map(e => `${e.string}-${e.noteNumber}`).sort().join(',') + '|' + color;
+    if (signature !== lastPracticeVisualKey) {
+        lastPracticeVisualKey = signature;
+        highlights.replaceChildren();
+        const shown = new Set();
+        for (const ev of visualEvents) {
+            const key = `${ev.string}-${ev.noteNumber}`;
+            if (shown.has(key))
+                continue;
+            shown.add(key);
+            const cx = ev.noteNumber >= 14 ? 1175 : (fretXs[ev.noteNumber - 1] + fretXs[ev.noteNumber]) / 2;
+            const cy = ev.string === 1 ? 240 : 219;
+            const tint = ev.string === 2 ? '#5ce0db' : color;
+            const rad = ev.string === 2 ? 12.5 : 15;
+            highlights.append(sEl('circle', { cx, cy, r: rad + 8, fill: tint, opacity: .25, filter: 'url(#glow)' }));
+            highlights.append(sEl('circle', { cx, cy, r: rad, fill: tint, stroke: '#f7fbff', 'stroke-width': 2.8 }));
+            highlights.append(sEl('text', { x: cx, y: cy + 4, 'text-anchor': 'middle', fill: '#142238', 'font-size': ev.string === 1 ? 12 : 10, 'font-weight': 850 }, ev.noteNumber === 14 ? 'F' : ev.noteNumber === 15 ? 'G' : String(ev.noteNumber)));
+        }
     }
-    const last = [...events].reverse().find(e => e.noteNumber !== 14) ?? events.at(-1);
-    $('liveNote').textContent = last ? `${labelFor(last.noteNumber)}${last.noteNumber !== 14 && last.withF !== false ? ' + F' : ''}` : '—';
-    $('liveHz').textContent = last ? `${HZ[last.noteNumber - 1]} Hz${last.noteNumber !== 14 && last.withF !== false ? ' · F' : ''}` : '— Hz';
+    $('liveNote').textContent = main ? `${main.noteNumber <= 13 ? main.noteNumber : labelFor(main.noteNumber)}` : '—';
+    $('liveHz').textContent = main ? `${HZ[main.noteNumber - 1]} Hz` : '— Hz';
+    $('practiceNote').textContent = main ? `${noteCaption(main)}${main.noteNumber !== 14 && main.withF !== false ? ' + F' : ''}` : '—';
+    $('practiceGroup').textContent = main ? (groups[idx]?.label || 'Nota e zgjedhur') : 'Zgjidh këngën dhe luaj';
+    $('practiceCurrent').style.setProperty('--practice-color', color);
+    const upcoming = song && ms !== null ? nextMelodyNote(song.notes, ms) : undefined;
+    $('practiceNext').textContent = upcoming ? noteCaption(upcoming) : '—';
+}
+function renderPlaybackNotes(song, ms) {
+    const current = currentPluck(song.notes, ms);
+    showActive(current, song, ms);
 }
 function renderKeys() {
     const root = $('keypad');
@@ -233,7 +276,10 @@ async function hit(noteNumber, string) {
     catch (e) {
         setStatus(String(e));
     }
-    showActive([{ string, noteNumber, time: 0 }]);
+    clearNoteFadeTimer();
+    showActive([{ string, noteNumber, time: 0 }], null);
+    manualNoteFadeTimer = window.setTimeout(() => { if (!audio.playing && originalPlayer.paused)
+        showActive([]); manualNoteFadeTimer = undefined; }, 430);
     if (keyboardRecordStart !== null) {
         const now = performance.now();
         if (keyboardEvents.length === 0)
@@ -356,11 +402,13 @@ function stopPlayback() {
     cancelAnimationFrame(playFrame);
     audio.stop();
     originalPlayer.pause();
+    clearNoteFadeTimer();
     activeGroupEndMs = null;
     currentPlayMode = 'all';
     showActive([]);
     $('playBtn').textContent = '▶ Luaj';
     $('groupPlayBtn').textContent = '▶ Luaj grupin';
+    $('practicePauseBtn').textContent = '▶ Vazhdo';
     $('studioState').textContent = 'GATI';
     syncTabTransport();
 }
@@ -371,6 +419,15 @@ function selectedGroupRange(song) {
     const audioEnd = importedSong(song) && Number.isFinite(originalPlayer.duration) ? Math.round(originalPlayer.duration * 1000) : Math.max(start + 600, ...song.notes.map(n => n.time + 500));
     const end = Math.max(start + 100, Math.min(audioEnd, groups[i + 1]?.start ?? audioEnd));
     return { start, end, name: groups[i].label, index: i };
+}
+function applyPlaybackSpeed(value) {
+    if (audio.playing)
+        seekToMs(playbackPositionMs()); // Audio e sintetizuar kërkon planifikim të ri.
+    playbackSpeed = value === 0.5 ? 0.5 : 1;
+    $('playbackSpeed').value = String(playbackSpeed);
+    $('practiceSpeed').value = String(playbackSpeed);
+    configurePlaybackSpeed();
+    setStatus(`Shpejtësia: ${playbackSpeed.toFixed(2)}×`);
 }
 function configurePlaybackSpeed() {
     originalPlayer.playbackRate = playbackSpeed;
@@ -411,6 +468,7 @@ async function playSelectedGroup() {
             originalPlayer.currentTime = range.start / 1000;
             await originalPlayer.play();
             $('groupPlayBtn').textContent = '▶ Po luhet grupi';
+            syncTabTransport();
             setStatus(`Po luhet vetëm ${range.name} · ${playbackSpeed.toFixed(2)}×`);
         }
         catch (e) {
@@ -436,15 +494,14 @@ async function playSelectedGroup() {
         }
         $('groupPlayBtn').textContent = '▶ Po luhet grupi';
         $('studioState').textContent = 'GRUPI';
+        syncTabTransport();
         const loop = () => {
             if (token !== playToken)
                 return;
             const ms = first + audio.elapsedMs * playbackSpeed;
             drawTab(song, ms);
             $('timeLabel').textContent = `${fmt(ms)} / ${fmt(range.end)}`;
-            const active = notes.filter(n => Math.abs(n.time - ms) < 75);
-            if (active.length)
-                showActive(active);
+            renderPlaybackNotes(song, ms);
             if (audio.done()) {
                 completeGroupPlayback();
                 return;
@@ -487,6 +544,9 @@ function syncTabTransport() {
     $('tabSeekReadout').textContent = `${fmt(ms)} · ${preciseTime(ms)} s`;
     const playing = importedSong(song) ? !originalPlayer.paused : audio.playing;
     $('playBtn').textContent = playing ? '⏸ Pauzë' : '▶ Luaj';
+    $('practicePauseBtn').textContent = playing ? '⏸ Pauzë' : '▶ Vazhdo';
+    $('practiceSpeed').value = String(playbackSpeed);
+    $('practiceGroupSelect').value = String(selectedGroupStart);
 }
 /** Pause before seeking so the player cannot overwrite the clicked position. */
 function seekToMs(target) {
@@ -516,6 +576,8 @@ function seekToMs(target) {
     }
     activeGroupEndMs = null;
     currentPlayMode = 'all';
+    clearNoteFadeTimer();
+    showActive([]);
     tabCurrentMs = ms;
     tabFollowPlayback = false;
     const geom = visibleTab(), x = timelineX(ms, tabViewStartMs, geom.left, geom.scale);
@@ -551,11 +613,10 @@ async function playSynthFromCursor() {
             const ms = Math.min(activeSeekEndMs(), syntheticStartMs + audio.elapsedMs * playbackSpeed);
             drawTab(song, ms);
             $('timeLabel').textContent = `${fmt(ms)} / ${fmt(activeSeekEndMs())}`;
-            const now = song.notes.filter(e => Math.abs(e.time - ms) < 70);
-            if (now.length)
-                showActive(now);
+            renderPlaybackNotes(song, ms);
             if (audio.done()) {
                 audio.stop();
+                showActive([]);
                 syncTabTransport();
                 return;
             }
@@ -588,6 +649,7 @@ async function toggleTabPlay() {
         }
         if (!originalPlayer.paused) {
             originalPlayer.pause();
+            showActive([]);
             tabCurrentMs = originalPlayer.currentTime * 1000;
             redrawTab();
             return;
@@ -609,6 +671,7 @@ async function toggleTabPlay() {
             playToken++;
             cancelAnimationFrame(playFrame);
             audio.stop();
+            showActive([]);
             tabCurrentMs = at;
             redrawTab();
             return;
@@ -668,9 +731,7 @@ async function playCurrent() {
             if (token !== playToken)
                 return;
             const ms = audio.elapsedMs * playbackSpeed;
-            const current = song.notes.filter(n => Math.abs(n.time - ms) < 75);
-            if (current.length)
-                showActive(current);
+            renderPlaybackNotes(song, ms);
             drawTab(song, ms);
             $('timeLabel').textContent = `${fmt(ms)} / ${fmt(song.notes.at(-1).time + 600)}`;
             if (audio.done()) {
@@ -1771,14 +1832,14 @@ function init() {
     $('micBtn').addEventListener('click', () => void toggleMic());
     $('playBtn').addEventListener('click', () => void toggleTabPlay());
     $('groupPlayBtn').addEventListener('click', () => void playSelectedGroup());
+    $('practiceAllBtn').addEventListener('click', () => void playCurrent());
+    $('practiceGroupPlayBtn').addEventListener('click', () => void playSelectedGroup());
+    $('practicePauseBtn').addEventListener('click', () => void toggleTabPlay());
+    $('practiceStopBtn').addEventListener('click', () => { stopPlayback(); seekToMs(0); showActive([]); setStatus('Ndaluar.'); });
+    $('practiceGroupSelect').addEventListener('change', e => selectGroup(Number(e.target.value)));
+    $('practiceSpeed').addEventListener('change', e => applyPlaybackSpeed(Number(e.target.value)));
     $('selectedGroupSelect').addEventListener('change', e => selectGroup(Number(e.target.value)));
-    $('playbackSpeed').addEventListener('change', e => {
-        if (audio.playing)
-            seekToMs(playbackPositionMs()); // Ndalo planifikimin e vjetër para ndryshimit të shpejtësisë.
-        playbackSpeed = Number(e.target.value) === 0.5 ? 0.5 : 1;
-        configurePlaybackSpeed();
-        setStatus(`Shpejtësia: ${playbackSpeed.toFixed(2)}×`);
-    });
+    $('playbackSpeed').addEventListener('change', e => applyPlaybackSpeed(Number(e.target.value)));
     $('stopBtn').addEventListener('click', () => { stopPlayback(); if (micActive)
         stopMic(); if (keyboardRecordStart !== null)
         recordKeyboard(); seekToMs(0); setStatus('Ndaluar në fillim.'); });
@@ -1847,14 +1908,13 @@ function init() {
             drawTab(song, ms);
             $('timeLabel').textContent = `${fmt(ms)} / ${fmt((originalPlayer.duration || 0) * 1000)}`;
             const now = song.notes.filter(n => Math.abs(n.time - ms) < 70);
-            if (now.length)
-                showActive(now);
+            renderPlaybackNotes(song, ms);
             playFrame = requestAnimationFrame(tick);
         };
         tick();
         setStatus('Po luhet regjistrimi origjinal. 220 Hz nuk shtohet artificialisht.');
     });
-    originalPlayer.addEventListener('pause', () => { cancelAnimationFrame(playFrame); if (importedSong(currentSong())) {
+    originalPlayer.addEventListener('pause', () => { cancelAnimationFrame(playFrame); showActive([]); if (importedSong(currentSong())) {
         $('playBtn').textContent = '▶ Luaj';
         $('studioState').textContent = 'PAUZË';
         syncTabTransport();
@@ -1872,8 +1932,10 @@ function init() {
         drawTab(song, ms);
         $('timeLabel').textContent = `${fmt(ms)} / ${fmt((originalPlayer.duration || 0) * 1000)}`;
         const active = song.notes.filter(n => Math.abs(n.time - ms) < 65);
-        if (active.length)
-            showActive(active);
+        if (!originalPlayer.paused)
+            renderPlaybackNotes(song, ms);
+        else
+            showActive([]);
     });
     $('installBtn').addEventListener('click', installAndroid);
     window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstall = e; $('installBtn').hidden = false; });
