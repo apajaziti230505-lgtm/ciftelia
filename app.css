@@ -43,10 +43,16 @@
  .stanza-entry{grid-template-columns:minmax(120px,1fr) 90px 36px}
 }
 
-
-/* V9: vijat e strofave dhe nota e zgjedhur */
-.stanza-divider{--stanza-color:#e8b45a;display:flex;align-items:center;gap:14px;grid-column:1 / -1;margin:18px 0 7px;padding:11px 14px;border:1px solid var(--stanza-color);border-left:6px solid var(--stanza-color);border-radius:10px;background:#13263b;color:var(--stanza-color);font-size:13px;font-weight:800}
-.stanza-divider::after{content:"";height:4px;flex:1;min-width:24px;background:var(--stanza-color);border-radius:10px;opacity:.95}
+/* V9 – ndarje të dukshme strofash dhe përzgjedhje note */
+.stanza-divider {
+  --stanza-color: #e8b45a;
+  display:flex;align-items:center;gap:14px;
+  grid-column:1 / -1;margin:18px 0 7px;padding:11px 14px;
+  border:1px solid var(--stanza-color);border-left:6px solid var(--stanza-color);
+  border-radius:10px;background:#13263b;color:var(--stanza-color);
+  font-size:13px;font-weight:800;letter-spacing:.015em;
+}
+.stanza-divider::after {content:"";height:4px;flex:1;min-width:24px;background:var(--stanza-color);border-radius:10px;opacity:.95}
 .stanza-entry{--stanza-color:#e8b45a;border-left:4px solid var(--stanza-color)}
 .analysis-note-row{cursor:pointer;scroll-margin:16px;transition:border-color .15s,background .15s}
 .analysis-note-row.is-selected{border:2px solid #53d7c4;background:#163d48;box-shadow:inset 4px 0 0 #53d7c4,0 0 0 1px rgba(83,215,196,.18)}
@@ -68,3 +74,10 @@
 .analysis-column-hint strong{color:#f2cb88;}
 #groupAutoBtn:not(:disabled){border-color:#68b8c7;color:#c8f0f3;}
 @media(max-width:760px){.stanza-entry{grid-template-columns:minmax(110px,1fr) 85px 42px 34px;}}
+
+/* V11: lëviz vetëm notën e zgjedhur në grupin pasardhës. */
+.analysis-note-row{grid-template-columns:minmax(76px,96px) minmax(72px,90px) minmax(50px,60px) 63px 38px 38px 38px minmax(92px,1fr) 65px}
+.move-to-next-group{font-size:11px;white-space:normal;line-height:1.1;border-color:var(--group-color);color:#f3e4c6;background:color-mix(in srgb,var(--group-color) 18%,#172a40)}
+.move-to-next-group:disabled{opacity:.32}
+.analysis-note-row.group-moved{box-shadow:inset 0 0 0 1px var(--group-color)}
+@media(max-width:760px){.analysis-note-row{grid-template-columns:minmax(70px,1fr) minmax(70px,1fr) 54px 42px;gap:6px}.analysis-note-row .move-to-next-group{grid-column:span 2;min-height:35px}.analysis-note-row .stanza-split{grid-column:span 2}}

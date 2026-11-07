@@ -7,7 +7,7 @@ export const TOLERANCE = 15;
 export const MIN_MIC_HZ = 205;
 export const FRETS = 13;
 export type NoteNumber = number;
-export interface NoteEvent { string: 1 | 2; noteNumber: number; time: number; measuredHz?: number; confidence?: number; velocity?: number; withF?: boolean; }
+export interface NoteEvent { string: 1 | 2; noteNumber: number; time: number; measuredHz?: number; confidence?: number; velocity?: number; withF?: boolean; groupStart?: number; }
 export interface Stanza { start: number; label: string; color?: string; }
 export interface Song { id: string; name: string; notes: NoteEvent[]; createdAt: string; originalAudioId?: string; stanzas?: Stanza[]; }
 export const DEMO: Song[] = [
@@ -35,7 +35,7 @@ export function withOpenF(events: readonly NoteEvent[]): NoteEvent[] {
   const combined: NoteEvent[] = events.map(e => e.noteNumber === 14 ? {...e, string: 2} : e);
   for (const ev of events) {
     if ((ev.noteNumber >= 1 && ev.noteNumber <= 13 || ev.noteNumber === 15) && ev.withF !== false && !accompanimentTimes.has(ev.time)) {
-      combined.push({string:2, noteNumber:14, time:ev.time, velocity:ev.velocity});
+      combined.push({string:2, noteNumber:14, time:ev.time, velocity:ev.velocity, groupStart:ev.groupStart});
       accompanimentTimes.add(ev.time);
     }
   }

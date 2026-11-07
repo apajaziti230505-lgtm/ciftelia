@@ -8,6 +8,8 @@ export interface GuessedHit {
   confidence: number;
   detail: string;
   withF?: boolean;
+  /** Grup manual; fillimi i grupit, pa ndryshuar kohën e audios. */
+  groupStart?: number;
 }
 export interface AnalysisReport {
   hits: GuessedHit[];

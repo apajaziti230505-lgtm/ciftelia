@@ -64,12 +64,20 @@ Ngarkimi i parë në internet mund të marrë pak kohë për 30 mostrat audio (r
 - Këngët e ruajtura që kanë audio mund të redaktohen dhe të ruhen mbi të njëjtën këngë.
 - Analiza automatikisht propozon goditje/nota; rezultatet e pasigurta duhet të kontrollohen me dëgjim.
 
-## V9 — Strofat me ngjyra dhe shtim note poshte rreshtit
-Ndarjet e strofave shfaqen me vija te trasha me ngjyra te ndryshme edhe ne tablature. Prek nje note per ta zgjedhur, pastaj shtyp **+ Shto poshte notes se zgjedhur**. Nota e re shfaqet menjehere poshte dhe koha vendoset mes dy goditjeve; mund ta korrigjosh ne milisekonda. Ndarja e strofes vendoset te nota e zgjedhur. Audioja origjinale nuk ndryshohet.
+## V9 — redaktim i notave dhe ndarje me ngjyra
+- Në panelin **Nga audio në tablaturë**, secila strofë ndahet me vijë të trashë me ngjyrë të ndryshme; edhe tablatura shfaq kufijtë me të njëjtat ngjyra.
+- Prek një notë në listë (rreshti ndizet me ngjyrë). **+ Shto poshtë notës së zgjedhur** e fut menjëherë poshtë, me kohë mes notës së zgjedhur dhe asaj pas saj. Nuk përdoret më koha aktuale e audios.
+- Me **Ndaj strofë te nota e zgjedhur** vendos kufirin sipas notës që ke zgjedhur.
+- F (220 Hz) mbetet shoqëruese e parazgjedhur për notat poshtë, me mundësi përjashtimi në secilën goditje. Audioja origjinale nuk modifikohet.
 
-## V10 — Grupe notash me ngjyra
 
-- Onset Detection zbulon goditjet dhe propozon grupe kur ka një pauzë të dallueshme, zakonisht pas të paktën 3 notave. Ndarja është orientuese, jo njohje e garantuar e frazave.
-- Mund të krijosh grup te nota e zgjedhur, ose të rillogaritësh grupet sipas pauzave.
-- Ngjyra e zgjedhur i aplikohet çdo note të grupit, vijës ndarëse dhe tablaturës.
-- Emrat dhe ngjyrat ruhen me këngën. Audioja origjinale nuk ndryshohet.
+## Versioni V10 — grupe notash të dallueshme me ngjyrë
+
+- Onset Detection mat kohën e goditjeve dhe përdor distancat midis tyre për të **propozuar** grupet. Duhet një pauzë relativisht e gjatë dhe zakonisht të paktën 3 nota në secilën anë; prandaj ndarjet nuk janë gjithmonë identike me strofat muzikore.
+- Mund të zgjedhësh një notë dhe të shtypësh **Krijo grup nga nota e zgjedhur**, ose të përdorësh **Nda grupet sipas pauzave**.
+- Secili grup ka një përzgjedhës ngjyre. Të gjitha rreshtat e notave në atë grup, kufiri i grupit dhe notat në tablaturë përdorin ngjyrën e njëjtë.
+- Emri i grupit mund të ndryshohet. Fusha e perdes është veçmas, 1–13, 14 F, 15 tel i poshtëm i hapur.
+- Ndarjet dhe ngjyrat ruhen te `song.stanzas`, duke ruajtur përputhshmërinë me këngët e vjetra; audioja origjinale nuk ndryshohet.
+
+## V11 — Zhvendosje e notës në grupin pasardhës
+Në redaktues, butoni “→ Grupi 2” (ose emri i grupit pasardhës) zhvendos **vetëm notën e zgjedhur** te grupi pasardhës. Koha, audioja dhe notat e tjera mbeten të paprekura; ndryshon ngjyra dhe përkatësia e grupit. Ruaj këngën që ndryshimi të mbetet në shfletues dhe në eksportin JSON. Nëse mungon grupi pasardhës, krijoje me “+ Krijo grup”.

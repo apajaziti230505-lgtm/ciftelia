@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "node tests/test-notes.mjs && node tests/test-audio-engine.mjs && node tests/test-analysis.mjs && node tests/test-stanzas.mjs && node tests/test-groups.mjs"
+    "test": "node tests/test-notes.mjs && node tests/test-audio-engine.mjs && node tests/test-analysis.mjs && node tests/test-stanzas.mjs && node tests/test-groups.mjs && node tests/test-move-note.mjs"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

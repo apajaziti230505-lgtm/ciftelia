@@ -33,7 +33,7 @@ export function withOpenF(events) {
     const combined = events.map(e => e.noteNumber === 14 ? { ...e, string: 2 } : e);
     for (const ev of events) {
         if ((ev.noteNumber >= 1 && ev.noteNumber <= 13 || ev.noteNumber === 15) && ev.withF !== false && !accompanimentTimes.has(ev.time)) {
-            combined.push({ string: 2, noteNumber: 14, time: ev.time, velocity: ev.velocity });
+            combined.push({ string: 2, noteNumber: 14, time: ev.time, velocity: ev.velocity, groupStart: ev.groupStart });
             accompanimentTimes.add(ev.time);
         }
     }
