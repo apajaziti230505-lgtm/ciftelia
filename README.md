@@ -46,7 +46,7 @@ Ngarkimi i parë në internet mund të marrë pak kohë për 30 mostrat audio (r
 
 - Kliko **Importo këngë audio**, zgjidh MP3/M4A/WAV deri në 25 MB dhe 150 sekonda.
 - **Analizo notat** zbulon goditje dhe i krahason me 30 regjistrimet reale të çiftelisë. **Nuk është transkriptim i garantuar**; figurat e paqarta mbeten `?`.
-- Në panelin **Korrigjo notat dhe kohët**, mund të ndryshosh milisekondën, telin dhe perden, të dëgjosh pjesën dhe të shtosh/fshish shënime.
+- Në panelin **Korrigjo notat dhe kohët**, mund të ndryshosh milisekondën, telin dhe të shkruash perden (1–13; 14 F, 15 G), të dëgjosh pjesën dhe të shtosh/fshish shënime.
 - Në **Luaj**, kënga e importuar dëgjohet si **audioja origjinale**, me tablaturën e sinkronizuar. Nuk shtohet automatikisht 220 Hz.
 - **Ruaj** ruan notat në localStorage dhe audion origjinale në IndexedDB, vetëm në pajisjen/shfletuesin ku përdoret. JSON ruan tablaturën, **jo audion**; në pajisje tjetër duhet edhe skedari audio origjinal.
 - Për muzikë me disa instrumente, shumë zhurmë ose dy tela në një goditje, analiza mund të ngatërrojë notat. Kontrolli manual është pjesë e domosdoshme e procesit.

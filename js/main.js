@@ -566,11 +566,16 @@ function renderImportedHits() {
         ms.max = String(Math.round((originalPlayer.duration || 150) * 1000));
         ms.value = String(hit.time);
         ms.setAttribute('aria-label', 'Koha e notës në milisekonda');
-        const sel = document.createElement('select');
-        sel.setAttribute('aria-label', 'Zgjidh notën');
-        sel.add(new Option('? - e pasigurt', ''));
-        KEYS.forEach((key, i) => sel.add(new Option(i === 13 ? 'F · lart 220 Hz' : i === 14 ? 'G · poshtë i hapur' : `${i + 1} · ${key.toUpperCase()}`, String(i + 1))));
-        sel.value = hit.noteNumber === null ? '' : String(hit.noteNumber);
+        // Numri mund të shkruhet drejtpërdrejt: 1–13 perde, 14 F lart, 15 G poshtë i hapur.
+        const fret = document.createElement('input');
+        fret.type = 'number';
+        fret.min = '1';
+        fret.max = '15';
+        fret.step = '1';
+        fret.placeholder = 'Perdja 1–13';
+        fret.setAttribute('aria-label', 'Shkruaj numrin e perdes 1–13, ose 14 F, 15 G');
+        fret.title = '1–13: perdet; 14: teli lart F 220 Hz; 15: teli poshtë i hapur G 293 Hz';
+        fret.value = hit.noteNumber === null ? '' : String(hit.noteNumber);
         const str = document.createElement('select');
         str.setAttribute('aria-label', 'Teli');
         str.add(new Option('Poshtë', '1'));
@@ -592,9 +597,23 @@ function renderImportedHits() {
         remove.setAttribute('aria-label', 'Fshi këtë shënim');
         remove.addEventListener('click', () => { importedHits = importedHits.filter(x => x !== hit); updateImportDraft(); renderImportedHits(); });
         ms.addEventListener('change', () => { hit.time = Math.min(Math.round((originalPlayer.duration || 150) * 1000), Math.max(0, Math.round(Number(ms.value) || 0))); updateImportDraft(); renderImportedHits(); });
-        sel.addEventListener('change', () => { hit.noteNumber = sel.value ? Number(sel.value) : null; hit.string = hit.noteNumber === 14 ? 2 : 1; hit.confidence = 1; updateImportDraft(); renderImportedHits(); });
+        fret.addEventListener('change', () => {
+            const value = fret.value.trim();
+            const n = value === '' ? null : Number(value);
+            if (n !== null && (!Number.isInteger(n) || n < 1 || n > 15)) {
+                setStatus('Shkruaj perden 1–13, ose 14 (F lart) / 15 (G poshtë i hapur).');
+                fret.value = hit.noteNumber === null ? '' : String(hit.noteNumber);
+                return;
+            }
+            hit.noteNumber = n;
+            hit.string = n === 14 ? 2 : 1;
+            hit.confidence = n === null ? 0 : 1;
+            hit.detail = n === null ? 'Pa notë' : 'Vendosur manualisht';
+            updateImportDraft();
+            renderImportedHits();
+        });
         str.addEventListener('change', () => { hit.string = hit.noteNumber === 14 ? 2 : Number(str.value); updateImportDraft(); });
-        row.append(ms, sel, str, status, seek, remove);
+        row.append(ms, fret, str, status, seek, remove);
         rows.append(row);
     });
     $('analysisMoreBtn').hidden = analysisRowsVisible >= importedHits.length;
