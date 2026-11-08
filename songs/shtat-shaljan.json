@@ -1,6 +1,6 @@
 {
-  "id": "56022ff0-34c4-4b6d-b282-11acf0c299b3",
-  "name": "Shtat shaljan kane ra në Shtoj - për mësim!-00.00.00.000-00.01.24.119",
+  "id": "catalog-shtat-shaljan",
+  "name": "Shtat shaljan kanë ra në Shtoj · Provë",
   "createdAt": "2026-11-08T11:01:43.894Z",
   "notes": [
     {
@@ -8,7 +8,8 @@
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.43612940264712297,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 2103,
@@ -16,6 +17,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 0
     },
     {
@@ -23,7 +25,8 @@
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.581997083108263,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 2412,
@@ -31,6 +34,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 0
     },
     {
@@ -39,6 +43,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 0
     },
     {
@@ -47,6 +52,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 0
     },
     {
@@ -54,7 +60,8 @@
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.580520455729286,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 3418,
@@ -62,6 +69,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 3080
     },
     {
@@ -70,6 +78,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 3080
     },
     {
@@ -78,6 +87,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 3080
     },
     {
@@ -86,6 +96,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 3080
     },
     {
@@ -94,6 +105,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 3080
     },
     {
@@ -101,21 +113,24 @@
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.4798083820702368,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 5121,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.5720913980873041,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 5270,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.5323145170466388,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 5392,
@@ -123,6 +138,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 4330
     },
     {
@@ -131,6 +147,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 4330
     },
     {
@@ -139,6 +156,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 4330
     },
     {
@@ -147,6 +165,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 6190
     },
     {
@@ -155,6 +174,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 6190
     },
     {
@@ -163,6 +183,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 6190
     },
     {
@@ -171,6 +192,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 6190
     },
     {
@@ -179,6 +201,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 6190
     },
     {
@@ -187,6 +210,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 6190
     },
     {
@@ -195,6 +219,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -203,6 +228,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -211,6 +237,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -219,6 +246,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -227,6 +255,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -235,6 +264,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -243,6 +273,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -251,6 +282,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -259,6 +291,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -267,6 +300,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -275,6 +309,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -283,6 +318,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -291,6 +327,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -299,6 +336,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -307,6 +345,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -315,6 +354,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -323,6 +363,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -330,6 +371,7 @@
       "noteNumber": 14,
       "string": 2,
       "confidence": 1,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -338,6 +380,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -346,6 +389,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -354,6 +398,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -362,6 +407,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -370,6 +416,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -378,6 +425,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -386,6 +434,7 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
@@ -394,511 +443,1030 @@
       "string": 1,
       "confidence": 1,
       "withF": true,
+      "upperNoteNumber": 14,
       "groupStart": 7250
     },
     {
-      "time": 15440,
-      "noteNumber": 1,
+      "time": 11959,
+      "noteNumber": 4,
       "string": 1,
-      "confidence": 0.7251431076363543,
-      "withF": true
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 10160
     },
     {
-      "time": 16460,
-      "noteNumber": 1,
+      "time": 12113,
+      "noteNumber": 4,
       "string": 1,
-      "confidence": 0.6819697710254491,
-      "withF": true
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 10160
     },
     {
-      "time": 17030,
-      "noteNumber": 14,
-      "string": 2,
-      "confidence": 0.46896785353687476
+      "time": 12251,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 10160
     },
     {
-      "time": 19180,
+      "time": 12428,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 6,
+      "groupStart": 10160
+    },
+    {
+      "time": 12582,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 10160
+    },
+    {
+      "time": 12720,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 10160
+    },
+    {
+      "time": 12924,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 6,
+      "groupStart": 10160
+    },
+    {
+      "time": 13101,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 5,
+      "groupStart": 10160
+    },
+    {
+      "time": 13294,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 6,
+      "groupStart": 10160
+    },
+    {
+      "time": 13488,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 10160
+    },
+    {
+      "time": 13653,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 10160
+    },
+    {
+      "time": 13841,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 10160
+    },
+    {
+      "time": 14034,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 6,
+      "groupStart": 10160
+    },
+    {
+      "time": 14265,
+      "noteNumber": 15,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 10160
+    },
+    {
+      "time": 14436,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 14601,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 14750,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 14927,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 15087,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 15379,
+      "noteNumber": 15,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 15561,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 15782,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 15970,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 16157,
+      "noteNumber": 15,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 16294,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 16482,
+      "noteNumber": 15,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 16632,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 16825,
+      "noteNumber": 9,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 17012,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 17183,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 17327,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 17520,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 17674,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 17856,
+      "noteNumber": 9,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 18055,
+      "noteNumber": 9,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 18243,
+      "noteNumber": 10,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 18414,
+      "noteNumber": 10,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 18623,
+      "noteNumber": 9,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 18833,
+      "noteNumber": 9,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 19037,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.573020219023622,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
-      "time": 19880,
-      "noteNumber": 2,
-      "string": 1,
-      "confidence": 0.48867384665032354,
-      "withF": true
-    },
-    {
-      "time": 19880,
-      "noteNumber": 14,
-      "string": 2,
-      "confidence": 0.48867384665032354
-    },
-    {
-      "time": 20280,
-      "noteNumber": 8,
-      "string": 1,
-      "confidence": 0.4896838641764019,
-      "withF": true
-    },
-    {
-      "time": 21110,
-      "noteNumber": 1,
-      "string": 1,
-      "confidence": 0.5334488910340236,
-      "withF": true
-    },
-    {
-      "time": 21650,
+      "time": 19192,
       "noteNumber": 7,
       "string": 1,
-      "confidence": 0.48287105571498135,
-      "withF": true
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
     },
     {
-      "time": 22180,
-      "noteNumber": 8,
-      "string": 1,
-      "confidence": 0.46938542617434603,
-      "withF": true
-    },
-    {
-      "time": 22880,
-      "noteNumber": 1,
-      "string": 1,
-      "confidence": 0.6121722597684847,
-      "withF": true
-    },
-    {
-      "time": 23120,
+      "time": 19412,
       "noteNumber": 7,
       "string": 1,
-      "confidence": 0.6100269994806984,
-      "withF": true
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 19594,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 19776,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 19970,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 20179,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 20356,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 20516,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 20728,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 20966,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 21264,
+      "noteNumber": 15,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 21528,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 21744,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 21975,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 22257,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 22478,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 22714,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 22941,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 23128,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
+    },
+    {
+      "time": 23416,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "upperNoteNumber": 14,
+      "groupStart": 11910
     },
     {
       "time": 24920,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.43475522946463535,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 25850,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.4706403700259312,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 27080,
       "noteNumber": 1,
       "string": 1,
       "confidence": 0.6180137173053833,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 27430,
       "noteNumber": 14,
       "string": 2,
-      "confidence": 0.42793747684756106
+      "confidence": 0.42793747684756106,
+      "upperNoteNumber": 14
     },
     {
       "time": 27990,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.5962550981669931,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 29080,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.5227843621410424,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 29380,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.6213889588839214,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 29770,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.5375450930201628,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 30140,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.5932985267575285,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 34310,
       "noteNumber": 1,
       "string": 1,
       "confidence": 0.5032365128607921,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 34640,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.5185716407673893,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 35870,
       "noteNumber": 14,
       "string": 2,
-      "confidence": 0.5143679791250015
+      "confidence": 0.5143679791250015,
+      "upperNoteNumber": 14
     },
     {
       "time": 35970,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.6016559102411452,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 36070,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.4634221168376175,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 36340,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.4700460099768894,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 38910,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.5804848915886255,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 40520,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.46082094969982046,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 41530,
       "noteNumber": 5,
       "string": 1,
       "confidence": 0.48737783185702444,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 41530,
       "noteNumber": 14,
       "string": 2,
-      "confidence": 0.48737783185702444
+      "confidence": 0.48737783185702444,
+      "upperNoteNumber": 14
     },
     {
       "time": 42400,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.6441677884456352,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 42760,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.5730020602005221,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 46870,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.41854968399080816,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 47630,
       "noteNumber": 2,
       "string": 1,
       "confidence": 0.5093351370149927,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 47630,
       "noteNumber": 14,
       "string": 2,
-      "confidence": 0.5093351370149927
+      "confidence": 0.5093351370149927,
+      "upperNoteNumber": 14
     },
     {
       "time": 47730,
       "noteNumber": 1,
       "string": 1,
       "confidence": 0.7366999625371045,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 48490,
       "noteNumber": 1,
       "string": 1,
       "confidence": 0.6167249146604192,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 52580,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.5491320621822561,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 53300,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.4708066544345733,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 53420,
       "noteNumber": 1,
       "string": 1,
       "confidence": 0.6318034815888058,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 53610,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.505672868609707,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 54010,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.585150530243876,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 54360,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.48375084259148093,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 55230,
       "noteNumber": 1,
       "string": 1,
       "confidence": 0.5630067170323374,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 55640,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.5226423416323596,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 56790,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.5042065031708652,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 56790,
       "noteNumber": 14,
       "string": 2,
-      "confidence": 0.5042065031708652
+      "confidence": 0.5042065031708652,
+      "upperNoteNumber": 14
     },
     {
       "time": 57050,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.6141709766987555,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 59050,
       "noteNumber": 1,
       "string": 1,
       "confidence": 0.6693380903441483,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 59370,
       "noteNumber": 1,
       "string": 1,
       "confidence": 0.6791225059679548,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 59760,
       "noteNumber": 14,
       "string": 2,
-      "confidence": 0.4766604528907683
+      "confidence": 0.4766604528907683,
+      "upperNoteNumber": 14
     },
     {
       "time": 60360,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.5877876494262981,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 61040,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.5546585888584157,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 62100,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.5297488800854449,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 62460,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.5441488308201351,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 63150,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.5214777601183931,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 66250,
       "noteNumber": 2,
       "string": 1,
       "confidence": 0.5078526540264089,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 66250,
       "noteNumber": 14,
       "string": 2,
-      "confidence": 0.5078526540264089
+      "confidence": 0.5078526540264089,
+      "upperNoteNumber": 14
     },
     {
       "time": 66620,
       "noteNumber": 1,
       "string": 1,
       "confidence": 0.460429268132441,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 67450,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.5720881161671865,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 69780,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.5075997252525627,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 69870,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.5612107011454532,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 70250,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.5671011715895673,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 71090,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.604196035179693,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 72370,
       "noteNumber": 14,
       "string": 2,
-      "confidence": 0.47281095472979784
+      "confidence": 0.47281095472979784,
+      "upperNoteNumber": 14
     },
     {
       "time": 72470,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.6322860662320601,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 72840,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.4153887487401286,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 75080,
       "noteNumber": 7,
       "string": 1,
       "confidence": 0.5554251988187315,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 75600,
       "noteNumber": 8,
       "string": 1,
       "confidence": 0.47001956796448363,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 76670,
       "noteNumber": 4,
       "string": 1,
       "confidence": 0.46470951651465364,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 77540,
       "noteNumber": 4,
       "string": 1,
       "confidence": 0.45368635933028634,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     },
     {
       "time": 78360,
       "noteNumber": 4,
       "string": 1,
       "confidence": 0.4159346303241841,
-      "withF": true
+      "withF": true,
+      "upperNoteNumber": 14
     }
   ],
-  "originalAudioId": "__draft",
+  "originalAudioId": "catalog:catalog-shtat-shaljan",
   "stanzas": [
     {
       "start": 0,
@@ -926,17 +1494,17 @@
       "color": "#79aaf0"
     },
     {
-      "start": 12270,
+      "start": 10160,
       "label": "Grupi 6",
       "color": "#86c870"
     },
     {
-      "start": 25850,
+      "start": 11910,
       "label": "Grupi 7",
       "color": "#f2a36d"
     },
     {
-      "start": 31940,
+      "start": 23960,
       "label": "Grupi 8",
       "color": "#57cad4"
     },
@@ -1010,5 +1578,6 @@
       "label": "Grupi 22",
       "color": "#86c870"
     }
-  ]
+  ],
+  "preferNotes": true
 }

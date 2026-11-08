@@ -10,6 +10,7 @@ import {manualTapTime,manualAnywhereTime,manualEntryNote} from './manual.js';
 import {notesAtMoment,noteAttackColor} from './practice.js';
 import {CopiedGroup,copySongGroup,pasteSongGroup,replaceSongGroup,deleteSongGroup,parseSongJSON} from './song-editing.js';
 import {EditHistory,EditorSnapshot} from './edit-history.js';
+import {importSongJSON,validateAudioFile} from './song-import.js';
 const $=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const svg=document.getElementById('ciftelia') as unknown as SVGSVGElement;
 const fretLayer=document.getElementById('fret-layer')!;
@@ -42,6 +43,8 @@ let groupBusy=false;
 let pendingGroupDelete:{songId:string;start:number;label:string;count:number}|null=null;
 let jsonBaseSong:Song|null=null;
 let jsonBaseSelectedId='';
+let audioLinkSongId:string|null=null;
+let linkingAudio=false;
 let stanzas:Stanza[]=[{start:0,label:'Grupi 1',color:GROUP_COLORS[0]}];
 let selectedImportedHit:GuessedHit|null=null;
 let selectedGroupStart=0;
@@ -105,10 +108,20 @@ function clearOriginalUrl():void { seekPendingUntilMetadata=null;if(originalObje
 function showOriginalBlob(blob:Blob,id:string):void {
   clearOriginalUrl();originalObjectUrl=URL.createObjectURL(blob);originalSourceId=id;
   originalPlayer.src=originalObjectUrl;originalPlayer.hidden=false;originalPlayer.load();
+  refreshAudioControls();
+}
+function refreshAudioControls():void {
+  const song=currentSong();
+  $('catalogAudioBtn').hidden=!song;
+  $('catalogAudioBtn').toggleAttribute('disabled',linkingAudio);
+  $('originalPlayBtn').hidden=!song?.originalAudioId;
+  $('originalPlayBtn').toggleAttribute('disabled',linkingAudio);
+  $('originalPlayBtn').textContent=usingOriginal(song)&&!originalPlayer.paused?'⏸ MP3':'▶ MP3';
+  $('audioLinkStatus').textContent=linkingAudio?'Po lidhet MP3…':song?.originalAudioName?`MP3: ${song.originalAudioName}`:song?.originalAudioId?'MP3 i lidhur me këtë këngë':'Importo JSON, pastaj Lidh MP3 për këtë këngë.';
 }
 async function prepareOriginalForSelection():Promise<void> {
   const song=currentSong();const token=++audioSelectToken;
-  if(!importedSong(song)){originalPlayer.pause();originalPlayer.hidden=true;clearOriginalUrl();return;}
+  if(!importedSong(song)){originalPlayer.pause();originalPlayer.hidden=true;clearOriginalUrl();refreshAudioControls();return;}
   if(song!.originalAudioId==='__draft' && importFile){
     if(originalSourceId!=='__draft')showOriginalBlob(importFile,'__draft');
     return;
@@ -116,13 +129,12 @@ async function prepareOriginalForSelection():Promise<void> {
   if(originalSourceId===song!.originalAudioId)return;
   originalPlayer.pause();originalPlayer.hidden=true;clearOriginalUrl();
   try {
-    const blob=await getOriginal(song!.originalAudioId!);
+    const blob=await getOriginal(song!.originalAudioId!).catch(()=>null);
     if(token!==audioSelectToken)return;
     if(!blob){
  const remote=catalogAudioURLs.get(song!.originalAudioId!);
- if(remote){try{const rr=await fetch(remote,{method:'HEAD'});if(token!==audioSelectToken)return;if(rr.ok){originalSourceId=song!.originalAudioId!;originalPlayer.src=remote;originalPlayer.hidden=false;originalPlayer.load();return;}}catch{}
- setStatus('Kënga e provës ka notat. Shtyp Lidh MP3 për audion origjinale.');return;}
- setStatus('Nuk gjendet audioja e kësaj kënge në këtë pajisje. JSON ruan notat, jo skedarin audio.');return;
+ if(remote){originalSourceId=song!.originalAudioId!;originalPlayer.src=remote;originalPlayer.hidden=false;originalPlayer.load();refreshAudioControls();return;}
+ setStatus('Notat janë gati. Shtyp Lidh MP3 për të zgjedhur audion e kësaj kënge.');refreshAudioControls();return;
  }
     showOriginalBlob(blob,song!.originalAudioId!);
   }catch(e){if(token===audioSelectToken)setStatus('Audioja e ruajtur nuk u lexua: '+String(e));}
@@ -158,7 +170,7 @@ function commitEditorChange(before:EditorSnapshot|null,label:string):void {
   refreshHistoryControls();
 }
 function historyBlocked():boolean {
-  return groupBusy||micActive||keyboardRecordStart!==null||analyzing||!!manualPending||
+  return linkingAudio||groupBusy||micActive||keyboardRecordStart!==null||analyzing||!!manualPending||
     $<HTMLDialogElement>('jsonEditorDialog').open||$<HTMLDialogElement>('groupDeleteDialog').open;
 }
 function refreshHistoryControls():void {
@@ -227,7 +239,7 @@ async function applyGroupOperation(result:{song:Song;groupStart:number},label:st
   }finally{groupBusy=false;refreshGroupCopyControls();}
 }
 function groupEditAllowed():boolean {
-  if(micActive||keyboardRecordStart!==null||manualPending||analyzing||groupBusy){
+  if(linkingAudio||micActive||keyboardRecordStart!==null||manualPending||analyzing||groupBusy){
     setStatus('Përfundo shënimin ose regjistrimin përpara ndryshimit të grupit.');return false;
   }
   return true;
@@ -286,12 +298,14 @@ function undoEditorChange(redo=false):void {
   if(!wasDraft){editingSongId=current.song.id;importFile=null;}
   restored.song.id=current.song.id;
   if(current.song.originalAudioId)restored.song.originalAudioId=current.song.originalAudioId;
+  if(current.song.originalAudioName)restored.song.originalAudioName=current.song.originalAudioName;
   selectedGroupStart=restored.selectedGroupStart;setEditableSong(restored.song);
   selectSongPlayback(draft);seekToMs(restored.time);focusTimelineAt(restored.time);refreshGroupCopyControls();
   setStatus(`${redo?'U ribë':'U zhbë'}: ${result.label}. Shtyp Ruaj për t'i mbajtur ndryshimet.`);
 }
 function openJSONEditor():void {
   const song=currentSong();if(!song)return;
+  if(linkingAudio){setStatus('Prit të përfundojë lidhja e MP3-së para redaktimit.');return;}
   if(micActive||keyboardRecordStart!==null){setStatus('Ndalo regjistrimin përpara redaktimit të JSON-it.');return;}
   if(manualPending){setStatus('Vendos ose anulo notën e hapur përpara redaktimit të JSON-it.');return;}
   stopPlayback();jsonBaseSong=structuredClone(song);jsonBaseSelectedId=selectedId;
@@ -360,7 +374,7 @@ function renderSongs():void {
     const isUserSong=!!selectedSong&&savedSongs.some(s=>s.id===selectedSong.id);
   const isOverride=isUserSong&&(isCatalogSong||DEMO.some(s=>s.id===selectedSong!.id));
   $('deleteBtn').textContent=selectedId==='__draft'?'Fshi provën':isOverride?'Rikthe origjinalin':'Fshi';
-    $('catalogAudioBtn').hidden=!isCatalogSong;
+  refreshAudioControls();
   $('saveBtn').toggleAttribute('disabled',!draft);
   $('analysisEditSavedBtn').toggleAttribute('disabled',!selectedSong || (!selectedSong.notes.length&&!selectedSong.originalAudioId) || selectedId==='__draft');
   $('deleteBtn').toggleAttribute('disabled',!isUserSong && selectedId!=='__draft');
@@ -718,12 +732,13 @@ async function playCurrent():Promise<void> {
   }catch(e){$('playBtn').textContent='▶ Luaj';$('studioState').textContent='GABIM';setStatus(`Audio: ${e instanceof Error?e.message:String(e)}`);}
 }
 async function saveDraft():Promise<void> {
+  if(linkingAudio){setStatus('Prit të përfundojë lidhja e MP3-së para ruajtjes.');return;}
   if(manualPending){setStatus('Vendos ose anulo notën e hapur para ruajtjes.');return;}
   if(!draft){setStatus('Nuk ka këngë provë për ruajtje.');return;}
   const title=prompt('Emri i këngës:',draft.name);
   if(title===null)return;
   if(!title.trim()){setStatus('Vendos një emër për këngën.');return;}
-  const saved={...draft,id:editingSongId||newSong(title,[]).id,name:title.trim(),stanzas:sanitizeStanzas(stanzas)};
+  const saved={...draft,id:editingSongId||draft.id,name:title.trim(),stanzas:sanitizeStanzas(stanzas)};
   if(draft.originalAudioId==='__draft' && importFile){
     try {await putOriginal(saved.id,importFile);saved.originalAudioId=saved.id;}
     catch(e){setStatus(`Audioja nuk u ruajt në këtë pajisje: ${String(e)}. Liro hapësirë dhe provo përsëri.`);return;}
@@ -746,14 +761,14 @@ async function deleteSong():Promise<void> {
   if(!confirm(isOverride?'Të hiqen ndryshimet lokale dhe të rikthehet kënga origjinale?':`Ta fshijmë këngën “${song.name}”?`))return;
   const next=savedSongs.filter(s=>s.id!==song.id);if(!saveSongs(next)){setStatus('Fshirja nuk u ruajt.');return;}savedSongs=next;
   editHistories.delete(song.id);draftBaseline=null;
-  if(song.originalAudioId===song.id)try{await deleteOriginal(song.originalAudioId);}catch{}
+  if(song.originalAudioId&&(song.originalAudioId===song.id||song.originalAudioId===`local:${song.id}`)&&!next.some(s=>s.originalAudioId===song.originalAudioId))try{await deleteOriginal(song.originalAudioId);}catch{}
   selectedId=isOverride?song.id:DEMO[0].id;renderSongs();void prepareOriginalForSelection();setStatus(isOverride?'U rikthye kënga origjinale.':'Kënga u fshi nga ky shfletues.');
 }
 const canvas=$<HTMLCanvasElement>('tabCanvas');
 function tabSongEnd(song:Song|null):number{
   const maxNote=Math.max(0,...(song?.notes??[]).map(n=>n.time));
   const maxGroup=Math.max(0,...(song?.stanzas??[]).map(g=>g.start));
-  const audioEnd=importedSong(song)&&Number.isFinite(originalPlayer.duration)?originalPlayer.duration*1000:0;
+  const audioEnd=importedSong(song)&&originalSourceId===song?.originalAudioId&&Number.isFinite(originalPlayer.duration)?originalPlayer.duration*1000:0;
   return Math.max(1600,maxNote+950,maxGroup+850,audioEnd);
 }
 function visibleTab():{left:number;right:number;scale:number;visibleMs:number;width:number}{
@@ -1140,24 +1155,19 @@ function installTabInteraction():void{
 }
 
 async function importSongFile(file:File):Promise<void> {
+  if(micActive||keyboardRecordStart!==null||analyzing||linkingAudio||manualPending){setStatus('Përfundo shënimin ose regjistrimin para importimit.');return;}
   try {
-    if (file.size > 2_000_000) throw new Error('Skedari është tepër i madh.');
-    const data:unknown=JSON.parse(await file.text());
-    if (!data || typeof data !== 'object') throw new Error('JSON i pavlefshëm.');
-    const obj=data as {name?:unknown,notes?:unknown};
-    if(!Array.isArray(obj.notes) || obj.notes.length<1 || obj.notes.length>10000) throw new Error('Lista e notave nuk është e vlefshme.');
-    const notes:NoteEvent[]=obj.notes.map((v:unknown)=>{
-      const n=v as Partial<NoteEvent>;
-      if(!n || (n.string!==1&&n.string!==2) || !Number.isInteger(n.noteNumber) || (n.noteNumber as number)<1 || (n.noteNumber as number)>15 || !Number.isFinite(n.time) || (n.time as number)<0 || (n.time as number)>3_600_000) throw new Error('Një notë ka vlera të pavlefshme.');
-      return {string:n.string as 1|2,noteNumber:n.noteNumber as number,time:n.time as number,withF:n.withF!==false,upperNoteNumber:upperFret(n.upperNoteNumber),
-        ...(Number.isInteger(n.groupStart) && (n.groupStart as number)>=0?{groupStart:n.groupStart}:{} )};
-    });
-    const name=typeof obj.name==='string'?obj.name:'Këngë e importuar';
-    stopPlayback();createDraftFromNotes(notes,name);
-    const markers=(data as {stanzas?:Stanza[]}).stanzas;stanzas=sanitizeStanzas(Array.isArray(markers)?markers:undefined);if(draft){draft.stanzas=stanzas;draftBaseline=structuredClone(draft);}
-    renderSongs();renderImportedHits();
-    setStatus('Kënga u importua si PROVË. Shtyp Luaj dhe pastaj Ruaj nëse dëshiron.');
-  }catch(e){setStatus(`Importimi dështoi: ${e instanceof Error?e.message:String(e)}`)}
+    if(file.size>2_000_000)throw Error('Skedari është tepër i madh.');
+    const known=draft?upsertSong(allSongs(savedSongs,catalogSongs),draft):allSongs(savedSongs,catalogSongs);
+    const result=importSongJSON(await file.text(),known),song=result.song;
+    const previous=known.find(s=>s.id===song.id),before=previous?editorSnapshot(previous):null;
+    stopPlayback();importFile=null;editingSongId=result.existing?song.id:null;
+    manualPending=null;selectedGroupStart=0;tabCurrentMs=0;tabViewStartMs=0;tabFollowPlayback=true;
+    setEditableSong(song);selectSongPlayback(song);
+    if(before)commitEditorChange(before,'Importimi i JSON-it të përditësuar');
+    await prepareOriginalForSelection();
+    setStatus(`${song.notes.length} nota u importuan${result.existing?' si përditësim i këngës':''}. ${song.originalAudioId?'Lidhja me MP3-në u ruajt; përdor ▶ MP3 për ta dëgjuar.':'Shtyp Lidh MP3 për audion e kësaj kënge.'} Ruaj për t'i mbajtur ndryshimet.`);
+  }catch(e){setStatus(`Importimi dështoi: ${e instanceof Error?e.message:String(e)}`);}
 }
 /** Edit a saved transcription in a draft; the original stored recording remains untouched. */
 async function editSavedAudio():Promise<void>{
@@ -1435,7 +1445,7 @@ async function loadPublicCatalog():Promise<void> {
   const metas=(await res.json()) as {id:string;name:string;json:string;audio:string}[];if(!Array.isArray(metas))return;
   for(const m of metas){
    if(typeof m.id!=='string'||typeof m.json!=='string'||typeof m.name!=='string')continue;
-   const file=await fetch(m.json);if(!file.ok)continue;const song=(await file.json()) as Song;
+   const file=await fetch(m.json,{cache:'no-store'});if(!file.ok)continue;const song=(await file.json()) as Song;
    if(!Array.isArray(song.notes)||!song.notes.length)continue;
    const id='catalog:'+m.id;catalogSongs.push({...song,id:m.id,name:m.name,originalAudioId:id});
    if(typeof m.audio==='string')catalogAudioURLs.set(id,m.audio);
@@ -1443,11 +1453,45 @@ async function loadPublicCatalog():Promise<void> {
   renderSongs();
  }catch(e){console.warn('Katalogu nuk u ngarkua',e);}
 }
-async function connectCatalogAudio(file:File):Promise<void> {
- const song=currentSong();if(!song?.originalAudioId||!catalogSongs.some(s=>s.id===song.id))return;
- if(!/\.(mp3|m4a|wav|ogg)$/i.test(file.name)){setStatus('Zgjidh MP3/M4A/WAV/OGG.');return;}
- try{await putOriginal(song.originalAudioId,file);if(selectedId===song.id)showOriginalBlob(file,song.originalAudioId);setStatus('MP3 u lidh në këtë pajisje. Tani mund të luash këngën dhe grupet.');}
- catch(e){setStatus('Ruajtja e MP3 dështoi: '+String(e));}
+/** Attach a recording to the selected JSON without replacing its notes or groups. */
+async function connectSongAudio(file:File,targetId:string|null):Promise<void> {
+  const song=currentSong();
+  if(!song||song.id!==targetId){setStatus('Kënga ndryshoi. Zgjidh këngën dhe shtyp Lidh MP3 përsëri.');return;}
+  if(linkingAudio||micActive||keyboardRecordStart!==null||analyzing||manualPending){setStatus('Përfundo shënimin ose regjistrimin para lidhjes së MP3-së.');return;}
+  try{validateAudioFile(file);}catch(e){setStatus(String((e as Error).message));return;}
+  const audioId=`local:${song.id}`,wasDraft=editableTab(),position=playbackPositionMs();
+  linkingAudio=true;stopPlayback();refreshAudioControls();refreshHistoryControls();
+  try{
+    const previous=await getOriginal(audioId);
+    await putOriginal(audioId,file);
+    const linked={...song,originalAudioId:audioId,originalAudioName:file.name};
+    if(!wasDraft){
+      const next=upsertSong(savedSongs,linked);
+      if(!saveSongs(next)){
+        if(previous)await putOriginal(audioId,previous);else await deleteOriginal(audioId);
+        throw Error('Lidhja nuk u ruajt: hapësira e shfletuesit është plot.');
+      }
+      savedSongs=next;
+    }
+    if(draft?.id===song.id){draft.originalAudioId=audioId;draft.originalAudioName=file.name;draftBaseline=structuredClone(draft);}
+    if(currentSong()?.id===song.id){
+      ++audioSelectToken;importFile=wasDraft?file:importFile;renderSongs();
+      showOriginalBlob(file,audioId);playbackSource='original';seekToMs(position);
+      if(wasDraft)$('analyzeBtn').removeAttribute('disabled');
+      setStatus(`MP3 “${file.name}” u lidh me “${song.name}”. Notat dhe grupet u ruajtën. Shtyp ▶ MP3 për ta dëgjuar.${wasDraft?' Pastaj Ruaj këngën.':''}`);
+    }
+  }catch(e){setStatus('Lidhja e MP3 dështoi: '+String((e as Error).message||e));}
+  finally{linkingAudio=false;refreshAudioControls();refreshHistoryControls();}
+}
+async function playOriginalAudio():Promise<void> {
+  const song=currentSong();if(!song?.originalAudioId)return;
+  if(manualPending||micActive||keyboardRecordStart!==null||analyzing||linkingAudio){setStatus('Përfundo shënimin ose regjistrimin para luajtjes.');return;}
+  if(usingOriginal(song)&&!originalPlayer.paused){originalPlayer.pause();refreshAudioControls();return;}
+  const position=playbackPositionMs();stopPlayback();
+  await prepareOriginalForSelection();
+  if(currentSong()?.id!==song.id)return;
+  if(originalSourceId!==song.originalAudioId||!originalPlayer.src){setStatus('MP3-ja nuk gjendet në këtë pajisje. Shtyp Lidh MP3 dhe zgjidh skedarin.');return;}
+  playbackSource='original';seekToMs(position);await toggleTabPlay();refreshAudioControls();
 }
 
 function init():void {
@@ -1537,8 +1581,9 @@ function init():void {
   renderManualMode();
   renderInstrument();renderKeys();renderSongs();renderMicHits();
   audio.setVolume(Number($<HTMLInputElement>('volume').value)/100);
-  $('catalogAudioBtn').addEventListener('click',()=>$<HTMLInputElement>('catalogAudioFile').click());
-  $('catalogAudioFile').addEventListener('change',()=>{const el=$<HTMLInputElement>('catalogAudioFile');if(el.files?.[0])void connectCatalogAudio(el.files[0]);el.value='';});
+  $('catalogAudioBtn').addEventListener('click',()=>{audioLinkSongId=currentSong()?.id??null;$<HTMLInputElement>('catalogAudioFile').click();});
+  $('originalPlayBtn').addEventListener('click',()=>void playOriginalAudio());
+  $('catalogAudioFile').addEventListener('change',()=>{const el=$<HTMLInputElement>('catalogAudioFile');if(el.files?.[0])void connectSongAudio(el.files[0],audioLinkSongId);el.value='';});
   $('songSelect').addEventListener('change',e=>{stopPlayback();manualPending=null;manualMode=false;instantTabNoteMode=false;renderManualMode();selectedGroupStart=0;tabViewStartMs=0;tabCurrentMs=0;tabFollowPlayback=true;selectedId=(e.target as HTMLSelectElement).value;$<HTMLSelectElement>('groupPasteTarget').value='';renderSongs();renderImportedHits();void prepareOriginalForSelection();});
   $('recordBtn').addEventListener('click',recordKeyboard);
   $('micBtn').addEventListener('click',()=>void toggleMic());
@@ -1578,6 +1623,7 @@ function init():void {
     insertNoteBelow(selectedImportedHit);
   });
   $('analysisMoreBtn').addEventListener('click',()=>{analysisRowsVisible+=60;renderImportedHits();});
+  originalPlayer.addEventListener('error',()=>{if(originalSourceId===currentSong()?.originalAudioId){setStatus('MP3-ja nuk u hap. Shtyp Lidh MP3 dhe zgjidh një skedar audio që luhet në këtë pajisje.');}});
   originalPlayer.addEventListener('loadedmetadata',()=>{
     if(seekPendingUntilMetadata!==null){
       originalPlayer.currentTime=Math.min(originalPlayer.duration,seekPendingUntilMetadata/1000);seekPendingUntilMetadata=null;
@@ -1587,7 +1633,7 @@ function init():void {
   originalPlayer.addEventListener('play',()=>{
     const song=currentSong();if(!usingOriginal(song)){originalPlayer.pause();return;}
     audio.stop();cancelAnimationFrame(playFrame);const token=++playToken;
-    $('playBtn').textContent=currentPlayMode==='group'?'▶ Luaj':'▶ Po luhet';$('studioState').textContent=currentPlayMode==='group'?'GRUPI':'ORIGJINAL';
+    refreshAudioControls();$('playBtn').textContent=currentPlayMode==='group'?'▶ Luaj':'▶ Po luhet';$('studioState').textContent=currentPlayMode==='group'?'GRUPI':'ORIGJINAL';
     const tick=()=>{
       if(token!==playToken||originalPlayer.paused)return;
       const ms=originalPlayer.currentTime*1000;
@@ -1599,7 +1645,7 @@ function init():void {
     };tick();
     setStatus('Po luhet regjistrimi origjinal. 220 Hz nuk shtohet artificialisht.');
   });
-  originalPlayer.addEventListener('pause',()=>{if(!usingOriginal(currentSong()))return;cancelAnimationFrame(playFrame);clearPlayedNote();if(usingOriginal(currentSong())){$('playBtn').textContent='▶ Luaj';$('studioState').textContent='PAUZË';syncTabTransport();}});
+  originalPlayer.addEventListener('pause',()=>{refreshAudioControls();if(!usingOriginal(currentSong()))return;cancelAnimationFrame(playFrame);clearPlayedNote();if(usingOriginal(currentSong())){$('playBtn').textContent='▶ Luaj';$('studioState').textContent='PAUZË';syncTabTransport();}});
   originalPlayer.addEventListener('ended',()=>{if(!usingOriginal(currentSong()))return;stopPlayback();setStatus('Kënga origjinale përfundoi.');});
   originalPlayer.addEventListener('timeupdate',()=>{
     const song=currentSong();if(!usingOriginal(song))return;
