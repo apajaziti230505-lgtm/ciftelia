@@ -1,13 +1,14 @@
 import { AudioEngine } from './audio-engine.js';
 import { MicrophoneRecorder } from './microphone.js';
 import { KEYS, HZ, DEMO, labelFor, fmt, withOpenF, upperFret, noteFrequency } from './constants.js';
-import { allSongs, loadSongs, newSong, saveSongs, exportSong } from './songs.js';
+import { allSongs, loadSongs, newSong, saveSongs, exportSong, upsertSong } from './songs.js';
 import { analyzeAudio } from './analysis.js';
 import { putOriginal, getOriginal, deleteOriginal } from './local-audio.js';
 import { GROUP_COLORS, detectNoteGroups, groupAtTime, groupForNote } from './grouping.js';
 import { timelineGeometry, timelineX, timelineTime, clampTimelineStart, clampGroupBoundary, findGroupBoundary } from './timeline.js';
 import { manualAnywhereTime, manualNote } from './manual.js';
 import { notesAtMoment, noteAttackColor } from './practice.js';
+import { copySongGroup, pasteSongGroup, parseSongJSON } from './song-editing.js';
 const $ = (id) => document.getElementById(id);
 const svg = document.getElementById('ciftelia');
 const fretLayer = document.getElementById('fret-layer');
@@ -33,6 +34,10 @@ let analysisRowsVisible = 60;
 let audioSelectToken = 0;
 let analyzing = false;
 let editingSongId = null;
+let groupClipboard = null;
+let groupUndo = null;
+let jsonBaseSong = null;
+let jsonBaseSelectedId = '';
 let stanzas = [{ start: 0, label: 'Grupi 1', color: GROUP_COLORS[0] }];
 let selectedImportedHit = null;
 let selectedGroupStart = 0;
@@ -213,7 +218,148 @@ function setMicStatus(s) { $('micStatus').textContent = s; }
 function currentSong() {
     if (selectedId === '__draft')
         return draft;
-    return [...allSongs(savedSongs), ...catalogSongs].find(s => s.id === selectedId) || null;
+    return allSongs(savedSongs, catalogSongs).find(s => s.id === selectedId) || null;
+}
+function refreshGroupCopyControls() {
+    const song = currentSong();
+    const groups = activeSongGroups(song), index = groups.findIndex(g => g.start === selectedGroupStart);
+    const hasNotes = !!song && song.notes.some(n => groupForNote(groups, n) === index);
+    $('groupCopyBtn').toggleAttribute('disabled', !hasNotes);
+    for (const id of ['groupPasteBtn', 'groupPasteEndBtn'])
+        $(id).toggleAttribute('disabled', !song || !groupClipboard);
+    $('groupUndoBtn').toggleAttribute('disabled', !editableTab() || !groupUndo);
+    $('groupClipboardStatus').textContent = groupClipboard
+        ? `Kopjuar: ${groupClipboard.label} · ${groupClipboard.notes.length} nota · ${fmt(groupClipboard.duration)}`
+        : 'Zgjidh grupin dhe kopjoje; mund ta ngjitësh edhe te një këngë tjetër.';
+}
+function setEditableSong(song) {
+    draft = { ...song, notes: song.notes.map(n => ({ ...n })) };
+    stanzas = sanitizeStanzas(song.stanzas);
+    draft.stanzas = stanzas;
+    importedHits = song.notes.map(n => ({ ...n, string: n.noteNumber === 14 ? 2 : n.string, confidence: n.confidence ?? 1,
+        withF: n.withF !== false, upperNoteNumber: upperFret(n.upperNoteNumber), detail: 'Redaktuar' }));
+    selectedId = '__draft';
+    selectedImportedHit = null;
+    manualPending = null;
+    manualMode = true;
+    instantTabNoteMode = false;
+    analysisRowsVisible = 60;
+    renderSongs();
+    renderImportedHits();
+    renderManualMode();
+}
+function copySelectedGroup() {
+    const song = currentSong();
+    if (!song)
+        return;
+    try {
+        groupClipboard = copySongGroup(song, selectedGroupStart, tabSongEnd(song));
+        refreshGroupCopyControls();
+        setStatus(`U kopjua ${groupClipboard.label}. Zgjidh ku ta ngjitësh.`);
+    }
+    catch (e) {
+        setStatus(String(e.message || e));
+    }
+}
+async function pasteCopiedGroup(atEnd) {
+    if (micActive || keyboardRecordStart !== null) {
+        setStatus('Ndalo regjistrimin para ngjitjes së grupit.');
+        return;
+    }
+    if (manualPending) {
+        setStatus('Vendos ose anulo notën e hapur përpara ngjitjes.');
+        return;
+    }
+    const song = currentSong();
+    if (!song || !groupClipboard)
+        return;
+    const previousGroup = selectedGroupStart, previousTime = playbackPositionMs();
+    try {
+        const groups = activeSongGroups(song), index = Math.max(0, groups.findIndex(g => g.start === selectedGroupStart));
+        const at = Math.ceil(atEnd ? tabSongEnd(song) : groups[index + 1]?.start ?? tabSongEnd(song));
+        const result = pasteSongGroup(song, groupClipboard, at);
+        if (!editableTab())
+            await editSavedAudio();
+        if (selectedId !== '__draft' || draft?.id !== song.id)
+            return;
+        groupUndo = { song: structuredClone(draft), selectedGroupStart: previousGroup, time: previousTime };
+        stopPlayback();
+        selectedGroupStart = result.groupStart;
+        setEditableSong(result.song);
+        useNotePlayback();
+        seekToMs(result.groupStart);
+        focusTimelineAt(result.groupStart);
+        refreshGroupCopyControls();
+        setStatus('Grupi u ngjit. Grupet pas tij u shtynë; luaj sipas notave dhe shtyp Ruaj. MP3 origjinal nuk ndryshon.');
+    }
+    catch (e) {
+        setStatus(String(e.message || e));
+    }
+}
+function undoGroupPaste() {
+    if (!editableTab() || !groupUndo)
+        return;
+    const undo = groupUndo;
+    groupUndo = null;
+    stopPlayback();
+    selectedGroupStart = undo.selectedGroupStart;
+    setEditableSong(undo.song);
+    seekToMs(undo.time);
+    refreshGroupCopyControls();
+    setStatus('Ngjitja e fundit u zhbë.');
+}
+function openJSONEditor() {
+    const song = currentSong();
+    if (!song)
+        return;
+    if (micActive || keyboardRecordStart !== null) {
+        setStatus('Ndalo regjistrimin përpara redaktimit të JSON-it.');
+        return;
+    }
+    if (manualPending) {
+        setStatus('Vendos ose anulo notën e hapur përpara redaktimit të JSON-it.');
+        return;
+    }
+    stopPlayback();
+    jsonBaseSong = structuredClone(song);
+    jsonBaseSelectedId = selectedId;
+    $('jsonEditorText').value = JSON.stringify(song, null, 2);
+    $('jsonEditorStatus').textContent = 'Ndrysho emrin, notat ose grupet; pastaj zbatoji në tablaturë.';
+    $('jsonEditorStatus').classList.remove('is-error');
+    $('jsonEditorDialog').showModal();
+}
+function validateJSONEditor(format = false) {
+    if (!jsonBaseSong)
+        return null;
+    try {
+        const song = parseSongJSON($('jsonEditorText').value, jsonBaseSong);
+        if (format)
+            $('jsonEditorText').value = JSON.stringify(song, null, 2);
+        $('jsonEditorStatus').textContent = `JSON i vlefshëm: ${song.notes.length} nota · ${song.stanzas?.length ?? 1} grupe.`;
+        $('jsonEditorStatus').classList.remove('is-error');
+        return song;
+    }
+    catch (e) {
+        $('jsonEditorStatus').textContent = String(e.message || e);
+        $('jsonEditorStatus').classList.add('is-error');
+        return null;
+    }
+}
+function applyJSONEditor() {
+    const song = validateJSONEditor();
+    if (!song)
+        return;
+    stopPlayback();
+    groupUndo = null;
+    if (jsonBaseSelectedId !== '__draft') {
+        editingSongId = jsonBaseSong.id;
+        importFile = null;
+    }
+    setEditableSong(song);
+    $('jsonEditorDialog').close();
+    void prepareOriginalForSelection();
+    useNotePlayback();
+    setStatus('JSON-i u zbatua në tablaturë. Shtyp Ruaj për ta mbajtur në këtë shfletues ose Eksporto JSON për skedarin.');
 }
 function songForDisplay() { return currentSong(); }
 function activeSongGroups(song) {
@@ -242,6 +388,7 @@ function selectGroup(start) {
     $('practiceGroupSelect').value = String(group.start);
     document.querySelectorAll('.stanza-entry').forEach(el => el.classList.toggle('group-active', el.dataset.groupStart === String(group.start)));
     focusTimelineAt(group.start);
+    refreshGroupCopyControls();
     setStatus(`U zgjodh ${group.label}. Vija me ngjyrë shfaqet në tablaturë.`);
 }
 function renderSongs() {
@@ -252,24 +399,28 @@ function renderSongs() {
         const opt = new Option(`● PROVË — ${draft.name}`, '__draft');
         select.add(opt);
     }
-    for (const song of allSongs(savedSongs))
-        select.add(new Option(song.name, song.id));
-    for (const song of catalogSongs)
-        select.add(new Option('♫ ' + song.name, song.id));
+    for (const song of allSongs(savedSongs, catalogSongs))
+        select.add(new Option((catalogSongs.some(s => s.id === song.id) ? '♫ ' : '') + song.name, song.id));
     select.value = selected;
     if (select.selectedIndex < 0)
         select.selectedIndex = 0;
     selectedId = select.value;
     const selectedSong = currentSong();
     const isCatalogSong = !!selectedSong && catalogSongs.some(s => s.id === selectedSong.id);
-    const isUserSong = !!selectedSong && selectedSong.id !== 'draft' && !DEMO.some(s => s.id === selectedSong.id) && !isCatalogSong;
+    const isUserSong = !!selectedSong && savedSongs.some(s => s.id === selectedSong.id);
+    const isOverride = isUserSong && (isCatalogSong || DEMO.some(s => s.id === selectedSong.id));
+    $('deleteBtn').textContent = selectedId === '__draft' ? 'Fshi provën' : isOverride ? 'Rikthe origjinalin' : 'Fshi';
     $('catalogAudioBtn').hidden = !isCatalogSong;
-    $('saveBtn').toggleAttribute('disabled', !(draft && draft.notes.length > 0));
+    $('saveBtn').toggleAttribute('disabled', !draft);
     $('analysisEditSavedBtn').toggleAttribute('disabled', !selectedSong || (!selectedSong.notes.length && !selectedSong.originalAudioId) || selectedId === '__draft');
     $('deleteBtn').toggleAttribute('disabled', !isUserSong && selectedId !== '__draft');
-    $('exportBtn').toggleAttribute('disabled', !selectedSong || !selectedSong.notes.length);
+    $('exportBtn').toggleAttribute('disabled', !selectedSong);
+    $('jsonEditBtn').toggleAttribute('disabled', !selectedSong);
     $('songMeta').textContent = `${selectedSong?.notes.length ?? 0} nota · ${selectedSong ? fmt((selectedSong.notes.at(-1)?.time ?? 0) + 300) : '00:00.00'}`;
+    if (isOverride)
+        $('songMeta').textContent += ' · Ndryshime lokale';
     refreshGroupPicker(selectedSong);
+    refreshGroupCopyControls();
     clearPlayedNote();
     renderTimeline();
 }
@@ -396,6 +547,7 @@ async function hit(noteNumber, string) {
 function createDraftFromNotes(notes, name) {
     draft = newSong(name, notes);
     editingSongId = null;
+    groupUndo = null;
     importedHits = notes.map(n => ({ ...n, confidence: n.confidence ?? 1, detail: 'Vendosur' }));
     stanzas = sanitizeStanzas(draft.stanzas);
     selectedId = '__draft';
@@ -525,7 +677,7 @@ function selectedGroupRange(song) {
     const groups = activeSongGroups(song);
     const i = Math.max(0, groups.findIndex(g => g.start === selectedGroupStart));
     const start = groups[i].start;
-    const audioEnd = importedSong(song) && Number.isFinite(originalPlayer.duration) ? Math.round(originalPlayer.duration * 1000) : Math.max(start + 600, ...song.notes.map(n => n.time + 500));
+    const audioEnd = usingOriginal(song) && Number.isFinite(originalPlayer.duration) ? Math.round(originalPlayer.duration * 1000) : tabSongEnd(song);
     const end = Math.max(start + 100, Math.min(audioEnd, groups[i + 1]?.start ?? audioEnd));
     return { start, end, name: groups[i].label, index: i };
 }
@@ -620,7 +772,7 @@ function playbackPositionMs() {
 }
 function activeSeekEndMs() {
     const song = currentSong();
-    if (importedSong(song) && Number.isFinite(originalPlayer.duration) && originalPlayer.duration > 0)
+    if (usingOriginal(song) && Number.isFinite(originalPlayer.duration) && originalPlayer.duration > 0)
         return Math.round(originalPlayer.duration * 1000);
     return tabSongEnd(song);
 }
@@ -852,7 +1004,7 @@ async function saveDraft() {
         setStatus('Vendos ose anulo notën e hapur para ruajtjes.');
         return;
     }
-    if (!draft || !draft.notes.length) {
+    if (!draft) {
         setStatus('Nuk ka këngë provë për ruajtje.');
         return;
     }
@@ -874,7 +1026,7 @@ async function saveDraft() {
             return;
         }
     }
-    const next = editingSongId ? savedSongs.map(s => s.id === editingSongId ? saved : s) : [...savedSongs, saved];
+    const next = upsertSong(savedSongs, saved);
     if (!saveSongs(next)) {
         if (draft.originalAudioId === '__draft' && importFile)
             void deleteOriginal(saved.id).catch(() => { });
@@ -884,6 +1036,7 @@ async function saveDraft() {
     savedSongs = next;
     draft = null;
     editingSongId = null;
+    groupUndo = null;
     selectedId = saved.id;
     importedHits = [];
     importFile = null;
@@ -908,9 +1061,10 @@ async function deleteSong() {
         return;
     }
     const song = currentSong();
-    if (!song || DEMO.some(d => d.id === song.id))
+    if (!song || !savedSongs.some(s => s.id === song.id))
         return;
-    if (!confirm(`Ta fshijmë këngën “${song.name}”?`))
+    const isOverride = DEMO.some(s => s.id === song.id) || catalogSongs.some(s => s.id === song.id);
+    if (!confirm(isOverride ? 'Të hiqen ndryshimet lokale dhe të rikthehet kënga origjinale?' : `Ta fshijmë këngën “${song.name}”?`))
         return;
     const next = savedSongs.filter(s => s.id !== song.id);
     if (!saveSongs(next)) {
@@ -918,15 +1072,15 @@ async function deleteSong() {
         return;
     }
     savedSongs = next;
-    if (song.originalAudioId)
+    if (song.originalAudioId === song.id)
         try {
             await deleteOriginal(song.originalAudioId);
         }
         catch { }
-    selectedId = DEMO[0].id;
+    selectedId = isOverride ? song.id : DEMO[0].id;
     renderSongs();
     void prepareOriginalForSelection();
-    setStatus('Kënga u fshi nga ky shfletues.');
+    setStatus(isOverride ? 'U rikthye kënga origjinale.' : 'Kënga u fshi nga ky shfletues.');
 }
 const canvas = $('tabCanvas');
 function tabSongEnd(song) {
@@ -1544,7 +1698,8 @@ async function editSavedAudio() {
     if (!song || selectedId === '__draft')
         return;
     stopPlayback();
-    editingSongId = savedSongs.some(s => s.id === song.id) ? song.id : null;
+    editingSongId = song.id;
+    groupUndo = null;
     importFile = null;
     selectedImportedHit = null;
     $('analyzeBtn').setAttribute('disabled', '');
@@ -1698,6 +1853,7 @@ function renderStanzas() {
 function updateImportDraft() {
     if (!draft)
         return;
+    groupUndo = null;
     draft.notes = importedHits.filter(h => h.noteNumber !== null).map(h => ({
         time: Math.round(h.time), noteNumber: h.noteNumber, string: (h.noteNumber === 14 ? 2 : h.string),
         confidence: h.confidence, velocity: h.velocity, measuredHz: h.measuredHz, withF: h.string === 2 ? undefined : h.withF !== false, upperNoteNumber: upperFret(h.upperNoteNumber),
@@ -2030,6 +2186,15 @@ async function connectCatalogAudio(file) {
     }
 }
 function init() {
+    $('groupCopyBtn').addEventListener('click', copySelectedGroup);
+    $('groupPasteBtn').addEventListener('click', () => void pasteCopiedGroup(false));
+    $('groupPasteEndBtn').addEventListener('click', () => void pasteCopiedGroup(true));
+    $('groupUndoBtn').addEventListener('click', undoGroupPaste);
+    $('jsonEditBtn').addEventListener('click', openJSONEditor);
+    $('jsonValidateBtn').addEventListener('click', () => validateJSONEditor());
+    $('jsonFormatBtn').addEventListener('click', () => validateJSONEditor(true));
+    $('jsonApplyBtn').addEventListener('click', applyJSONEditor);
+    $('jsonCancelBtn').addEventListener('click', () => $('jsonEditorDialog').close());
     initStringControls();
     installTabInteraction();
     $('practiceAllBtn').addEventListener('click', () => void playCurrent());

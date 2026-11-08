@@ -12,7 +12,14 @@ export function loadSongs():Song[] {
 export function saveSongs(songs:Song[]):boolean {
   try {localStorage.setItem(KEY,JSON.stringify(songs)); return true;} catch { return false; }
 }
-export function allSongs(userSongs:Song[]):Song[] {return [...DEMO,...userSongs];}
+export function allSongs(userSongs:Song[],catalog:Song[]=[]):Song[] {
+  const defaults=[...DEMO,...catalog],ids=new Set(defaults.map(s=>s.id));
+  const overrides=new Map(userSongs.map(s=>[s.id,s]));
+  return [...defaults.map(s=>overrides.get(s.id)??s),...userSongs.filter(s=>!ids.has(s.id))];
+}
+export function upsertSong(songs:Song[],song:Song):Song[]{
+  return songs.some(s=>s.id===song.id)?songs.map(s=>s.id===song.id?song:s):[...songs,song];
+}
 export function newSong(name:string,events:NoteEvent[]):Song {
   const id = typeof crypto!=='undefined' && 'randomUUID' in crypto ? crypto.randomUUID():`song-${Date.now()}-${Math.floor(Math.random()*1e6)}`;
   return {id,name:name.trim().slice(0,80)||'Melodi e re',createdAt:new Date().toISOString(),notes:events.map(e=>({...e,time:Math.max(0,Math.round(e.time))})).sort((a,b)=>a.time-b.time)};

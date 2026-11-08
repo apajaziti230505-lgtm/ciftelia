@@ -175,3 +175,15 @@
 .analysis-note-row .upper-pick{width:100%;min-width:0;font-size:11px;padding:7px 4px}
 @media(max-width:950px){.analysis-note-row{grid-template-columns:repeat(5,minmax(0,1fr))}.analysis-note-row .f-companion{grid-column:span 3}}
 @media(max-width:600px){.string-controls>label{width:100%}.string-controls select{width:100%}}
+
+.group-copy-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:10px 12px;margin:10px 0;border:1px solid #36516a;background:#10243a;border-radius:10px}
+.group-copy-toolbar .btn{min-height:38px;font-size:12px}
+.group-copy-toolbar>span{flex-basis:100%;font-size:11px;color:#abc2d7;line-height:1.5}
+.json-editor{width:min(1100px,94vw);max-height:94vh;padding:20px;border:1px solid #49647c;border-radius:16px;background:#111f31;color:#f1f5f9;box-shadow:0 20px 80px #0008}
+.json-editor::backdrop{background:#020817d9}
+.json-editor-heading{display:flex;align-items:center;justify-content:space-between;gap:15px}
+.json-editor h2{font-size:20px;margin:0}.json-editor p{color:#afc3d6;font-size:12px;line-height:1.6}
+.json-editor textarea{display:block;width:100%;height:55vh;min-height:210px;resize:vertical;border:1px solid #49647c;border-radius:9px;padding:12px;background:#091523;color:#e7edf5;font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:2}
+.json-editor-status{min-height:44px;display:flex;align-items:center;padding:8px 0;font-size:12px;color:#78d5bc;line-height:1.5}.json-editor-status.is-error{color:#ff9b9b}
+.json-editor-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+@media(max-width:600px){.group-copy-toolbar .btn{flex:1 1 140px}.json-editor{padding:12px}.json-editor h2{font-size:17px}.json-editor textarea{height:48vh}.json-editor-actions .btn{flex:1 1 110px}}

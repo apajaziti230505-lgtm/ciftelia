@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=22-upper-20261108">
+  <link rel="stylesheet" href="app.css?v=23-group-json-20261108">
 </head>
 <body>
   <main class="container">
@@ -180,7 +180,7 @@
     </section>
     <section class="transport" aria-label="Këngët dhe kontrollet">
       <div class="transport-song"><label for="songSelect">KËNGA E ZGJEDHUR</label><select id="songSelect"></select><button id="catalogAudioBtn" type="button" class="btn btn-minimal" hidden>🎵 Lidh MP3</button><input id="catalogAudioFile" type="file" accept=".mp3,.m4a,.wav,.ogg,audio/*" hidden><div id="songMeta" class="song-meta">0 nota</div></div>
-      <div class="transport-actions"><button type="button" class="btn btn-record" id="recordBtn">＋ Regjistro</button><button type="button" class="btn" id="saveBtn" disabled>▣ Ruaj</button><button type="button" class="btn btn-danger" id="deleteBtn" disabled>Fshi</button><button type="button" class="btn btn-minimal" id="exportBtn">Eksporto JSON</button><button type="button" class="btn btn-minimal" id="importBtn">Importo JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button type="button" class="btn btn-minimal" id="installBtn" hidden>Instalo Android</button></div>
+      <div class="transport-actions"><button type="button" class="btn btn-record" id="recordBtn">＋ Regjistro</button><button type="button" class="btn" id="saveBtn" disabled>▣ Ruaj</button><button type="button" class="btn btn-danger" id="deleteBtn" disabled>Fshi</button><button type="button" class="btn btn-minimal" id="jsonEditBtn">✎ Redakto JSON</button><button type="button" class="btn btn-minimal" id="exportBtn">Eksporto JSON</button><button type="button" class="btn btn-minimal" id="importBtn">Importo JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button type="button" class="btn btn-minimal" id="installBtn" hidden>Instalo Android</button></div>
       <span id="recordCounter" class="record-counter">GATI</span>
     </section>
 
@@ -210,6 +210,13 @@
         <div class="tab-nav-set"><span>PAMJA</span><button id="tabLeftBtn" class="btn btn-minimal" type="button" title="Shiko më majtas">◀ Majtas</button><button id="tabRightBtn" class="btn btn-minimal" type="button" title="Shiko më djathtas">Djathtas ▶</button><button id="tabFollowBtn" class="btn btn-minimal" type="button" title="Ndiq muzikën gjatë luajtjes">◎ Ndiq muzikën</button></div>
         <div class="tab-nav-set"><span>VIJA E GRUPIT</span><button id="tabMarkLeftBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms majtas">−50 ms</button><button id="tabMarkRightBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms djathtas">+50 ms</button></div>
         <strong id="tabViewRange" aria-live="polite">00:00 – 00:00</strong>
+      </div>
+      <div class="group-copy-toolbar" role="group" aria-label="Kopjo dhe ngjit grupe në tablaturë">
+        <button id="groupCopyBtn" type="button" class="btn">⧉ Kopjo grupin</button>
+        <button id="groupPasteBtn" type="button" class="btn" disabled>＋ Ngjit pas grupit</button>
+        <button id="groupPasteEndBtn" type="button" class="btn" disabled>＋ Ngjit në fund</button>
+        <button id="groupUndoBtn" type="button" class="btn btn-minimal" disabled>↶ Zhbëj ngjitjen</button>
+        <span id="groupClipboardStatus" role="status">Zgjidh një grup për ta kopjuar.</span>
       </div>
       <div class="manual-toolbar" role="group" aria-label="Shënimi manual i notave">
         <button id="manualModeBtn" type="button" class="btn btn-manual" aria-pressed="false">✍ Shëno manualisht</button>
@@ -288,6 +295,13 @@
     </div>
     <div class="footer"><p id="status" role="status">Gati për të luajtur.</p></div>
   </main>
+  <dialog id="jsonEditorDialog" class="json-editor" aria-labelledby="jsonEditorTitle">
+    <div class="json-editor-heading"><h2 id="jsonEditorTitle">Redakto JSON-in e këngës</h2><button id="jsonCancelBtn" type="button" class="btn btn-minimal">Mbyll</button></div>
+    <p>Redakto edhe këngët nga DB-ja. Ndryshimet zbatohen fillimisht në tablaturë; me Ruaj mbeten në këtë shfletues. Eksporto JSON për skedarin e përditësuar.</p>
+    <textarea id="jsonEditorText" aria-label="JSON-i i këngës" spellcheck="false" wrap="off"></textarea>
+    <div id="jsonEditorStatus" class="json-editor-status" role="status" aria-live="polite"></div>
+    <div class="json-editor-actions"><button id="jsonFormatBtn" type="button" class="btn">Formatizo</button><button id="jsonValidateBtn" type="button" class="btn">Kontrollo JSON</button><button id="jsonApplyBtn" type="button" class="btn btn-primary">Zbato në tablaturë</button></div>
+  </dialog>
   <script>
   (() => {
     let started = false;
@@ -327,6 +341,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v22/main.js?v=22-upper"></script>
+  <script type="module" src="./js/v23/main.js?v=23-group-json"></script>
 </body>
 </html>

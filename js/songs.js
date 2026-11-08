@@ -22,7 +22,14 @@ export function saveSongs(songs) {
         return false;
     }
 }
-export function allSongs(userSongs) { return [...DEMO, ...userSongs]; }
+export function allSongs(userSongs, catalog = []) {
+    const defaults = [...DEMO, ...catalog], ids = new Set(defaults.map(s => s.id));
+    const overrides = new Map(userSongs.map(s => [s.id, s]));
+    return [...defaults.map(s => overrides.get(s.id) ?? s), ...userSongs.filter(s => !ids.has(s.id))];
+}
+export function upsertSong(songs, song) {
+    return songs.some(s => s.id === song.id) ? songs.map(s => s.id === song.id ? song : s) : [...songs, song];
+}
 export function newSong(name, events) {
     const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `song-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
     return { id, name: name.trim().slice(0, 80) || 'Melodi e re', createdAt: new Date().toISOString(), notes: events.map(e => ({ ...e, time: Math.max(0, Math.round(e.time)) })).sort((a, b) => a.time - b.time) };
