@@ -169,7 +169,7 @@
     </section>
 
     <section class="transport" aria-label="Këngët dhe kontrollet">
-      <div class="transport-song"><label for="songSelect">KËNGA E ZGJEDHUR</label><select id="songSelect"></select><div id="songMeta" class="song-meta">0 nota</div></div>
+      <div class="transport-song"><label for="songSelect">KËNGA E ZGJEDHUR</label><select id="songSelect"></select><button id="catalogAudioBtn" type="button" class="btn btn-minimal" hidden>🎵 Lidh MP3</button><input id="catalogAudioFile" type="file" accept=".mp3,.m4a,.wav,.ogg,audio/*" hidden><div id="songMeta" class="song-meta">0 nota</div></div>
       <div class="transport-actions"><button type="button" class="btn btn-record" id="recordBtn">＋ Regjistro</button><button type="button" class="btn" id="saveBtn" disabled>▣ Ruaj</button><button type="button" class="btn btn-danger" id="deleteBtn" disabled>Fshi</button><button type="button" class="btn btn-minimal" id="exportBtn">Eksporto JSON</button><button type="button" class="btn btn-minimal" id="importBtn">Importo JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button type="button" class="btn btn-minimal" id="installBtn" hidden>Instalo Android</button></div>
       <span id="recordCounter" class="record-counter">GATI</span>
     </section>
@@ -315,6 +315,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v19/main.js?v=20-speed-quarter"></script>
+  <script type="module" src="./js/v19/main.js?v=21-catalog"></script>
 </body>
 </html>
