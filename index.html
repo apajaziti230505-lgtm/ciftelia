@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=24-local-entry-20261108">
+  <link rel="stylesheet" href="app.css?v=25-group-history-20261108">
 </head>
 <body>
   <main class="container">
@@ -200,13 +200,15 @@
         <div class="tab-nav-set"><span>VIJA E GRUPIT</span><button id="tabMarkLeftBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms majtas">−50 ms</button><button id="tabMarkRightBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms djathtas">+50 ms</button></div>
         <strong id="tabViewRange" aria-live="polite">00:00 – 00:00</strong>
       </div>
-      <div class="group-copy-toolbar" role="group" aria-label="Kopjo dhe ngjit grupe në tablaturë">
-        <button id="groupCopyBtn" type="button" class="btn">⧉ Kopjo grupin</button>
-        <label for="groupPasteTarget">Ngjite te <select id="groupPasteTarget" disabled><option value="">Zgjidh grupin pritës…</option></select></label>
-        <button id="groupPasteBtn" type="button" class="btn" disabled>＋ Ngjit te grupi</button>
-        <button id="groupDeleteBtn" type="button" class="btn btn-danger">Fshi grupin</button>
-        <button id="groupUndoBtn" type="button" class="btn btn-minimal" disabled>↶ Zhbëj</button>
-        <span id="groupClipboardStatus" role="status">Zgjidh një grup për ta kopjuar.</span>
+      <div class="group-copy-toolbar" role="group" aria-label="Menaxho grupet në tablaturë">
+        <div class="group-action-row"><strong id="groupActiveLabel">Grupi 1</strong><button id="groupCopyBtn" type="button" class="btn">⧉ Kopjo</button><button id="groupDuplicateBtn" type="button" class="btn">＋ Dyfisho grupin</button><button id="groupDeleteBtn" type="button" class="btn btn-danger">Fshi grupin</button></div>
+        <div class="group-action-row group-paste-row">
+          <label for="groupPasteTarget">Ngjite te <select id="groupPasteTarget" disabled><option value="">Zgjidh grupin pritës…</option></select></label>
+          <label for="groupPasteMode">Mënyra <select id="groupPasteMode" disabled><option value="insert">Shto grup të ri</option><option value="replace">Zëvendëso notat</option></select></label>
+          <button id="groupPasteBtn" type="button" class="btn" disabled>＋ Ngjit kopjen</button>
+        </div>
+        <span id="groupClipboardStatus" role="status">Zgjidh grupin që dëshiron të kopjosh.</span>
+        <div class="group-action-row group-history-row" aria-label="Kthimi i veprimeve"><button id="groupUndoBtn" type="button" class="btn btn-minimal" disabled>↶ Zhbëj</button><button id="groupRedoBtn" type="button" class="btn btn-minimal" disabled>↷ Ribëj</button><span id="groupHistoryStatus" role="status" title="Deri në 50 hapa gjatë kësaj hapjeje të faqes.">Ctrl+Z: zhbëj · Ctrl+Y: ribëj</span></div>
       </div>
       <div class="manual-toolbar" role="group" aria-label="Shënimi manual i notave">
         <button id="manualModeBtn" type="button" class="btn btn-manual" aria-pressed="false">✍ Shëno manualisht</button>
@@ -286,6 +288,10 @@
     </div>
     <div class="footer"><p id="status" role="status">Gati për të luajtur.</p></div>
   </main>
+  <dialog id="groupDeleteDialog" class="group-delete-dialog" aria-labelledby="groupDeleteTitle" aria-describedby="groupDeleteSummary">
+    <h2 id="groupDeleteTitle">Fshi grupin?</h2><strong id="groupDeleteName"></strong>
+    <p id="groupDeleteSummary"></p><div class="group-delete-actions"><button id="groupDeleteCancelBtn" type="button" class="btn" autofocus>Anulo</button><button id="groupDeleteConfirmBtn" type="button" class="btn btn-danger">Fshi grupin</button></div>
+  </dialog>
   <dialog id="jsonEditorDialog" class="json-editor" aria-labelledby="jsonEditorTitle">
     <div class="json-editor-heading"><h2 id="jsonEditorTitle">Redakto JSON-in e këngës</h2><button id="jsonCancelBtn" type="button" class="btn btn-minimal">Mbyll</button></div>
     <p>Redakto edhe këngët nga DB-ja. Ndryshimet zbatohen fillimisht në tablaturë; me Ruaj mbeten në këtë shfletues. Eksporto JSON për skedarin e përditësuar.</p>
@@ -332,6 +338,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v24/main.js?v=24-local-entry-2"></script>
+  <script type="module" src="./js/v25/main.js?v=25-group-history"></script>
 </body>
 </html>
