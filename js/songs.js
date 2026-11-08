@@ -30,6 +30,11 @@ export function allSongs(userSongs, catalog = []) {
 export function upsertSong(songs, song) {
     return songs.some(s => s.id === song.id) ? songs.map(s => s.id === song.id ? song : s) : [...songs, song];
 }
+export function prefersNotePlayback(song, localCatalogEdit = false) {
+    return !!song && (song.preferNotes === true || localCatalogEdit || song.notes.some(n => n.withF === false ||
+        (n.upperNoteNumber !== undefined && n.upperNoteNumber >= 1 && n.upperNoteNumber <= 13) ||
+        (n.string === 2 && n.noteNumber >= 1 && n.noteNumber <= 13)));
+}
 export function newSong(name, events) {
     const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `song-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
     return { id, name: name.trim().slice(0, 80) || 'Melodi e re', createdAt: new Date().toISOString(), notes: events.map(e => ({ ...e, time: Math.max(0, Math.round(e.time)) })).sort((a, b) => a.time - b.time) };

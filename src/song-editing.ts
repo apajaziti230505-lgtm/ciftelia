@@ -42,6 +42,39 @@ export function pasteSongGroup(song:Song,copied:CopiedGroup,insertAt:number):{so
   return {song:{...song,notes:notes.sort((a,b)=>a.time-b.time||a.string-b.string),stanzas:stanzas.sort((a,b)=>a.start-b.start)},groupStart:insertAt};
 }
 
+/** Replace the selected group, keeping its identity and the copied attack intervals. */
+export function replaceSongGroup(song:Song,copied:CopiedGroup,targetStart:number,endMs:number):{song:Song;groupStart:number}{
+  const groups=groupsOf(song),index=groups.findIndex(g=>g.start===targetStart);
+  if(index<0)throw Error('Zgjidh grupin ku dëshiron ta ngjitësh.');
+  if(!copied.notes.length||!Number.isInteger(copied.duration)||copied.duration<1)throw Error('Kopjo së pari një grup.');
+  const oldEnd=groups[index+1]?.start??Math.max(endMs,targetStart+100);
+  const delta=copied.duration-(oldEnd-targetStart);
+  const notes=song.notes.filter(n=>groupForNote(groups,n)!==index).map(n=>{
+    const later=groupForNote(groups,n)>index;
+    return {...n,time:n.time+(later?delta:0),...(n.groupStart!==undefined?{groupStart:n.groupStart+(n.groupStart>targetStart?delta:0)}:{})};
+  });
+  notes.push(...copied.notes.map(n=>({...n,time:targetStart+n.time,groupStart:targetStart})));
+  const stanzas=groups.map((g,i)=>({...g,start:g.start+(i>index?delta:0)}));
+  if(notes.length>MAX_NOTES)throw Error('Maksimumi është 10 000 nota.');
+  if(targetStart+copied.duration>=MAX_TIME||notes.some(n=>n.time<0||n.time>=MAX_TIME)||stanzas.some(g=>g.start<0||g.start>=MAX_TIME))
+    throw Error('Koha pas ngjitjes del jashtë kufijve të këngës.');
+  return {song:{...song,notes:notes.sort((a,b)=>a.time-b.time||a.string-b.string),stanzas},groupStart:targetStart};
+}
+
+/** Delete the group and its members without moving the other notes in time. */
+export function deleteSongGroup(song:Song,targetStart:number):{song:Song;groupStart:number}{
+  const groups=groupsOf(song),index=groups.findIndex(g=>g.start===targetStart);
+  if(index<0)throw Error('Zgjidh grupin që dëshiron ta fshish.');
+  let notes=song.notes.filter(n=>groupForNote(groups,n)!==index).map(n=>({...n}));
+  const stanzas=groups.filter((_,i)=>i!==index).map(g=>({...g}));
+  if(!stanzas.length)stanzas.push({start:0,label:'Grupi 1',color:GROUP_COLORS[0]});
+  else if(index===0){
+    const oldStart=stanzas[0].start;stanzas[0].start=0;
+    notes=notes.map(n=>n.groupStart===oldStart?{...n,groupStart:0}:n);
+  }
+  return {song:{...song,notes,stanzas},groupStart:stanzas[Math.min(index,stanzas.length-1)].start};
+}
+
 /** Validate completely before replacing any editable state. */
 export function parseSongJSON(text:string,base:Song):Song{
   if(text.length>2_000_000)throw Error('JSON-i është tepër i madh.');
@@ -51,6 +84,7 @@ export function parseSongJSON(text:string,base:Song):Song{
   if(raw.id!==undefined&&raw.id!==base.id)throw Error('Mbaje id-në e kësaj kënge; ndrysho emrin, notat dhe grupet.');
   if(raw.originalAudioId!==undefined&&raw.originalAudioId!==base.originalAudioId)
     throw Error('Mbaje originalAudioId që kënga të ruajë lidhjen me audion.');
+  if(raw.preferNotes!==undefined&&typeof raw.preferNotes!=='boolean')throw Error('preferNotes duhet të jetë true ose false.');
   if(typeof raw.name!=='string'||!raw.name.trim()||raw.name.length>200)throw Error('Vendos një emër kënge me 1–200 shkronja.');
   if(!Array.isArray(raw.notes)||raw.notes.length>MAX_NOTES)throw Error('notes duhet të jetë listë me deri në 10 000 nota.');
   const notes:NoteEvent[]=raw.notes.map((n:any,i:number)=>{

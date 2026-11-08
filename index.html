@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=23-group-json-20261108">
+  <link rel="stylesheet" href="app.css?v=24-local-entry-20261108">
 </head>
 <body>
   <main class="container">
@@ -17,8 +17,8 @@
     </header>
 
     <section class="hero" aria-labelledby="instrTitle">
-      <div class="section-head"><div><h2 id="instrTitle">Luaj çiftelinë</h2></div><div class="live-note"><small>NOTA AKTUALE</small><strong id="liveNote">—</strong><span id="liveHz">— Hz</span></div></div>
-      <div class="instrument-stage"><div class="instrument-scroller"><svg id="ciftelia" viewBox="0 0 1450 465" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Çifteli tradicionale me dy tela dhe trembëdhjetë perde; prek perdet ose kupën për tingujt.">
+      <div class="section-head"><h2 id="instrTitle">Luaj çiftelinë</h2></div>
+      <div class="instrument-stage"><div class="instrument-scroller"><svg id="ciftelia" viewBox="0 0 1450 465" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Çiftelia">
           <defs>
             <linearGradient id="cupWood" x1="0" x2="0.75" y1="0" y2="1">
               <stop offset="0" stop-color="#f8d99b" />
@@ -164,20 +164,9 @@
         <select id="practiceSpeedSelect" aria-label="Shpejtësia e ushtrimit">
           <option value="1">1.00× Normal</option><option value="0.5">0.50× Ngadalë</option><option value="0.25">0.25× Shumë ngadalë</option>
         </select>
-        <span class="practice-indicator">Tani <strong id="practiceNoteNow">—</strong><span class="practice-arrow">→</span>Më pas <strong id="practiceNoteNext">—</strong></span>
       </div>
     </section>
 
-    <section class="string-controls" aria-label="Telat dhe shoqërimi">
-      <label for="playbackSource">Luajtja e këngës
-        <select id="playbackSource"><option value="original">MP3 origjinal</option><option value="notes">Çiftelia sipas notave</option></select>
-      </label>
-      <label for="defaultUpperNote">Teli lart për notat e reja
-        <select id="defaultUpperNote"></select>
-      </label>
-      <label class="lower-only"><input id="lowerOnly" type="checkbox"> Vetëm teli poshtë</label>
-      <p>Shoqërimi: F hapur automatikisht. Mund ta ndryshosh për çdo notë. Për shoqërimin dhe telin poshtë përdor “Çiftelia sipas notave”; MP3 luan regjistrimin origjinal.</p>
-    </section>
     <section class="transport" aria-label="Këngët dhe kontrollet">
       <div class="transport-song"><label for="songSelect">KËNGA E ZGJEDHUR</label><select id="songSelect"></select><button id="catalogAudioBtn" type="button" class="btn btn-minimal" hidden>🎵 Lidh MP3</button><input id="catalogAudioFile" type="file" accept=".mp3,.m4a,.wav,.ogg,audio/*" hidden><div id="songMeta" class="song-meta">0 nota</div></div>
       <div class="transport-actions"><button type="button" class="btn btn-record" id="recordBtn">＋ Regjistro</button><button type="button" class="btn" id="saveBtn" disabled>▣ Ruaj</button><button type="button" class="btn btn-danger" id="deleteBtn" disabled>Fshi</button><button type="button" class="btn btn-minimal" id="jsonEditBtn">✎ Redakto JSON</button><button type="button" class="btn btn-minimal" id="exportBtn">Eksporto JSON</button><button type="button" class="btn btn-minimal" id="importBtn">Importo JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button type="button" class="btn btn-minimal" id="installBtn" hidden>Instalo Android</button></div>
@@ -213,9 +202,10 @@
       </div>
       <div class="group-copy-toolbar" role="group" aria-label="Kopjo dhe ngjit grupe në tablaturë">
         <button id="groupCopyBtn" type="button" class="btn">⧉ Kopjo grupin</button>
-        <button id="groupPasteBtn" type="button" class="btn" disabled>＋ Ngjit pas grupit</button>
-        <button id="groupPasteEndBtn" type="button" class="btn" disabled>＋ Ngjit në fund</button>
-        <button id="groupUndoBtn" type="button" class="btn btn-minimal" disabled>↶ Zhbëj ngjitjen</button>
+        <label for="groupPasteTarget">Ngjite te <select id="groupPasteTarget" disabled><option value="">Zgjidh grupin pritës…</option></select></label>
+        <button id="groupPasteBtn" type="button" class="btn" disabled>＋ Ngjit te grupi</button>
+        <button id="groupDeleteBtn" type="button" class="btn btn-danger">Fshi grupin</button>
+        <button id="groupUndoBtn" type="button" class="btn btn-minimal" disabled>↶ Zhbëj</button>
         <span id="groupClipboardStatus" role="status">Zgjidh një grup për ta kopjuar.</span>
       </div>
       <div class="manual-toolbar" role="group" aria-label="Shënimi manual i notave">
@@ -235,19 +225,20 @@
       <div class="tab-canvas-wrap"><canvas id="tabCanvas" tabindex="0" aria-label="Tablatura interaktive: cakto sekondën, ose aktivizo Kliko kudo për të shtuar notën në pozicionin horizontal të prekur." height="175"></canvas></div>
       <div id="manualEntryPanel" class="manual-entry" hidden>
         <strong id="manualTimeLabel">00:00.000</strong><label for="manualTimeSeconds">Koha e notës (s)</label><input id="manualTimeSeconds" type="number" min="0" step="0.001" value="0.000" inputmode="decimal" aria-label="Koha e saktë e notës në sekonda">
-        <label for="manualFretSelect">Perdja / nota</label>
-        <select id="manualFretSelect" aria-label="Zgjidh perden e notës së re">
+        <label for="manualFretSelect">Teli poshtë · nota</label>
+        <select id="manualFretSelect" aria-label="Perdja e telit poshtë">
           <option value="">? — Zgjidh notën</option>
           <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
           <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
           <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option>
-          <option value="14">F · teli lart hapur</option><option value="15">G · teli poshtë hapur</option>
+          <option value="15">G · teli poshtë hapur</option>
         </select>
-        <label class="manual-f-label"><input id="manualFCompanion" type="checkbox" checked> Teli lart shoqëron</label>
-        <select id="manualUpperNote" aria-label="Perdja shoqëruese e telit lart"></select>
+        <label for="manualUpperNote">Teli lart</label>
+        <select id="manualUpperNote" aria-label="Teli lart për këtë notë"></select>
         <button id="manualSetBtn" type="button" class="btn">Vendos</button>
         <button id="manualContinueBtn" type="button" class="btn btn-primary">▶ Vendos &amp; Vazhdo</button>
         <button id="manualCancelBtn" type="button" class="btn btn-minimal">Anulo</button>
+        <small class="manual-upper-hint">F shoqëron automatikisht; këtu mund të zgjedhësh një perde tjetër lart ose Pa telin lart.</small>
       </div>
       <p class="tab-help" id="tabHelp">Zgjidh një grup. Në mënyrën Redakto këngën, tërhiq vijën e tij me ngjyrë në tablaturë për të ndryshuar kufirin; shigjetat lëvizin pamjen.</p>
       
@@ -341,6 +332,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v23/main.js?v=23-group-json"></script>
+  <script type="module" src="./js/v24/main.js?v=24-local-entry"></script>
 </body>
 </html>

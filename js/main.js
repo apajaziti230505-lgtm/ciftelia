@@ -1,14 +1,14 @@
 import { AudioEngine } from './audio-engine.js';
 import { MicrophoneRecorder } from './microphone.js';
 import { KEYS, HZ, DEMO, labelFor, fmt, withOpenF, upperFret, noteFrequency } from './constants.js';
-import { allSongs, loadSongs, newSong, saveSongs, exportSong, upsertSong } from './songs.js';
+import { allSongs, loadSongs, newSong, saveSongs, exportSong, upsertSong, prefersNotePlayback } from './songs.js';
 import { analyzeAudio } from './analysis.js';
 import { putOriginal, getOriginal, deleteOriginal } from './local-audio.js';
 import { GROUP_COLORS, detectNoteGroups, groupAtTime, groupForNote } from './grouping.js';
 import { timelineGeometry, timelineX, timelineTime, clampTimelineStart, clampGroupBoundary, findGroupBoundary } from './timeline.js';
-import { manualAnywhereTime, manualNote } from './manual.js';
+import { manualAnywhereTime, manualEntryNote } from './manual.js';
 import { notesAtMoment, noteAttackColor } from './practice.js';
-import { copySongGroup, pasteSongGroup, parseSongJSON } from './song-editing.js';
+import { copySongGroup, pasteSongGroup, replaceSongGroup, deleteSongGroup, parseSongJSON } from './song-editing.js';
 const $ = (id) => document.getElementById(id);
 const svg = document.getElementById('ciftelia');
 const fretLayer = document.getElementById('fret-layer');
@@ -67,71 +67,33 @@ function usingOriginal(song) {
     return importedSong(song) && playbackSource === 'original' && audio.upperEnabled;
 }
 function accompaniment() {
-    const value = $('defaultUpperNote').value;
-    return { withF: value !== 'off', upperNoteNumber: upperFret(Number(value)) };
+    return { withF: true, upperNoteNumber: 14 };
 }
 function fillUpperOptions(select, allowOff = false) {
-    if (allowOff)
-        select.add(new Option('Pa shoqërim', 'off'));
-    select.add(new Option('F · hapur (automatikisht)', '14'));
+    select.add(new Option('F · automatikisht', '14'));
     for (let n = 1; n <= 13; n++)
         select.add(new Option(`Lart · perdja ${n}`, String(n)));
+    if (allowOff)
+        select.add(new Option('Pa telin lart', 'off'));
     select.value = '14';
 }
-function saveStringSettings() {
-    try {
-        localStorage.setItem('ciftelia-string-settings-v1', JSON.stringify({
-            source: playbackSource, lowerOnly: !audio.upperEnabled, upper: $('defaultUpperNote').value
-        }));
-    }
-    catch { }
+function selectSongPlayback(song) {
+    const localCatalogEdit = !!song && catalogSongs.some(s => s.id === song.id) && savedSongs.some(s => s.id === song.id);
+    playbackSource = prefersNotePlayback(song, localCatalogEdit) ? 'notes' : 'original';
 }
 function useNotePlayback() {
     const position = playbackPositionMs();
     stopPlayback();
     playbackSource = 'notes';
-    $('playbackSource').value = 'notes';
+    if (draft)
+        draft.preferNotes = true;
     seekToMs(position);
-    saveStringSettings();
 }
-function changeStringPlayback() {
-    const position = playbackPositionMs();
-    stopPlayback();
-    audio.upperEnabled = !$('lowerOnly').checked;
-    const source = $('playbackSource');
-    if (!audio.upperEnabled)
-        source.value = 'notes';
-    playbackSource = source.value === 'notes' ? 'notes' : 'original';
-    source.options[0].disabled = !audio.upperEnabled;
-    seekToMs(position);
-    saveStringSettings();
-    setStatus(!audio.upperEnabled ? 'Vetëm teli poshtë: teli lart është i heshtur.' : playbackSource === 'notes'
-        ? 'Luajtja sipas notave: F shoqëron automatikisht; ndryshoje për çdo notë.'
-        : 'MP3 origjinal: dëgjohet regjistrimi i pandryshuar.');
-}
-function initStringControls() {
-    fillUpperOptions($('defaultUpperNote'), true);
-    fillUpperOptions($('manualUpperNote'));
+function initNoteControls() {
+    audio.upperEnabled = true;
+    audio.upperNoteNumber = 14;
+    fillUpperOptions($('manualUpperNote'), true);
     fillUpperOptions($('tabUpperNote'), true);
-    try {
-        const settings = JSON.parse(localStorage.getItem('ciftelia-string-settings-v1') || '{}');
-        audio.upperEnabled = settings.lowerOnly !== true;
-        playbackSource = settings.source === 'notes' || !audio.upperEnabled ? 'notes' : 'original';
-        const upper = $('defaultUpperNote');
-        upper.value = settings.upper === 'off' ? 'off' : String(upperFret(Number(settings.upper)));
-    }
-    catch { }
-    const source = $('playbackSource');
-    source.value = playbackSource;
-    source.options[0].disabled = !audio.upperEnabled;
-    $('lowerOnly').checked = !audio.upperEnabled;
-    audio.upperNoteNumber = accompaniment().upperNoteNumber;
-    source.addEventListener('change', changeStringPlayback);
-    $('lowerOnly').addEventListener('change', changeStringPlayback);
-    $('defaultUpperNote').addEventListener('change', () => { audio.upperNoteNumber = accompaniment().upperNoteNumber; saveStringSettings(); });
-    $('manualFCompanion').addEventListener('change', () => {
-        $('manualUpperNote').disabled = !$('manualFCompanion').checked;
-    });
     $('tabUpperNote').addEventListener('change', () => {
         const hit = selectedImportedHit;
         if (!hit || hit.string === 2)
@@ -221,16 +183,22 @@ function currentSong() {
     return allSongs(savedSongs, catalogSongs).find(s => s.id === selectedId) || null;
 }
 function refreshGroupCopyControls() {
-    const song = currentSong();
-    const groups = activeSongGroups(song), index = groups.findIndex(g => g.start === selectedGroupStart);
+    const song = currentSong(), groups = activeSongGroups(song), index = groups.findIndex(g => g.start === selectedGroupStart);
     const hasNotes = !!song && song.notes.some(n => groupForNote(groups, n) === index);
     $('groupCopyBtn').toggleAttribute('disabled', !hasNotes);
-    for (const id of ['groupPasteBtn', 'groupPasteEndBtn'])
-        $(id).toggleAttribute('disabled', !song || !groupClipboard);
+    $('groupDeleteBtn').toggleAttribute('disabled', !song || (!song.notes.length && groups.length === 1));
+    $('groupDeleteBtn').title = `Fshi ${groups[index]?.label ?? 'grupin e zgjedhur'} dhe notat e tij`;
+    const target = $('groupPasteTarget'), previous = target.value;
+    target.replaceChildren(new Option('Zgjidh grupin pritës…', ''), ...groups.map(g => new Option(`${g.label} · ${fmt(g.start)}`, String(g.start))), new Option('＋ Grup i ri në fund', '__end'));
+    target.options[0].disabled = true;
+    target.value = Array.from(target.options).some(o => o.value === previous) ? previous : '';
+    target.disabled = !song || !groupClipboard;
+    $('groupPasteBtn').toggleAttribute('disabled', !song || !groupClipboard || !target.value);
+    $('groupPasteBtn').textContent = target.value === '__end' ? '＋ Ngjit si grup i ri' : '＋ Ngjit te grupi';
     $('groupUndoBtn').toggleAttribute('disabled', !editableTab() || !groupUndo);
     $('groupClipboardStatus').textContent = groupClipboard
-        ? `Kopjuar: ${groupClipboard.label} · ${groupClipboard.notes.length} nota · ${fmt(groupClipboard.duration)}`
-        : 'Zgjidh grupin dhe kopjoje; mund ta ngjitësh edhe te një këngë tjetër.';
+        ? `Kopjuar: ${groupClipboard.label} · ${groupClipboard.notes.length} nota. Zgjidh grupin pritës; notat e tij do të zëvendësohen.`
+        : 'Zgjidh grupin që dëshiron ta kopjosh ose ta fshish.';
 }
 function setEditableSong(song) {
     draft = { ...song, notes: song.notes.map(n => ({ ...n })) };
@@ -254,6 +222,7 @@ function copySelectedGroup() {
         return;
     try {
         groupClipboard = copySongGroup(song, selectedGroupStart, tabSongEnd(song));
+        $('groupPasteTarget').value = '';
         refreshGroupCopyControls();
         setStatus(`U kopjua ${groupClipboard.label}. Zgjidh ku ta ngjitësh.`);
     }
@@ -261,7 +230,7 @@ function copySelectedGroup() {
         setStatus(String(e.message || e));
     }
 }
-async function pasteCopiedGroup(atEnd) {
+async function pasteCopiedGroup() {
     if (micActive || keyboardRecordStart !== null) {
         setStatus('Ndalo regjistrimin para ngjitjes së grupit.');
         return;
@@ -270,14 +239,47 @@ async function pasteCopiedGroup(atEnd) {
         setStatus('Vendos ose anulo notën e hapur përpara ngjitjes.');
         return;
     }
-    const song = currentSong();
+    const song = currentSong(), target = $('groupPasteTarget').value;
     if (!song || !groupClipboard)
+        return;
+    if (!target) {
+        setStatus('Zgjidh grupin ku dëshiron ta ngjitësh.');
+        return;
+    }
+    const previousGroup = selectedGroupStart, previousTime = playbackPositionMs();
+    try {
+        const result = target === '__end' ? pasteSongGroup(song, groupClipboard, Math.ceil(tabSongEnd(song)))
+            : replaceSongGroup(song, groupClipboard, Number(target), Math.ceil(tabSongEnd(song)));
+        if (!editableTab())
+            await editSavedAudio();
+        if (selectedId !== '__draft' || draft?.id !== song.id)
+            return;
+        groupUndo = { song: structuredClone(draft), selectedGroupStart: previousGroup, time: previousTime };
+        stopPlayback();
+        selectedGroupStart = result.groupStart;
+        setEditableSong(result.song);
+        useNotePlayback();
+        seekToMs(result.groupStart);
+        focusTimelineAt(result.groupStart);
+        $('groupPasteTarget').value = String(result.groupStart);
+        refreshGroupCopyControls();
+        setStatus('Notat u ngjitën në grupin që zgjodhe. Mund ta zhbësh; shtyp Ruaj që ndryshimi të mbetet.');
+    }
+    catch (e) {
+        setStatus(String(e.message || e));
+    }
+}
+async function deleteSelectedGroup() {
+    if (micActive || keyboardRecordStart !== null || manualPending) {
+        setStatus('Përfundo shënimin ose regjistrimin përpara fshirjes së grupit.');
+        return;
+    }
+    const song = currentSong();
+    if (!song)
         return;
     const previousGroup = selectedGroupStart, previousTime = playbackPositionMs();
     try {
-        const groups = activeSongGroups(song), index = Math.max(0, groups.findIndex(g => g.start === selectedGroupStart));
-        const at = Math.ceil(atEnd ? tabSongEnd(song) : groups[index + 1]?.start ?? tabSongEnd(song));
-        const result = pasteSongGroup(song, groupClipboard, at);
+        const result = deleteSongGroup(song, selectedGroupStart);
         if (!editableTab())
             await editSavedAudio();
         if (selectedId !== '__draft' || draft?.id !== song.id)
@@ -290,7 +292,7 @@ async function pasteCopiedGroup(atEnd) {
         seekToMs(result.groupStart);
         focusTimelineAt(result.groupStart);
         refreshGroupCopyControls();
-        setStatus('Grupi u ngjit. Grupet pas tij u shtynë; luaj sipas notave dhe shtyp Ruaj. MP3 origjinal nuk ndryshon.');
+        setStatus('U fshi grupi me notat e tij. Kohët e notave të tjera mbetën siç ishin. Zhbëj e kthen veprimin.');
     }
     catch (e) {
         setStatus(String(e.message || e));
@@ -304,9 +306,10 @@ function undoGroupPaste() {
     stopPlayback();
     selectedGroupStart = undo.selectedGroupStart;
     setEditableSong(undo.song);
+    selectSongPlayback(draft);
     seekToMs(undo.time);
     refreshGroupCopyControls();
-    setStatus('Ngjitja e fundit u zhbë.');
+    setStatus('Veprimi i fundit mbi grupin u zhbë.');
 }
 function openJSONEditor() {
     const song = currentSong();
@@ -388,6 +391,8 @@ function selectGroup(start) {
     $('practiceGroupSelect').value = String(group.start);
     document.querySelectorAll('.stanza-entry').forEach(el => el.classList.toggle('group-active', el.dataset.groupStart === String(group.start)));
     focusTimelineAt(group.start);
+    if (groupClipboard)
+        $('groupPasteTarget').value = String(group.start);
     refreshGroupCopyControls();
     setStatus(`U zgjodh ${group.label}. Vija me ngjyrë shfaqet në tablaturë.`);
 }
@@ -406,6 +411,8 @@ function renderSongs() {
         select.selectedIndex = 0;
     selectedId = select.value;
     const selectedSong = currentSong();
+    if (selectedId !== '__draft' && !audio.playing && originalPlayer.paused)
+        selectSongPlayback(selectedSong);
     const isCatalogSong = !!selectedSong && catalogSongs.some(s => s.id === selectedSong.id);
     const isUserSong = !!selectedSong && savedSongs.some(s => s.id === selectedSong.id);
     const isOverride = isUserSong && (isCatalogSong || DEMO.some(s => s.id === selectedSong.id));
@@ -463,7 +470,6 @@ function renderInstrument() {
 }
 function showActive(events, groupColor = '#e8b45a', history = events) {
     const visualEvents = withOpenF(events, audio.upperEnabled);
-    const lead = visualEvents.find(e => e.string === 1) ?? visualEvents[0];
     const expandedHistory = withOpenF(history, audio.upperEnabled);
     const key = visualEvents.map(e => `${e.string}/${e.noteNumber}/${e.time}`).join('|') + '@' + groupColor;
     if (key === lastDisplayKey)
@@ -484,8 +490,6 @@ function showActive(events, groupColor = '#e8b45a', history = events) {
         highlights.append(sEl('circle', { cx, cy, r: 14.5, fill: color, stroke: '#fff4e0', 'stroke-width': 2.4 }));
         highlights.append(sEl('text', { x: cx, y: cy + 5.4, 'text-anchor': 'middle', 'font-size': 15, 'font-weight': 850, fill: '#122133', 'pointer-events': 'none' }, label));
     }
-    $('liveNote').textContent = lead ? (lead.noteNumber === 14 ? 'F' : lead.noteNumber === 15 ? 'G' : String(lead.noteNumber)) : '—';
-    $('liveHz').textContent = lead ? `${Math.round(noteFrequency(lead.noteNumber, lead.string))} Hz` : '— Hz';
 }
 /** Active markings represent the attack, not a latch that persists until another note. */
 function updatePlaybackNotes(song, ms) {
@@ -495,15 +499,9 @@ function updatePlaybackNotes(song, ms) {
     const groups = activeSongGroups(song);
     const color = lead ? groups[groupForNote(groups, lead)]?.color || GROUP_COLORS[0] : GROUP_COLORS[0];
     showActive(active, color, history);
-    const following = song.notes.find(n => n.time > ms + 35 && n.noteNumber !== 14);
-    const descriptor = (n) => n ? n.noteNumber === 14 ? 'F' : n.noteNumber === 15 ? 'G' : `Perdja ${n.noteNumber}` : '—';
-    $('practiceNoteNow').textContent = descriptor(lead);
-    $('practiceNoteNext').textContent = descriptor(following);
 }
 function clearPlayedNote() {
     showActive([]);
-    $('practiceNoteNow').textContent = '—';
-    $('practiceNoteNext').textContent = '—';
 }
 function renderKeys() {
     const root = $('keypad');
@@ -1033,6 +1031,7 @@ async function saveDraft() {
         setStatus('Ruajtja dështoi: hapësira e shfletuesit është plot. Eksporto JSON.');
         return;
     }
+    stopPlayback();
     savedSongs = next;
     draft = null;
     editingSongId = null;
@@ -1384,7 +1383,10 @@ function findExistingCanvasHit(x, y, geom) {
         return null;
     let nearest = null, distance = 17;
     for (const hit of importedHits) {
-        if (hit.string !== line || hit.noteNumber === null)
+        if (hit.noteNumber === null)
+            continue;
+        const shownOnLine = hit.string === line || (line === 2 && hit.string === 1 && hit.withF !== false && hit.noteNumber !== 14);
+        if (!shownOnLine)
             continue;
         const px = timelineX(hit.time, tabViewStartMs, geom.left, geom.scale);
         const d = Math.abs(px - x);
@@ -1435,16 +1437,14 @@ function beginManualNote(x, y, geom) {
         return;
     }
     const time = captureManualTime(x, geom);
-    const string = y < 90 ? 2 : 1;
+    const string = 1;
     seekToMs(time);
     manualPending = { time, string };
     const select = $('manualFretSelect');
-    select.value = string === 2 ? '14' : '';
-    $('manualFCompanion').checked = string === 1 && accompaniment().withF;
-    $('manualUpperNote').value = String(accompaniment().upperNoteNumber);
-    $('manualUpperNote').disabled = string === 2 || !accompaniment().withF;
-    $('manualFCompanion').disabled = string === 2;
-    $('manualTimeLabel').textContent = `${preciseTime(time)} s · ${string === 2 ? 'Teli lart' : 'Teli poshtë'}`;
+    select.value = '';
+    $('manualUpperNote').value = '14';
+    $('manualUpperNote').disabled = false;
+    $('manualTimeLabel').textContent = `${preciseTime(time)} s`;
     $('manualTimeSeconds').value = preciseTime(time);
     renderManualMode();
     tabFollowPlayback = false;
@@ -1458,8 +1458,8 @@ function commitManualNote(resume) {
     if (!manualPending || !editableTab())
         return;
     const noteNumber = Number($('manualFretSelect').value);
-    if (!Number.isInteger(noteNumber) || noteNumber < 1 || noteNumber > 15) {
-        setStatus('Zgjidh perden 1–13, F (14) ose telin e poshtëm të hapur (15).');
+    if (!Number.isInteger(noteNumber) || !(noteNumber >= 1 && noteNumber <= 13 || noteNumber === 15)) {
+        setStatus('Zgjidh perden poshtë 1–13 ose G hapur.');
         return;
     }
     const entered = Number($('manualTimeSeconds').value);
@@ -1471,7 +1471,7 @@ function commitManualNote(resume) {
     // The saved note follows the precise user-selected second, not the old playback clock.
     seekToMs(time);
     const groupStart = stanzas[groupAtTime(stanzas, time)]?.start ?? 0;
-    const h = manualNote(noteNumber, time, $('manualFCompanion').checked, groupStart, manualPending.string, Number($('manualUpperNote').value));
+    const h = manualEntryNote(noteNumber, time, $('manualUpperNote').value, groupStart);
     importedHits.push(h);
     selectedImportedHit = h;
     const count = stanzas.flatMap((_, i) => importedHits.filter(v => groupForNote(stanzas, v) === i)).indexOf(h);
@@ -1482,8 +1482,15 @@ function commitManualNote(resume) {
     renderManualMode();
     selectImportedHit(h);
     redrawTab();
-    setStatus(`Nota ${noteNumber === 14 ? 'F' : noteNumber === 15 ? 'G' : noteNumber} u vendos te ${fmt(time)}. ${resume ? 'Vazhdo dëgjimin.' : 'Mund të korrigjosh kohën në listë.'}`);
+    if (h.withF === false || (h.upperNoteNumber !== undefined && h.upperNoteNumber !== 14))
+        useNotePlayback();
+    setStatus(`Nota ${noteNumber === 15 ? 'G' : noteNumber} u vendos te ${fmt(time)}. ${resume ? 'Vazhdo dëgjimin.' : 'Mund të korrigjosh kohën në listë.'}`);
     if (resume) {
+        if (importedSong(currentSong()) && originalPlayer.src) {
+            stopPlayback();
+            playbackSource = 'original';
+            seekToMs(time);
+        }
         configurePlaybackSpeed();
         void toggleTabPlay();
     }
@@ -2187,15 +2194,22 @@ async function connectCatalogAudio(file) {
 }
 function init() {
     $('groupCopyBtn').addEventListener('click', copySelectedGroup);
-    $('groupPasteBtn').addEventListener('click', () => void pasteCopiedGroup(false));
-    $('groupPasteEndBtn').addEventListener('click', () => void pasteCopiedGroup(true));
+    $('groupPasteBtn').addEventListener('click', () => void pasteCopiedGroup());
+    $('groupDeleteBtn').addEventListener('click', () => void deleteSelectedGroup());
+    $('groupPasteTarget').addEventListener('change', () => {
+        const value = $('groupPasteTarget').value;
+        if (value && value !== '__end')
+            selectGroup(Number(value));
+        else
+            refreshGroupCopyControls();
+    });
     $('groupUndoBtn').addEventListener('click', undoGroupPaste);
     $('jsonEditBtn').addEventListener('click', openJSONEditor);
     $('jsonValidateBtn').addEventListener('click', () => validateJSONEditor());
     $('jsonFormatBtn').addEventListener('click', () => validateJSONEditor(true));
     $('jsonApplyBtn').addEventListener('click', applyJSONEditor);
     $('jsonCancelBtn').addEventListener('click', () => $('jsonEditorDialog').close());
-    initStringControls();
+    initNoteControls();
     installTabInteraction();
     $('practiceAllBtn').addEventListener('click', () => void playCurrent());
     $('practiceGroupBtn').addEventListener('click', () => void playSelectedGroup());
@@ -2238,18 +2252,6 @@ function init() {
         }
         setManualMode(!manualMode);
     });
-    $('manualFretSelect').addEventListener('change', () => {
-        const n = Number($('manualFretSelect').value);
-        const f = $('manualFCompanion');
-        const wasDisabled = f.disabled;
-        const targetString = n === 14 ? 2 : n === 15 ? 1 : manualPending?.string;
-        f.disabled = targetString === 2;
-        if (f.disabled)
-            f.checked = false;
-        else if (n > 0 && wasDisabled)
-            f.checked = accompaniment().withF;
-        $('manualUpperNote').disabled = f.disabled || !f.checked;
-    });
     $('manualSetBtn').addEventListener('click', () => commitManualNote(false));
     $('manualContinueBtn').addEventListener('click', () => commitManualNote(true));
     $('manualCancelBtn').addEventListener('click', cancelManualNote);
@@ -2275,7 +2277,7 @@ function init() {
     $('catalogAudioBtn').addEventListener('click', () => $('catalogAudioFile').click());
     $('catalogAudioFile').addEventListener('change', () => { const el = $('catalogAudioFile'); if (el.files?.[0])
         void connectCatalogAudio(el.files[0]); el.value = ''; });
-    $('songSelect').addEventListener('change', e => { stopPlayback(); manualPending = null; manualMode = false; instantTabNoteMode = false; renderManualMode(); selectedGroupStart = 0; tabViewStartMs = 0; tabCurrentMs = 0; tabFollowPlayback = true; selectedId = e.target.value; renderSongs(); renderImportedHits(); void prepareOriginalForSelection(); });
+    $('songSelect').addEventListener('change', e => { stopPlayback(); manualPending = null; manualMode = false; instantTabNoteMode = false; renderManualMode(); selectedGroupStart = 0; tabViewStartMs = 0; tabCurrentMs = 0; tabFollowPlayback = true; selectedId = e.target.value; $('groupPasteTarget').value = ''; renderSongs(); renderImportedHits(); void prepareOriginalForSelection(); });
     $('recordBtn').addEventListener('click', recordKeyboard);
     $('micBtn').addEventListener('click', () => void toggleMic());
     $('playBtn').addEventListener('click', () => void toggleTabPlay());

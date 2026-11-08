@@ -9,7 +9,7 @@ export const FRETS = 13;
 export type NoteNumber = number;
 export interface NoteEvent { string: 1 | 2; noteNumber: number; time: number; measuredHz?: number; confidence?: number; velocity?: number; withF?: boolean; upperNoteNumber?: number; groupStart?: number; }
 export interface Stanza { start: number; label: string; color?: string; }
-export interface Song { id: string; name: string; notes: NoteEvent[]; createdAt: string; originalAudioId?: string; stanzas?: Stanza[]; }
+export interface Song { id: string; name: string; notes: NoteEvent[]; createdAt: string; originalAudioId?: string; stanzas?: Stanza[]; preferNotes?: boolean; }
 export const DEMO: Song[] = [
   { id: 'demo-fast', name: 'Ushtrim i shpejtë · R–Y', createdAt: '', notes:
     [4,5,6,7,7,7,6,5,4,14,4,5,6,7].flatMap((noteNumber,i) => [
