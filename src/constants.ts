@@ -7,7 +7,7 @@ export const TOLERANCE = 15;
 export const MIN_MIC_HZ = 205;
 export const FRETS = 13;
 export type NoteNumber = number;
-export interface NoteEvent { string: 1 | 2; noteNumber: number; time: number; measuredHz?: number; confidence?: number; velocity?: number; withF?: boolean; groupStart?: number; }
+export interface NoteEvent { string: 1 | 2; noteNumber: number; time: number; measuredHz?: number; confidence?: number; velocity?: number; withF?: boolean; upperNoteNumber?: number; groupStart?: number; }
 export interface Stanza { start: number; label: string; color?: string; }
 export interface Song { id: string; name: string; notes: NoteEvent[]; createdAt: string; originalAudioId?: string; stanzas?: Stanza[]; }
 export const DEMO: Song[] = [
@@ -30,16 +30,28 @@ export function hzToNote(hz: number): {noteNumber: number; target: number; error
 }
 // 220 Hz luhet si shoqërim me perdet 1-13 dhe telin poshtë të hapur 293 Hz.
 // Kënga origjinale mbetet e paprekur; nuk dyfishojmë F nëse ekziston në të njëjtën kohë.
-export function withOpenF(events: readonly NoteEvent[]): NoteEvent[] {
-  const accompanimentTimes = new Set(events.filter(e => e.noteNumber === 14).map(e => e.time));
+export function upperFret(value: number | undefined): number {
+  return Number.isInteger(value) && value! >= 1 && value! <= 13 ? value! : 14;
+}
+/** Upper frets follow the measured fret ratios of the lower string. */
+export function upperPlaybackRate(noteNumber: number): number {
+  const fret=upperFret(noteNumber);
+  return fret === 14 ? 1 : HZ[fret - 1] / HZ[14];
+}
+export function noteFrequency(noteNumber: number, string: 1 | 2): number {
+  return string === 2 ? HZ[13] * upperPlaybackRate(noteNumber) : HZ[noteNumber - 1];
+}
+export function withOpenF(events: readonly NoteEvent[], upperEnabled = true): NoteEvent[] {
   const combined: NoteEvent[] = events.map(e => e.noteNumber === 14 ? {...e, string: 2} : e);
-  for (const ev of events) {
-    if ((ev.noteNumber >= 1 && ev.noteNumber <= 13 || ev.noteNumber === 15) && ev.withF !== false && !accompanimentTimes.has(ev.time)) {
-      combined.push({string:2, noteNumber:14, time:ev.time, velocity:ev.velocity, groupStart:ev.groupStart});
+  if (!upperEnabled) return combined.filter(e => e.string === 1);
+  const accompanimentTimes = new Set(combined.filter(e => e.string === 2).map(e => e.time));
+  for (const ev of combined.slice()) {
+    if (ev.string === 1 && (ev.noteNumber >= 1 && ev.noteNumber <= 13 || ev.noteNumber === 15) && ev.withF !== false && !accompanimentTimes.has(ev.time)) {
+      combined.push({string:2, noteNumber:upperFret(ev.upperNoteNumber), time:ev.time, velocity:ev.velocity, groupStart:ev.groupStart});
       accompanimentTimes.add(ev.time);
     }
   }
-  return combined.sort((a,b) => a.time-b.time || Number(a.noteNumber===14)-Number(b.noteNumber===14));
+  return combined.sort((a,b) => a.time-b.time || a.string-b.string);
 }
 export function labelFor(note: number): string { return KEYS[note - 1]?.toUpperCase() ?? '?'; }
 export function fmt(ms: number): string {

@@ -1,4 +1,4 @@
-const CACHE='ciftelia-studio-v21-catalog-test-20261108';
+const CACHE='ciftelia-studio-v22-upper-20261108';
 const CORE=['./','./index.html','./app.css','./songs/catalog.json','./songs/shtat-shaljan.json','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png',
   './js/v19/main.js','./js/v19/constants.js','./js/v19/audio-engine.js','./js/v19/pitch.js',
   './js/v19/microphone.js','./js/v19/mic-onset-worklet.js','./js/v19/songs.js',

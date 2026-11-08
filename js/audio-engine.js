@@ -1,6 +1,7 @@
-import { withOpenF } from './constants.js';
+import { upperFret, upperPlaybackRate, withOpenF } from './constants.js';
 /** Sample-based instrument: 30 authentic attacks from the user's own instrument.
- * All playback is at 1x speed; NO pitch shifting and NO artificial 293 Hz oscillator.
+ * Lower frets use their own recordings. Upper frets reuse the open F recording
+ * at the matching fret ratio; there is no artificial oscillator.
  */
 export class AudioEngine {
     context = null;
@@ -13,7 +14,10 @@ export class AudioEngine {
     playbackStart = 0;
     finish = 0;
     active = false;
+    generation = 0;
     volume = .8;
+    upperEnabled = true;
+    upperNoteNumber = 14;
     mode = 'short';
     strength = 'fort';
     get ctx() { return this.context; }
@@ -107,7 +111,7 @@ export class AudioEngine {
         await Promise.all(Array.from({ length: 4 }, worker));
     }
     async preload() { await Promise.all(Array.from({ length: 15 }, (_, i) => this.loadNote(i + 1, this.strength))); }
-    schedule(buffer, at, string, level) {
+    schedule(buffer, at, string, level, rate = 1) {
         const ctx = this.context;
         const previous = this.lastByString.get(string);
         if (previous && at < previous.end && at >= previous.at) {
@@ -123,8 +127,11 @@ export class AudioEngine {
         }
         const src = ctx.createBufferSource();
         src.buffer = buffer;
+        if (rate !== 1)
+            src.playbackRate.value = rate;
         const gain = ctx.createGain();
-        const duration = Math.min(buffer.duration, this.mode === 'short' ? 1.45 : buffer.duration);
+        const realDuration = buffer.duration / rate;
+        const duration = Math.min(realDuration, this.mode === 'short' ? 1.45 : realDuration);
         const end = at + duration;
         const fade = Math.min(.14, duration * .17);
         gain.gain.setValueAtTime(0, at);
@@ -145,20 +152,25 @@ export class AudioEngine {
         src.stop(end + .01);
         return duration;
     }
-    async hit(noteNumber) {
+    async hit(noteNumber, string = noteNumber === 14 ? 2 : 1, withF = true, upperNoteNumber = this.upperNoteNumber) {
+        const events = withOpenF([{ noteNumber, string, time: 0, withF, upperNoteNumber: upperFret(upperNoteNumber) }], this.upperEnabled);
+        if (!events.length)
+            return;
+        const generation = this.generation;
         await this.unlock();
-        const noteList = noteNumber === 14 ? [14] : [noteNumber, 14];
-        const types = noteList.map((_, i) => i === 1 ? 'lehte' : this.strength);
-        const buffers = await Promise.all(noteList.map((n, i) => this.loadNote(n, types[i])));
+        const types = events.map((e, i) => e.string === 2 && i > 0 ? 'lehte' : this.strength);
+        const buffers = await Promise.all(events.map((e, i) => this.loadNote(e.string === 2 ? 14 : e.noteNumber, types[i])));
+        if (generation !== this.generation)
+            return;
         const at = this.context.currentTime + .014;
-        noteList.forEach((n, i) => {
-            const string = n === 14 ? 2 : 1;
-            const base = n === 14 ? (noteNumber === 14 ? .76 : .49) : .9;
+        events.forEach((e, i) => {
+            const base = e.string === 2 ? (events.length === 1 ? .76 : .49) : .9;
             const level = base * (types[i] === 'lehte' ? .82 : 1);
-            this.schedule(buffers[i], at, string, level);
+            this.schedule(buffers[i], at, e.string, level, e.string === 2 ? upperPlaybackRate(e.noteNumber) : 1);
         });
     }
     stop() {
+        this.generation++;
         this.active = false;
         for (const s of this.sources) {
             try {
@@ -170,33 +182,42 @@ export class AudioEngine {
         this.lastByString.clear();
     }
     async play(song, tempo = 1) {
-        await this.unlock();
         this.stop();
+        const generation = this.generation;
+        await this.unlock();
+        if (generation !== this.generation)
+            return 0;
         if (!song.notes.length)
             throw Error('Kënga nuk ka nota.');
         if (!Number.isFinite(tempo) || tempo <= 0)
             throw Error('Shpejtësi e pavlefshme.');
-        const events = withOpenF(song.notes).sort((a, b) => a.time - b.time || a.string - b.string);
+        const events = withOpenF(song.notes, this.upperEnabled).sort((a, b) => a.time - b.time || a.string - b.string);
+        if (!events.length)
+            throw Error('Nuk ka nota për telin poshtë në këtë pjesë.');
+        const sampleNumber = (e) => e.string === 2 ? 14 : e.noteNumber;
         const strengthFor = (e) => e.velocity !== undefined ? (e.velocity < .56 ? 'lehte' : 'fort') : (e.string === 2 ? 'lehte' : this.strength);
         const keys = new Map();
         for (const e of events) {
             const strength = strengthFor(e);
-            keys.set(this.key(e.noteNumber, strength), { n: e.noteNumber, strength });
+            const n = sampleNumber(e);
+            keys.set(this.key(n, strength), { n, strength });
         }
         const loaded = new Map();
         await Promise.all([...keys.entries()].map(async ([key, v]) => loaded.set(key, await this.loadNote(v.n, v.strength))));
+        if (generation !== this.generation)
+            return 0;
         const ctx = this.context;
         this.playbackStart = ctx.currentTime + .10;
         let finish = this.playbackStart;
         for (const e of events) {
             const strength = strengthFor(e);
-            const buffer = loaded.get(this.key(e.noteNumber, strength));
+            const buffer = loaded.get(this.key(sampleNumber(e), strength));
             if (!buffer)
                 continue;
             const at = this.playbackStart + e.time / (1000 * tempo);
             const base = e.string === 2 ? .48 : .9;
             const level = base * (strength === 'lehte' ? .82 : 1);
-            const duration = this.schedule(buffer, at, e.string, level);
+            const duration = this.schedule(buffer, at, e.string, level, e.string === 2 ? upperPlaybackRate(e.noteNumber) : 1);
             finish = Math.max(finish, at + duration);
         }
         this.finish = finish;

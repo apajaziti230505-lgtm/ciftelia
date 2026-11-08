@@ -8,6 +8,9 @@ export interface GuessedHit {
   confidence: number;
   detail: string;
   withF?: boolean;
+  upperNoteNumber?: number;
+  velocity?: number;
+  measuredHz?: number;
   /** Grup manual; fillimi i grupit, pa ndryshuar kohën e audios. */
   groupStart?: number;
 }

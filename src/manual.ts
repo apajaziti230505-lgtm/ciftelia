@@ -7,11 +7,14 @@ export function manualTapTime(
   if(!Number.isFinite(proposed))return 0;
   return Math.max(0,Math.min(Math.max(0,maxDurationMs),Math.round(proposed)));
 }
-export function manualNote(n:number,time:number,withF=true,groupStart=0){
+export function manualNote(n:number,time:number,withF=true,groupStart=0,string:1|2=n===14?2:1,upperNoteNumber=14){
   if(!Number.isInteger(n)||n<1||n>15||!Number.isFinite(time)||time<0)
     throw new Error('Nota ose koha nuk është e vlefshme.');
-  return {time:Math.round(time),noteNumber:n,string:(n===14?2:1) as 1|2,
-    confidence:1,withF:n===14?false:withF,groupStart,detail:'Vendosur manualisht'};
+  const targetString:1|2=n===14?2:n===15?1:string;
+  return {time:Math.round(time),noteNumber:n,string:targetString,
+    confidence:1,withF:targetString===2?false:withF,
+    ...(Number.isInteger(upperNoteNumber)&&upperNoteNumber>=1&&upperNoteNumber<=13?{upperNoteNumber}:{}),
+    groupStart,detail:'Vendosur manualisht'};
 }
 
 /** Every band of the canvas maps to the same time at its horizontal pixel.

@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=17-seek-20261107">
+  <link rel="stylesheet" href="app.css?v=22-upper-20261108">
 </head>
 <body>
   <main class="container">
@@ -168,6 +168,16 @@
       </div>
     </section>
 
+    <section class="string-controls" aria-label="Telat dhe shoqërimi">
+      <label for="playbackSource">Luajtja e këngës
+        <select id="playbackSource"><option value="original">MP3 origjinal</option><option value="notes">Çiftelia sipas notave</option></select>
+      </label>
+      <label for="defaultUpperNote">Teli lart për notat e reja
+        <select id="defaultUpperNote"></select>
+      </label>
+      <label class="lower-only"><input id="lowerOnly" type="checkbox"> Vetëm teli poshtë</label>
+      <p>Shoqërimi: F hapur automatikisht. Mund ta ndryshosh për çdo notë. Për shoqërimin dhe telin poshtë përdor “Çiftelia sipas notave”; MP3 luan regjistrimin origjinal.</p>
+    </section>
     <section class="transport" aria-label="Këngët dhe kontrollet">
       <div class="transport-song"><label for="songSelect">KËNGA E ZGJEDHUR</label><select id="songSelect"></select><button id="catalogAudioBtn" type="button" class="btn btn-minimal" hidden>🎵 Lidh MP3</button><input id="catalogAudioFile" type="file" accept=".mp3,.m4a,.wav,.ogg,audio/*" hidden><div id="songMeta" class="song-meta">0 nota</div></div>
       <div class="transport-actions"><button type="button" class="btn btn-record" id="recordBtn">＋ Regjistro</button><button type="button" class="btn" id="saveBtn" disabled>▣ Ruaj</button><button type="button" class="btn btn-danger" id="deleteBtn" disabled>Fshi</button><button type="button" class="btn btn-minimal" id="exportBtn">Eksporto JSON</button><button type="button" class="btn btn-minimal" id="importBtn">Importo JSON</button><input id="importFile" type="file" accept=".json,application/json" hidden><button type="button" class="btn btn-minimal" id="installBtn" hidden>Instalo Android</button></div>
@@ -209,6 +219,7 @@
       </div>
       <div id="tabNoteEditBar" class="tab-note-editor" hidden role="group" aria-label="Redakto notën e zgjedhur">
         <span>Nota: <strong id="tabNoteSelected">—</strong></span>
+        <label for="tabUpperNote">Teli lart <select id="tabUpperNote"></select></label>
         <button id="tabNoteLeftBtn" type="button" class="btn btn-minimal" title="Zhvendose notën 50 ms majtas">◀ −50 ms</button>
         <button id="tabNoteRightBtn" type="button" class="btn btn-minimal" title="Zhvendose notën 50 ms djathtas">+50 ms ▶</button>
         <button id="tabNoteDeleteBtn" type="button" class="btn btn-danger" title="Fshi vetëm këtë notë">Fshi notën</button>
@@ -225,7 +236,8 @@
           <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option>
           <option value="14">F · teli lart hapur</option><option value="15">G · teli poshtë hapur</option>
         </select>
-        <label class="manual-f-label"><input id="manualFCompanion" type="checkbox" checked> F shoqëron</label>
+        <label class="manual-f-label"><input id="manualFCompanion" type="checkbox" checked> Teli lart shoqëron</label>
+        <select id="manualUpperNote" aria-label="Perdja shoqëruese e telit lart"></select>
         <button id="manualSetBtn" type="button" class="btn">Vendos</button>
         <button id="manualContinueBtn" type="button" class="btn btn-primary">▶ Vendos &amp; Vazhdo</button>
         <button id="manualCancelBtn" type="button" class="btn btn-minimal">Anulo</button>
@@ -244,11 +256,11 @@
       </div>
       <audio id="originalPlayer" preload="metadata" class="original-player" hidden aria-label="Luaj regjistrimin origjinal"></audio>
       <div class="analysis-status-row"><progress id="analysisProgress" max="100" value="0"></progress><span id="analysisStatus" role="status">Ngarko një audio për të filluar shënimin manual.</span></div>
-      <p class="analysis-hint">Shëno notat me dorë ndërsa dëgjon; nëse dëshiron, Onset Detection mund të propozojë fillimet e goditjeve. Plotëso perdet 1–13, 14 = F ose 15 = teli poshtë i hapur. F shtohet në tablaturë për çdo notë poshtë; hiqe vetëm kur duhet. Audioja origjinale nuk ndryshohet.</p>
+      <p class="analysis-hint">Shëno notat me dorë ndërsa dëgjon; nëse dëshiron, Onset Detection mund të propozojë fillimet e goditjeve. Plotëso perdet 1–13, 14 = F ose 15 = teli poshtë i hapur. F shoqëron automatikisht çdo notë poshtë. Zgjidh një perde lart 1–13 ose hiqe shoqërimin për notën që dëshiron. Audioja origjinale nuk ndryshohet.</p>
       <div id="analysisEdit" class="analysis-edit" hidden>
         <div class="analysis-edit-header"><strong>Grupet e notave dhe perdet</strong><span id="analysisCount"></span></div>
         <div class="stanza-actions"><button id="stanzaAddBtn" type="button" class="btn btn-minimal" disabled>＋ Krijo grup nga nota e zgjedhur</button><span id="selectedNoteHint">Prek një rresht note që ta zgjedhësh, pastaj shto notën menjëherë poshtë saj.</span></div>
-        <button id="groupAutoBtn" type="button" class="btn btn-minimal" disabled>↻ Nda grupet sipas pauzave</button><label class="group-sensitivity-label" for="groupSensitivity">Ndarja</label><select id="groupSensitivity" aria-label="Sa të ndjeshme janë pauzat"><option value="more">Më shumë grupe</option><option value="normal">Normale</option><option value="less">Më pak grupe</option></select><p class="group-tip">Pas një pauze të dallueshme, 3 ose më shumë nota mund të formojnë grup të ri. Prek një notë për ta filluar vetë grupin. Ngjyra zbatohet te notat e grupit. Nëse një notë është në grupin e gabuar, përdor “↑” ose “↓” për ta çuar lart ose poshtë. Shfaqet në grupin e ri dhe merr ngjyrën e tij; koha e audios nuk ndryshon.</p><div id="stanzaList" class="stanza-list"></div><div class="analysis-column-hint">Koha (ms) · <strong>Perdja (1–13)</strong> · F · Dëgjo · Shto · Fshi · <strong>↑ / ↓ Grupi</strong> · Krijo grup</div>
+        <button id="groupAutoBtn" type="button" class="btn btn-minimal" disabled>↻ Nda grupet sipas pauzave</button><label class="group-sensitivity-label" for="groupSensitivity">Ndarja</label><select id="groupSensitivity" aria-label="Sa të ndjeshme janë pauzat"><option value="more">Më shumë grupe</option><option value="normal">Normale</option><option value="less">Më pak grupe</option></select><p class="group-tip">Pas një pauze të dallueshme, 3 ose më shumë nota mund të formojnë grup të ri. Prek një notë për ta filluar vetë grupin. Ngjyra zbatohet te notat e grupit. Nëse një notë është në grupin e gabuar, përdor “↑” ose “↓” për ta çuar lart ose poshtë. Shfaqet në grupin e ri dhe merr ngjyrën e tij; koha e audios nuk ndryshon.</p><div id="stanzaList" class="stanza-list"></div><div class="analysis-column-hint">Koha (ms) · <strong>Perdja (1–13)</strong> · Teli lart (F ose 1–13) · Dëgjo · Shto · Fshi · <strong>↑ / ↓ Grupi</strong> · Krijo grup</div>
         <div id="analysisRows" class="analysis-rows"></div>
         <button type="button" class="btn btn-minimal" id="analysisMoreBtn" hidden>Shfaq 60 të tjera</button>
       </div>
@@ -315,6 +327,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v19/main.js?v=21-catalog"></script>
+  <script type="module" src="./js/v19/main.js?v=22-upper"></script>
 </body>
 </html>
