@@ -1,7 +1,7 @@
 import { AudioEngine } from './audio-engine.js';
 import { MicrophoneRecorder } from './microphone.js';
 import { KEYS, HZ, DEMO, labelFor, fmt, withOpenF, upperFret, noteFrequency } from './constants.js';
-import { allSongs, loadSongs, newSong, saveSongs, exportSong, upsertSong, prefersNotePlayback } from './songs.js';
+import { allSongs, loadSongs, newSong, saveSongs, exportSong, upsertSong } from './songs.js';
 import { analyzeAudio } from './analysis.js';
 import { putOriginal, getOriginal, deleteOriginal } from './local-audio.js';
 import { GROUP_COLORS, detectNoteGroups, groupAtTime, groupForNote } from './grouping.js';
@@ -13,6 +13,7 @@ import { EditHistory } from './edit-history.js';
 import { importSongJSON, validateAudioFile } from './song-import.js';
 import { groupEnd, groupLengthBounds, resizedGroupEnd, withGroupEnd } from './group-length.js';
 import { moveNoteSelection } from './note-selection.js';
+import { SongPlayback } from './playback.js';
 const $ = (id) => document.getElementById(id);
 const svg = document.getElementById('ciftelia');
 const fretLayer = document.getElementById('fret-layer');
@@ -70,7 +71,7 @@ let manualPending = null;
 let syntheticStartMs = 0;
 let seekPendingUntilMetadata = null;
 let lastDisplayKey = '';
-let playbackSource = 'original';
+const playback = new SongPlayback();
 const liveAttacks = [];
 let tabNoteDrag = null;
 const catalogSongs = [];
@@ -78,7 +79,7 @@ const catalogAudioURLs = new Map();
 const STANZA_COLORS = GROUP_COLORS;
 function importedSong(song) { return !!song?.originalAudioId; }
 function usingOriginal(song) {
-    return importedSong(song) && playbackSource === 'original' && audio.upperEnabled;
+    return !!song && playback.source === 'original';
 }
 function accompaniment() {
     return { withF: true, upperNoteNumber: 14 };
@@ -92,16 +93,47 @@ function fillUpperOptions(select, allowOff = false) {
     select.value = '14';
 }
 function selectSongPlayback(song) {
-    const localCatalogEdit = !!song && catalogSongs.some(s => s.id === song.id) && savedSongs.some(s => s.id === song.id);
-    playbackSource = prefersNotePlayback(song, localCatalogEdit) ? 'notes' : 'original';
+    playback.selectSong(song);
 }
-function useNotePlayback() {
+/** Editing pauses at the current second and keeps the user's playback choice. */
+function pauseForSongEdit() {
     const position = playbackPositionMs();
     stopPlayback();
-    playbackSource = 'notes';
-    if (draft)
-        draft.preferNotes = true;
     seekToMs(position);
+}
+function originalMatches(song) {
+    return !!song?.originalAudioId && originalSourceId === song.originalAudioId && !!originalPlayer.src;
+}
+async function ensureOriginalForPlayback(song) {
+    if (!song.originalAudioId) {
+        setStatus('Shtyp Lidh MP3 për audion e kësaj kënge, ose zgjidh Çifteli sipas notave.');
+        return false;
+    }
+    const token = playToken;
+    await prepareOriginalForSelection();
+    if (token !== playToken || currentSong()?.id !== song.id || !usingOriginal(song))
+        return false;
+    if (!originalMatches(song)) {
+        setStatus('MP3-ja nuk gjendet në këtë pajisje. Shtyp Lidh MP3 dhe zgjidh skedarin.');
+        return false;
+    }
+    return true;
+}
+async function choosePlayback(source) {
+    const song = currentSong();
+    if (!song)
+        return;
+    const position = playbackPositionMs();
+    stopPlayback();
+    playback.choose(source);
+    refreshAudioControls();
+    if (source === 'original')
+        await prepareOriginalForSelection();
+    if (currentSong()?.id !== song.id || playback.source !== source)
+        return;
+    seekToMs(position);
+    refreshAudioControls();
+    setStatus(source === 'notes' ? 'U zgjodh çiftelia sipas notave. Shtyp Luaj.' : originalMatches(song) ? 'U zgjodh MP3-ja origjinale. Shtyp Luaj.' : 'Shtyp Lidh MP3 për audion e kësaj kënge.');
 }
 function initNoteControls() {
     audio.upperEnabled = true;
@@ -116,7 +148,7 @@ function initNoteControls() {
         hit.withF = value !== 'off';
         if (hit.withF)
             hit.upperNoteNumber = upperFret(Number(value));
-        useNotePlayback();
+        pauseForSongEdit();
         updateImportDraft();
         renderImportedHits();
         setStatus('Teli lart u ndryshua për këtë notë. Shtyp Ruaj.');
@@ -137,6 +169,9 @@ function refreshAudioControls() {
     const song = currentSong();
     $('catalogAudioBtn').hidden = !song;
     $('catalogAudioBtn').toggleAttribute('disabled', linkingAudio);
+    const source = $('playbackSourceSelect');
+    source.value = playback.source;
+    source.disabled = !song || linkingAudio;
     $('originalPlayBtn').hidden = !song?.originalAudioId;
     $('originalPlayBtn').toggleAttribute('disabled', linkingAudio);
     $('originalPlayBtn').textContent = usingOriginal(song) && !originalPlayer.paused ? '⏸ MP3' : '▶ MP3';
@@ -325,7 +360,7 @@ async function applyGroupOperation(result, label) {
         stopPlayback();
         selectedGroupStart = result.groupStart;
         setEditableSong(result.song);
-        useNotePlayback();
+        pauseForSongEdit();
         seekToMs(result.groupStart);
         focusTimelineAt(result.groupStart);
         $('groupPasteTarget').value = String(result.groupStart);
@@ -504,7 +539,7 @@ function applyJSONEditor() {
     setEditableSong(song);
     $('jsonEditorDialog').close();
     void prepareOriginalForSelection();
-    useNotePlayback();
+    pauseForSongEdit();
     commitEditorChange(before, 'Redaktimi i JSON-it');
     setStatus('JSON-i u zbatua në tablaturë. Shtyp Ruaj për ta mbajtur në këtë shfletues ose Eksporto JSON për skedarin.');
 }
@@ -558,8 +593,7 @@ function renderSongs() {
         select.selectedIndex = 0;
     selectedId = select.value;
     const selectedSong = currentSong();
-    if (selectedId !== '__draft' && !audio.playing && originalPlayer.paused)
-        selectSongPlayback(selectedSong);
+    selectSongPlayback(selectedSong);
     const isCatalogSong = !!selectedSong && catalogSongs.some(s => s.id === selectedSong.id);
     const isUserSong = !!selectedSong && savedSongs.some(s => s.id === selectedSong.id);
     const isOverride = isUserSong && (isCatalogSong || DEMO.some(s => s.id === selectedSong.id));
@@ -858,14 +892,15 @@ async function playSelectedGroup() {
     tabViewStartMs = clampTimelineStart(range.start - visibleTab().visibleMs * .25, visibleTab().visibleMs, tabSongEnd(song));
     redrawTab();
     if (usingOriginal(song)) {
-        if (!originalPlayer.src) {
-            setStatus('Mungon audioja origjinale në këtë pajisje.');
+        if (!await ensureOriginalForPlayback(song))
             return;
-        }
         activeGroupEndMs = range.end;
         configurePlaybackSpeed();
         try {
-            originalPlayer.currentTime = range.start / 1000;
+            if (originalPlayer.readyState > 0)
+                originalPlayer.currentTime = range.start / 1000;
+            else
+                seekPendingUntilMetadata = range.start;
             await originalPlayer.play();
             $('groupPlayBtn').textContent = '▶ Po luhet grupi';
             setStatus(`Po luhet vetëm ${range.name} · ${playbackSpeed.toFixed(2)}×`);
@@ -914,13 +949,13 @@ async function playSelectedGroup() {
 }
 /** All tab controls share the exact original audio clock and position. */
 function playbackPositionMs() {
-    return usingOriginal(currentSong()) && Number.isFinite(originalPlayer.currentTime)
+    return usingOriginal(currentSong()) && originalMatches(currentSong()) && Number.isFinite(originalPlayer.currentTime)
         ? originalPlayer.currentTime * 1000
         : audio.playing ? syntheticStartMs + audio.elapsedMs * playbackSpeed : tabCurrentMs;
 }
 function activeSeekEndMs() {
     const song = currentSong();
-    if (usingOriginal(song) && Number.isFinite(originalPlayer.duration) && originalPlayer.duration > 0)
+    if (usingOriginal(song) && originalMatches(song) && Number.isFinite(originalPlayer.duration) && originalPlayer.duration > 0)
         return Math.round(originalPlayer.duration * 1000);
     return tabSongEnd(song);
 }
@@ -954,7 +989,7 @@ function seekToMs(target) {
     if (usingOriginal(song)) {
         originalPlayer.pause();
         try {
-            if (originalPlayer.readyState > 0) {
+            if (originalMatches(song) && originalPlayer.readyState > 0) {
                 originalPlayer.currentTime = ms / 1000;
                 seekPendingUntilMetadata = null;
             }
@@ -1040,10 +1075,8 @@ async function toggleTabPlay() {
     if (!song)
         return;
     if (usingOriginal(song)) {
-        if (!originalPlayer.src) {
-            setStatus('Audioja origjinale nuk është gati.');
+        if (!await ensureOriginalForPlayback(song))
             return;
-        }
         if (!originalPlayer.paused) {
             originalPlayer.pause();
             clearPlayedNote();
@@ -1090,7 +1123,7 @@ async function playCurrent() {
         setStatus('Zgjidh këngën.');
         return;
     }
-    if (!song.notes.length && !importedSong(song)) {
+    if (!usingOriginal(song) && !song.notes.length) {
         setStatus('Kënga nuk ka nota të njohura. Korrigjo notat ? te regjistrimi.');
         return;
     }
@@ -1102,12 +1135,13 @@ async function playCurrent() {
     tabViewStartMs = 0;
     tabFollowPlayback = true;
     if (usingOriginal(song)) {
-        if (!originalPlayer.src) {
-            setStatus('Mungon audioja origjinale në këtë pajisje. Zgjidh këngën sërish.');
+        if (!await ensureOriginalForPlayback(song))
             return;
-        }
         try {
-            originalPlayer.currentTime = 0;
+            if (originalPlayer.readyState > 0)
+                originalPlayer.currentTime = 0;
+            else
+                seekPendingUntilMetadata = 0;
             await originalPlayer.play();
         }
         catch (e) {
@@ -1631,7 +1665,7 @@ function editSelectedTabNote(delta, hits = [...selectedNoteHits]) {
         setStatus('Notat arritën kufirin e kohës.');
         return;
     }
-    useNotePlayback();
+    pauseForSongEdit();
     for (const index of indices) {
         importedHits[index].time = moved.times[index];
         importedHits[index].detail = 'Koha u korrigjua në tablaturë';
@@ -1811,12 +1845,11 @@ function commitManualNote(resume) {
     selectImportedHit(h);
     redrawTab();
     if (h.withF === false || (h.upperNoteNumber !== undefined && h.upperNoteNumber !== 14))
-        useNotePlayback();
+        pauseForSongEdit();
     setStatus(`Nota ${noteNumber === 15 ? 'G' : noteNumber} u vendos te ${fmt(time)}. ${resume ? 'Vazhdo dëgjimin.' : 'Mund të korrigjosh kohën në listë.'}`);
     if (resume) {
         if (importedSong(currentSong()) && originalPlayer.src) {
             stopPlayback();
-            playbackSource = 'original';
             seekToMs(time);
         }
         configurePlaybackSpeed();
@@ -2441,8 +2474,8 @@ function renderImportedHits() {
         fillUpperOptions(upper);
         upper.value = String(upperFret(hit.upperNoteNumber));
         upper.disabled = fCheck.disabled || !fCheck.checked;
-        fCheck.addEventListener('change', () => { hit.withF = fCheck.checked; upper.disabled = !fCheck.checked; useNotePlayback(); updateImportDraft(); });
-        upper.addEventListener('change', () => { hit.upperNoteNumber = upperFret(Number(upper.value)); useNotePlayback(); updateImportDraft(); });
+        fCheck.addEventListener('change', () => { hit.withF = fCheck.checked; upper.disabled = !fCheck.checked; pauseForSongEdit(); updateImportDraft(); });
+        upper.addEventListener('change', () => { hit.upperNoteNumber = upperFret(Number(upper.value)); pauseForSongEdit(); updateImportDraft(); });
         fLabel.append(fCheck, upper);
         const status = document.createElement('span');
         status.className = 'analysis-confidence';
@@ -2668,7 +2701,6 @@ async function connectSongAudio(file, targetId) {
             importFile = wasDraft ? file : importFile;
             renderSongs();
             showOriginalBlob(file, audioId);
-            playbackSource = 'original';
             seekToMs(position);
             if (wasDraft)
                 $('analyzeBtn').removeAttribute('disabled');
@@ -2699,6 +2731,8 @@ async function playOriginalAudio() {
     }
     const position = playbackPositionMs();
     stopPlayback();
+    playback.choose('original');
+    refreshAudioControls();
     await prepareOriginalForSelection();
     if (currentSong()?.id !== song.id)
         return;
@@ -2706,7 +2740,6 @@ async function playOriginalAudio() {
         setStatus('MP3-ja nuk gjendet në këtë pajisje. Shtyp Lidh MP3 dhe zgjidh skedarin.');
         return;
     }
-    playbackSource = 'original';
     seekToMs(position);
     await toggleTabPlay();
     refreshAudioControls();
@@ -2836,6 +2869,7 @@ function init() {
     audio.setVolume(Number($('volume').value) / 100);
     $('catalogAudioBtn').addEventListener('click', () => { audioLinkSongId = currentSong()?.id ?? null; $('catalogAudioFile').click(); });
     $('originalPlayBtn').addEventListener('click', () => void playOriginalAudio());
+    $('playbackSourceSelect').addEventListener('change', e => void choosePlayback(e.target.value));
     $('catalogAudioFile').addEventListener('change', () => { const el = $('catalogAudioFile'); if (el.files?.[0])
         void connectSongAudio(el.files[0], audioLinkSongId); el.value = ''; });
     $('songSelect').addEventListener('change', e => { stopPlayback(); manualPending = null; manualMode = false; instantTabNoteMode = false; renderManualMode(); selectedGroupStart = 0; tabViewStartMs = 0; tabCurrentMs = 0; tabFollowPlayback = true; selectedId = e.target.value; $('groupPasteTarget').value = ''; renderSongs(); renderImportedHits(); void prepareOriginalForSelection(); });

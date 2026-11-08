@@ -203,3 +203,6 @@
 @media(max-width:650px){.tab-scroll-dock{gap:5px;flex-wrap:wrap}.tab-scroll-dock .btn{padding:8px 10px}.tab-scroll-dock input{min-width:85px}.tab-scroll-dock output{display:none}#tabNoteEditBar{gap:7px}#tabSelectionHelp{flex-basis:100%}}
 .tab-note-editor [hidden]{display:none!important}
 @media(max-width:650px){.tab-scroll-dock{display:grid;grid-template-columns:auto auto auto minmax(30px,1fr) auto;gap:4px}.tab-scroll-dock input{width:100%;min-width:0}.tab-scroll-dock .btn{padding:7px;font-size:11px;min-width:32px}}
+
+/* Keep playback and horizontal navigation directly under the time controls. */
+.tab-audio-transport{gap:5px}.tab-audio-transport>.tab-scroll-dock{margin:0;padding:0;border:0;border-radius:0;background:transparent}#playbackSourceSelect{border-color:#6f8f8a;color:#d9f6e7}

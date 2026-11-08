@@ -1,8 +1,8 @@
-const CACHE='ciftelia-studio-v27-short-groups-20261108';
+const CACHE='ciftelia-studio-v28-mp3-default-20261108';
 const CORE=['./','./index.html','./app.css','./songs/catalog.json','./songs/shtat-shaljan.json','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png',
-  './js/v27/main.js','./js/v27/constants.js','./js/v27/audio-engine.js','./js/v27/pitch.js',
-  './js/v27/microphone.js','./js/v27/mic-onset-worklet.js','./js/v27/songs.js',
-  './js/v27/analysis.js','./js/v27/local-audio.js','./js/v27/grouping.js','./js/v27/timeline.js','./js/v27/manual.js','./js/v27/practice.js','./js/v27/song-editing.js','./js/v27/edit-history.js','./js/v27/song-import.js','./js/v27/group-length.js','./js/v27/note-selection.js'];
+  './js/v28/main.js','./js/v28/constants.js','./js/v28/audio-engine.js','./js/v28/pitch.js',
+  './js/v28/microphone.js','./js/v28/mic-onset-worklet.js','./js/v28/songs.js',
+  './js/v28/analysis.js','./js/v28/local-audio.js','./js/v28/grouping.js','./js/v28/timeline.js','./js/v28/manual.js','./js/v28/practice.js','./js/v28/song-editing.js','./js/v28/edit-history.js','./js/v28/song-import.js','./js/v28/group-length.js','./js/v28/note-selection.js','./js/v28/playback.js'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('ciftelia-studio-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
 self.addEventListener('fetch',event=>{
