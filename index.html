@@ -175,6 +175,21 @@
 
     <section class="tab-section" aria-labelledby="tabTitle">
       <div class="tab-heading"><div><h2 id="tabTitle">Tablatura</h2></div><div class="tab-state"><span id="studioState">GATI</span><strong id="timeLabel">00:00.00 / 00:00.00</strong></div></div>
+      <div class="tab-nav" role="group" aria-label="Lëviz nëpër tablaturë dhe korrigjo kufijtë e grupeve">
+        <div class="tab-nav-set"><button id="tabFollowBtn" class="btn btn-minimal" type="button" title="Ndiq muzikën gjatë luajtjes">◎ Ndiq muzikën</button></div>
+        <div class="tab-nav-set"><span>VIJA E GRUPIT</span><button id="tabMarkLeftBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms majtas">−50 ms</button><button id="tabMarkRightBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms djathtas">+50 ms</button></div>
+        <strong id="tabViewRange" aria-live="polite">00:00 – 00:00</strong>
+      </div>
+      <div class="group-copy-toolbar" role="group" aria-label="Menaxho grupet në tablaturë">
+        <div class="group-action-row"><strong id="groupActiveLabel">Grupi 1</strong><label class="group-length-label" for="groupLengthSeconds">Gjatësia (s)<input id="groupLengthSeconds" type="number" value="1.000" min="0.1" step="0.1" inputmode="decimal" aria-label="Gjatësia e grupit në sekonda"></label><button id="groupCopyBtn" type="button" class="btn">⧉ Kopjo</button><button id="groupDuplicateBtn" type="button" class="btn">＋ Dyfisho grupin</button><button id="groupDeleteBtn" type="button" class="btn btn-danger">Fshi grupin</button></div>
+        <div class="group-action-row group-paste-row">
+          <label for="groupPasteTarget">Ngjite te <select id="groupPasteTarget" disabled><option value="">Zgjidh grupin pritës…</option></select></label>
+          <label for="groupPasteMode">Mënyra <select id="groupPasteMode" disabled><option value="insert">Shto grup të ri</option><option value="replace">Zëvendëso notat</option></select></label>
+          <button id="groupPasteBtn" type="button" class="btn" disabled>＋ Ngjit kopjen</button>
+        </div>
+        <span id="groupClipboardStatus" role="status">Zgjidh grupin që dëshiron të kopjosh.</span>
+        <div class="group-action-row group-history-row" aria-label="Kthimi i veprimeve"><button id="groupUndoBtn" type="button" class="btn btn-minimal" disabled>↶ Zhbëj</button><button id="groupRedoBtn" type="button" class="btn btn-minimal" disabled>↷ Ribëj</button><span id="groupHistoryStatus" role="status" title="Deri në 50 hapa gjatë kësaj hapjeje të faqes.">Ctrl+Z: zhbëj · Ctrl+Y: ribëj</span></div>
+      </div>
       <div class="tab-audio-transport" role="group" aria-label="Kontrollet e këngës te tablatura">
         <div class="tab-audio-buttons">
           <button type="button" id="tabBackBtn" class="btn btn-minimal" title="Kthehu 1 sekondë">⟲ −1 s</button>
@@ -200,21 +215,6 @@
         <button id="tabRightBtn" class="btn btn-minimal" type="button" title="Shiko më djathtas" aria-label="Lëviz tablaturën djathtas">▶</button>
         <output id="tabScrollReadout" for="tabHorizontalScroll">0.000 s</output>
       </div>
-      </div>
-      <div class="tab-nav" role="group" aria-label="Lëviz nëpër tablaturë dhe korrigjo kufijtë e grupeve">
-        <div class="tab-nav-set"><button id="tabFollowBtn" class="btn btn-minimal" type="button" title="Ndiq muzikën gjatë luajtjes">◎ Ndiq muzikën</button></div>
-        <div class="tab-nav-set"><span>VIJA E GRUPIT</span><button id="tabMarkLeftBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms majtas">−50 ms</button><button id="tabMarkRightBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms djathtas">+50 ms</button></div>
-        <strong id="tabViewRange" aria-live="polite">00:00 – 00:00</strong>
-      </div>
-      <div class="group-copy-toolbar" role="group" aria-label="Menaxho grupet në tablaturë">
-        <div class="group-action-row"><strong id="groupActiveLabel">Grupi 1</strong><label class="group-length-label" for="groupLengthSeconds">Gjatësia (s)<input id="groupLengthSeconds" type="number" value="1.000" min="0.1" step="0.1" inputmode="decimal" aria-label="Gjatësia e grupit në sekonda"></label><button id="groupCopyBtn" type="button" class="btn">⧉ Kopjo</button><button id="groupDuplicateBtn" type="button" class="btn">＋ Dyfisho grupin</button><button id="groupDeleteBtn" type="button" class="btn btn-danger">Fshi grupin</button></div>
-        <div class="group-action-row group-paste-row">
-          <label for="groupPasteTarget">Ngjite te <select id="groupPasteTarget" disabled><option value="">Zgjidh grupin pritës…</option></select></label>
-          <label for="groupPasteMode">Mënyra <select id="groupPasteMode" disabled><option value="insert">Shto grup të ri</option><option value="replace">Zëvendëso notat</option></select></label>
-          <button id="groupPasteBtn" type="button" class="btn" disabled>＋ Ngjit kopjen</button>
-        </div>
-        <span id="groupClipboardStatus" role="status">Zgjidh grupin që dëshiron të kopjosh.</span>
-        <div class="group-action-row group-history-row" aria-label="Kthimi i veprimeve"><button id="groupUndoBtn" type="button" class="btn btn-minimal" disabled>↶ Zhbëj</button><button id="groupRedoBtn" type="button" class="btn btn-minimal" disabled>↷ Ribëj</button><span id="groupHistoryStatus" role="status" title="Deri në 50 hapa gjatë kësaj hapjeje të faqes.">Ctrl+Z: zhbëj · Ctrl+Y: ribëj</span></div>
       </div>
       <div class="manual-toolbar" role="group" aria-label="Shënimi manual i notave">
         <button id="manualModeBtn" type="button" class="btn btn-manual" aria-pressed="false">✍ Shëno manualisht</button>

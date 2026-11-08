@@ -1,4 +1,4 @@
-const CACHE='ciftelia-studio-v28-mp3-default-20261108';
+const CACHE='ciftelia-studio-v29-tablature-controls-20261108';
 const CORE=['./','./index.html','./app.css','./songs/catalog.json','./songs/shtat-shaljan.json','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png',
   './js/v28/main.js','./js/v28/constants.js','./js/v28/audio-engine.js','./js/v28/pitch.js',
   './js/v28/microphone.js','./js/v28/mic-onset-worklet.js','./js/v28/songs.js',
