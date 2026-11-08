@@ -8,7 +8,7 @@ export const MIN_MIC_HZ = 205;
 export const FRETS = 13;
 export type NoteNumber = number;
 export interface NoteEvent { string: 1 | 2; noteNumber: number; time: number; measuredHz?: number; confidence?: number; velocity?: number; withF?: boolean; upperNoteNumber?: number; groupStart?: number; }
-export interface Stanza { start: number; label: string; color?: string; }
+export interface Stanza { start: number; label: string; color?: string; end?: number; }
 export interface Song { id: string; name: string; notes: NoteEvent[]; createdAt: string; originalAudioId?: string; originalAudioName?: string; stanzas?: Stanza[]; preferNotes?: boolean; }
 export const DEMO: Song[] = [
   { id: 'demo-fast', name: 'Ushtrim i shpejtë · R–Y', createdAt: '', notes:

@@ -1,5 +1,6 @@
 import type {NoteEvent, Song, Stanza} from './constants.js';
 import {GROUP_COLORS, groupForNote} from './grouping.js';
+import {groupEnd} from './group-length.js';
 
 const MAX_TIME=3_600_000;
 const MAX_NOTES=10_000;
@@ -17,9 +18,8 @@ export function copySongGroup(song:Song,start:number,endMs:number):CopiedGroup{
   const notes=song.notes.filter(n=>groupForNote(groups,n)===index);
   if(!notes.length)throw Error('Grupi i zgjedhur nuk ka nota.');
   const origin=Math.min(start,...notes.map(n=>n.time));
-  const nextStart=groups[index+1]?.start;
   const last=Math.max(...notes.map(n=>n.time));
-  const end=nextStart===undefined?Math.max(endMs,last+300,origin+100):Math.max(nextStart,last+1);
+  const end=Math.max(groupEnd({...song,stanzas:groups},index),last+1,origin+100);
   return {label:groups[index].label,color:groups[index].color||GROUP_COLORS[index%GROUP_COLORS.length],
     duration:Math.ceil(end-origin),notes:notes.map(n=>({...n,time:n.time-origin,groupStart:0}))};
 }
@@ -35,9 +35,9 @@ export function pasteSongGroup(song:Song,copied:CopiedGroup,insertAt:number):{so
   const notes=song.notes.map(n=>({...n,time:shift(n.time),
     ...(n.groupStart!==undefined?{groupStart:shift(n.groupStart)}:{})}));
   notes.push(...copied.notes.map(n=>({...n,time:insertAt+n.time,groupStart:insertAt})));
-  const stanzas=groups.map(g=>({...g,start:shift(g.start)}));
-  stanzas.push({start:insertAt,label:`${copied.label.slice(0,55)} · Kopje`,color:copied.color});
-  if(insertAt+duration>=MAX_TIME||notes.some(n=>n.time>=MAX_TIME)||stanzas.some(g=>g.start>=MAX_TIME))
+  const stanzas=groups.map(g=>({...g,start:shift(g.start),...(g.end!==undefined?{end:g.end+(g.start>=insertAt||g.end>insertAt?duration:0)}:{})}));
+  stanzas.push({start:insertAt,end:insertAt+duration,label:`${copied.label.slice(0,55)} · Kopje`,color:copied.color});
+  if(insertAt+duration>=MAX_TIME||notes.some(n=>n.time>=MAX_TIME)||stanzas.some(g=>g.start>=MAX_TIME||(g.end!==undefined&&g.end>=MAX_TIME)))
     throw Error('Kënga nuk mund të kalojë një orë.');
   return {song:{...song,notes:notes.sort((a,b)=>a.time-b.time||a.string-b.string),stanzas:stanzas.sort((a,b)=>a.start-b.start)},groupStart:insertAt};
 }
@@ -47,16 +47,17 @@ export function replaceSongGroup(song:Song,copied:CopiedGroup,targetStart:number
   const groups=groupsOf(song),index=groups.findIndex(g=>g.start===targetStart);
   if(index<0)throw Error('Zgjidh grupin ku dëshiron ta ngjitësh.');
   if(!copied.notes.length||!Number.isInteger(copied.duration)||copied.duration<1)throw Error('Kopjo së pari një grup.');
-  const oldEnd=groups[index+1]?.start??Math.max(endMs,targetStart+100);
+  const oldEnd=groupEnd({...song,stanzas:groups},index);
   const delta=copied.duration-(oldEnd-targetStart);
   const notes=song.notes.filter(n=>groupForNote(groups,n)!==index).map(n=>{
     const later=groupForNote(groups,n)>index;
     return {...n,time:n.time+(later?delta:0),...(n.groupStart!==undefined?{groupStart:n.groupStart+(n.groupStart>targetStart?delta:0)}:{})};
   });
   notes.push(...copied.notes.map(n=>({...n,time:targetStart+n.time,groupStart:targetStart})));
-  const stanzas=groups.map((g,i)=>({...g,start:g.start+(i>index?delta:0)}));
+  const stanzas=groups.map((g,i)=>({...g,start:g.start+(i>index?delta:0),
+    ...(i===index?{end:targetStart+copied.duration}:g.end!==undefined?{end:g.end+(i>index?delta:0)}:{})}));
   if(notes.length>MAX_NOTES)throw Error('Maksimumi është 10 000 nota.');
-  if(targetStart+copied.duration>=MAX_TIME||notes.some(n=>n.time<0||n.time>=MAX_TIME)||stanzas.some(g=>g.start<0||g.start>=MAX_TIME))
+  if(targetStart+copied.duration>=MAX_TIME||notes.some(n=>n.time<0||n.time>=MAX_TIME)||stanzas.some(g=>g.start<0||g.start>=MAX_TIME||(g.end!==undefined&&g.end>=MAX_TIME)))
     throw Error('Koha pas ngjitjes del jashtë kufijve të këngës.');
   return {song:{...song,notes:notes.sort((a,b)=>a.time-b.time||a.string-b.string),stanzas},groupStart:targetStart};
 }
@@ -108,9 +109,11 @@ export function parseSongJSON(text:string,base:Song):Song{
     if(!g||!Number.isInteger(g.start)||g.start<0||g.start>=MAX_TIME||typeof g.label!=='string'||!g.label.trim()||g.label.length>65)
       throw Error(`Grupi ${i+1}: kontrollo start (ms) dhe label (emri).`);
     if(g.color!==undefined&&!/^#[0-9a-f]{6}$/i.test(g.color))throw Error(`Grupi ${i+1}: color duhet të ketë formatin #e8b45a.`);
+    if(g.end!==undefined&&(!Number.isInteger(g.end)||g.end<=g.start||g.end>=MAX_TIME))throw Error(`Grupi ${i+1}: end duhet të jetë pas fillimit, në milisekonda.`);
     return {...g};
   }).sort((a,b)=>a.start-b.start);
   if(new Set(stanzas.map(g=>g.start)).size!==stanzas.length)throw Error('Dy grupe nuk mund të fillojnë në të njëjtën kohë.');
+  for(let i=0;i<stanzas.length-1;i++)if(stanzas[i].end!==undefined&&stanzas[i].end!>stanzas[i+1].start)throw Error('Fundi i grupit nuk mund të kalojë grupin pasues.');
   if(!stanzas.some(g=>g.start===0))stanzas.unshift({start:0,label:'Grupi 1',color:GROUP_COLORS[0]});
   if(stanzas.length>MAX_GROUPS)throw Error('Maksimumi është 90 grupe, përfshirë grupin që fillon në zero.');
   for(const [i,n] of notes.entries())if(n.groupStart!==undefined&&!stanzas.some(g=>g.start===n.groupStart))

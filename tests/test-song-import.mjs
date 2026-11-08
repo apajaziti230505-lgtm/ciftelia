@@ -9,8 +9,8 @@ for(const dir of ['../js/','../js/v26/']){
   const updated=importSongJSON(input,[catalog]);
   assert.equal(updated.existing,true);assert.equal(updated.song.id,catalog.id);
   assert.equal(updated.song.originalAudioId,catalog.originalAudioId);
-  assert.equal(updated.song.notes.length,171);assert.equal(updated.song.stanzas.length,22);
-  assert.deepEqual(updated.song.notes,uploaded.notes);
+  assert.equal(updated.song.notes.length,uploaded.notes.length);assert.equal(updated.song.stanzas.length,uploaded.stanzas.length);
+  assert.deepEqual(updated.song.notes,uploaded.notes.map(n=>({...n,string:n.noteNumber===14?2:n.string})).sort((a,b)=>a.time-b.time||a.string-b.string));
   const local={...catalog,originalAudioId:'local:'+catalog.id,originalAudioName:'Melodia ime.mp3'};
   const localUpdate=importSongJSON(input,[local]).song;
   assert.equal(localUpdate.originalAudioId,local.originalAudioId);

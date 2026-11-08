@@ -194,3 +194,12 @@
 .group-delete-dialog{width:min(460px,92vw);padding:22px;border:1px solid #536c83;border-radius:15px;background:#122337;color:#f1f5f9;box-shadow:0 20px 80px #0009}
 .group-delete-dialog::backdrop{background:#020817bf}.group-delete-dialog h2{margin:0 0 12px;font-size:20px}.group-delete-dialog strong{color:#f3ce85}.group-delete-dialog p{font-size:13px;color:#b5c9dc;line-height:1.7}.group-delete-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}
 @media(max-width:650px){#groupActiveLabel{flex-basis:100%;margin:0}.group-paste-row label{flex:1 1 100%}.group-paste-row select{flex:1;max-width:100%;min-width:0}#groupHistoryStatus{flex-basis:100%;margin:0}.group-delete-dialog{padding:17px}}
+
+/* Compact group length, directly beside the selected group. */
+.group-length-label{display:flex;align-items:center;gap:7px;color:#b6cbd9;font-size:11px;white-space:nowrap}.group-length-label input{width:86px;min-height:38px;padding:7px 8px;border:1px solid #49657b;border-radius:8px;background:#172d41;color:#f3dfbc;font-variant-numeric:tabular-nums}
+
+/* Timeline transport stays next to the notes; scrolling only changes the view. */
+.tab-scroll-dock{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid #36516a;border-radius:10px;background:#10243a;margin-top:7px}.tab-scroll-dock .btn{min-height:40px;white-space:nowrap}.tab-scroll-dock input{flex:1;min-width:70px;accent-color:#eeb85e;cursor:ew-resize;touch-action:pan-x;min-height:30px}.tab-scroll-dock output{font-size:11px;color:#b9cedd;font-variant-numeric:tabular-nums;min-width:63px;text-align:right}#multiSelectBtn.is-on{background:#1a5146;border-color:#74c6ae;color:#edfff9}#tabNoteSelected{font-size:12px;color:#f0d79f}#tabNoteEditBar[hidden]{display:none}#tabSelectionHelp{flex:1 1 230px;line-height:1.4}
+@media(max-width:650px){.tab-scroll-dock{gap:5px;flex-wrap:wrap}.tab-scroll-dock .btn{padding:8px 10px}.tab-scroll-dock input{min-width:85px}.tab-scroll-dock output{display:none}#tabNoteEditBar{gap:7px}#tabSelectionHelp{flex-basis:100%}}
+.tab-note-editor [hidden]{display:none!important}
+@media(max-width:650px){.tab-scroll-dock{display:grid;grid-template-columns:auto auto auto minmax(30px,1fr) auto;gap:4px}.tab-scroll-dock input{width:100%;min-width:0}.tab-scroll-dock .btn{padding:7px;font-size:11px;min-width:32px}}

@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=26-mp3-link-20261108">
+  <link rel="stylesheet" href="app.css?v=27-short-groups-20261108">
 </head>
 <body>
   <main class="container">
@@ -177,8 +177,6 @@
       <div class="tab-heading"><div><h2 id="tabTitle">Tablatura</h2></div><div class="tab-state"><span id="studioState">GATI</span><strong id="timeLabel">00:00.00 / 00:00.00</strong></div></div>
       <div class="tab-audio-transport" role="group" aria-label="Kontrollet e këngës te tablatura">
         <div class="tab-audio-buttons">
-          <button type="button" id="playBtn" class="btn btn-primary">▶ Luaj</button>
-          <button type="button" id="stopBtn" class="btn">■ Ndalo</button>
           <button type="button" id="tabBackBtn" class="btn btn-minimal" title="Kthehu 1 sekondë">⟲ −1 s</button>
           <button type="button" id="tabFineBackBtn" class="btn btn-minimal" title="Kthehu 100 milisekonda">−0.1 s</button>
           <button type="button" id="tabFineNextBtn" class="btn btn-minimal" title="Ec 100 milisekonda përpara">+0.1 s</button>
@@ -196,12 +194,12 @@
         </div>
       </div>
       <div class="tab-nav" role="group" aria-label="Lëviz nëpër tablaturë dhe korrigjo kufijtë e grupeve">
-        <div class="tab-nav-set"><span>PAMJA</span><button id="tabLeftBtn" class="btn btn-minimal" type="button" title="Shiko më majtas">◀ Majtas</button><button id="tabRightBtn" class="btn btn-minimal" type="button" title="Shiko më djathtas">Djathtas ▶</button><button id="tabFollowBtn" class="btn btn-minimal" type="button" title="Ndiq muzikën gjatë luajtjes">◎ Ndiq muzikën</button></div>
+        <div class="tab-nav-set"><button id="tabFollowBtn" class="btn btn-minimal" type="button" title="Ndiq muzikën gjatë luajtjes">◎ Ndiq muzikën</button></div>
         <div class="tab-nav-set"><span>VIJA E GRUPIT</span><button id="tabMarkLeftBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms majtas">−50 ms</button><button id="tabMarkRightBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms djathtas">+50 ms</button></div>
         <strong id="tabViewRange" aria-live="polite">00:00 – 00:00</strong>
       </div>
       <div class="group-copy-toolbar" role="group" aria-label="Menaxho grupet në tablaturë">
-        <div class="group-action-row"><strong id="groupActiveLabel">Grupi 1</strong><button id="groupCopyBtn" type="button" class="btn">⧉ Kopjo</button><button id="groupDuplicateBtn" type="button" class="btn">＋ Dyfisho grupin</button><button id="groupDeleteBtn" type="button" class="btn btn-danger">Fshi grupin</button></div>
+        <div class="group-action-row"><strong id="groupActiveLabel">Grupi 1</strong><label class="group-length-label" for="groupLengthSeconds">Gjatësia (s)<input id="groupLengthSeconds" type="number" value="1.000" min="0.1" step="0.1" inputmode="decimal" aria-label="Gjatësia e grupit në sekonda"></label><button id="groupCopyBtn" type="button" class="btn">⧉ Kopjo</button><button id="groupDuplicateBtn" type="button" class="btn">＋ Dyfisho grupin</button><button id="groupDeleteBtn" type="button" class="btn btn-danger">Fshi grupin</button></div>
         <div class="group-action-row group-paste-row">
           <label for="groupPasteTarget">Ngjite te <select id="groupPasteTarget" disabled><option value="">Zgjidh grupin pritës…</option></select></label>
           <label for="groupPasteMode">Mënyra <select id="groupPasteMode" disabled><option value="insert">Shto grup të ri</option><option value="replace">Zëvendëso notat</option></select></label>
@@ -216,15 +214,24 @@
         <button id="manualClearBtn" type="button" class="btn btn-minimal" disabled>Pastro notat</button>
         <span class="manual-hint">Dy mënyra: cakto sekondën me Shko, ose aktivizo Kliko kudo → Notë.</span>
       </div>
-      <div id="tabNoteEditBar" class="tab-note-editor" hidden role="group" aria-label="Redakto notën e zgjedhur">
-        <span>Nota: <strong id="tabNoteSelected">—</strong></span>
-        <label for="tabUpperNote">Teli lart <select id="tabUpperNote"></select></label>
-        <button id="tabNoteLeftBtn" type="button" class="btn btn-minimal" title="Zhvendose notën 50 ms majtas">◀ −50 ms</button>
-        <button id="tabNoteRightBtn" type="button" class="btn btn-minimal" title="Zhvendose notën 50 ms djathtas">+50 ms ▶</button>
+      <div id="tabNoteEditBar" class="tab-note-editor" role="group" aria-label="Zgjidh dhe lëviz notat">
+        <button id="multiSelectBtn" type="button" class="btn btn-minimal" aria-pressed="false">☑ Zgjidh disa</button>
+        <strong id="tabNoteSelected">Asnjë notë e zgjedhur</strong>
+        <button id="clearNoteSelectionBtn" type="button" class="btn btn-minimal" hidden>Hiq zgjedhjen</button>
+        <label id="tabUpperLabel" for="tabUpperNote">Teli lart <select id="tabUpperNote"></select></label>
+        <button id="tabNoteLeftBtn" type="button" class="btn btn-minimal" title="Zhvendos notat e zgjedhura 50 ms majtas">◀ −50 ms</button>
+        <button id="tabNoteRightBtn" type="button" class="btn btn-minimal" title="Zhvendos notat e zgjedhura 50 ms djathtas">+50 ms ▶</button>
         <button id="tabNoteDeleteBtn" type="button" class="btn btn-danger" title="Fshi vetëm këtë notë">Fshi notën</button>
-        <small>Ose tërhiq notën majtas/djathtas. Ruaj pas ndryshimit.</small>
+        <small id="tabSelectionHelp">Zgjidh disa → prek notat → tërhiq njërën. Ose Ctrl/⌘ + klik.</small>
       </div>
       <div class="tab-canvas-wrap"><canvas id="tabCanvas" tabindex="0" aria-label="Tablatura interaktive: cakto sekondën, ose aktivizo Kliko kudo për të shtuar notën në pozicionin horizontal të prekur." height="175"></canvas></div>
+      <div class="tab-scroll-dock" role="group" aria-label="Luajtja dhe lëvizja horizontale e tablaturës">
+        <button type="button" id="playBtn" class="btn btn-primary">▶ Luaj</button><button type="button" id="stopBtn" class="btn">■ Ndalo</button>
+        <button id="tabLeftBtn" class="btn btn-minimal" type="button" title="Shiko më majtas" aria-label="Lëviz tablaturën majtas">◀</button>
+        <input id="tabHorizontalScroll" type="range" min="0" max="0" step="10" value="0" aria-label="Lëviz tablaturën majtas ose djathtas">
+        <button id="tabRightBtn" class="btn btn-minimal" type="button" title="Shiko më djathtas" aria-label="Lëviz tablaturën djathtas">▶</button>
+        <output id="tabScrollReadout" for="tabHorizontalScroll">0.000 s</output>
+      </div>
       <div id="manualEntryPanel" class="manual-entry" hidden>
         <strong id="manualTimeLabel">00:00.000</strong><label for="manualTimeSeconds">Koha e notës (s)</label><input id="manualTimeSeconds" type="number" min="0" step="0.001" value="0.000" inputmode="decimal" aria-label="Koha e saktë e notës në sekonda">
         <label for="manualFretSelect">Teli poshtë · nota</label>
@@ -338,6 +345,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v26/main.js?v=26-mp3-link"></script>
+  <script type="module" src="./js/v27/main.js?v=27-short-groups"></script>
 </body>
 </html>
