@@ -1,4 +1,4 @@
-const CACHE='ciftelia-studio-v24-local-entry-20261108';
+const CACHE='ciftelia-studio-v24-local-entry-2-20261108';
 const CORE=['./','./index.html','./app.css','./songs/catalog.json','./songs/shtat-shaljan.json','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png',
   './js/v24/main.js','./js/v24/constants.js','./js/v24/audio-engine.js','./js/v24/pitch.js',
   './js/v24/microphone.js','./js/v24/mic-onset-worklet.js','./js/v24/songs.js',

@@ -2252,6 +2252,16 @@ function init() {
         }
         setManualMode(!manualMode);
     });
+    $('manualTimeSeconds').addEventListener('input', () => {
+        if (!manualPending)
+            return;
+        const value = $('manualTimeSeconds').value, seconds = Number(value);
+        if (!value.trim() || !Number.isFinite(seconds) || seconds < 0 || seconds * 1000 > activeSeekEndMs())
+            return;
+        manualPending.time = Math.round(seconds * 1000);
+        $('manualTimeLabel').textContent = `${preciseTime(manualPending.time)} s`;
+        redrawTab();
+    });
     $('manualSetBtn').addEventListener('click', () => commitManualNote(false));
     $('manualContinueBtn').addEventListener('click', () => commitManualNote(true));
     $('manualCancelBtn').addEventListener('click', cancelManualNote);
