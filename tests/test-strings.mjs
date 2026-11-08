@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-for(const directory of ['../js/','../js/v19/']){
+for(const directory of ['../js/','../js/v22/']){
   const {withOpenF,HZ,upperPlaybackRate,noteFrequency}=await import(`${directory}constants.js`);
   const {notesAtMoment,noteAttackColor}=await import(`${directory}practice.js`);
   const {manualNote}=await import(`${directory}manual.js`);
