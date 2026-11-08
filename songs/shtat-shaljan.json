@@ -1,0 +1,1014 @@
+{
+  "id": "catalog-shtat-shaljan",
+  "name": "Shtat shaljan kanë ra në Shtoj · Provë",
+  "createdAt": "2026-11-08T11:01:43.894Z",
+  "notes": [
+    {
+      "time": 1991,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.43612940264712297,
+      "withF": true
+    },
+    {
+      "time": 2103,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 0
+    },
+    {
+      "time": 2267,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.581997083108263,
+      "withF": true
+    },
+    {
+      "time": 2412,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 0
+    },
+    {
+      "time": 2583,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 0
+    },
+    {
+      "time": 2721,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 0
+    },
+    {
+      "time": 3300,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.580520455729286,
+      "withF": true
+    },
+    {
+      "time": 3418,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 3080
+    },
+    {
+      "time": 3551,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 3080
+    },
+    {
+      "time": 3694,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 3080
+    },
+    {
+      "time": 3854,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 3080
+    },
+    {
+      "time": 3997,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 3080
+    },
+    {
+      "time": 4996,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.4798083820702368,
+      "withF": true
+    },
+    {
+      "time": 5121,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.5720913980873041,
+      "withF": true
+    },
+    {
+      "time": 5270,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.5323145170466388,
+      "withF": true
+    },
+    {
+      "time": 5392,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 4330
+    },
+    {
+      "time": 5530,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 4330
+    },
+    {
+      "time": 5695,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 4330
+    },
+    {
+      "time": 6269,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 6190
+    },
+    {
+      "time": 6401,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 6190
+    },
+    {
+      "time": 6523,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 6190
+    },
+    {
+      "time": 6661,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 6190
+    },
+    {
+      "time": 6788,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 6190
+    },
+    {
+      "time": 6920,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 6190
+    },
+    {
+      "time": 7571,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 7717,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 7883,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 8026,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 8153,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 8307,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 8462,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 8589,
+      "noteNumber": 3,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 8760,
+      "noteNumber": 3,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 8990,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 9122,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 9288,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 9442,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 9630,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 9751,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 9922,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 10065,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 10257,
+      "noteNumber": 14,
+      "string": 2,
+      "confidence": 1,
+      "groupStart": 7250
+    },
+    {
+      "time": 10407,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 10578,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 10765,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 10915,
+      "noteNumber": 6,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 11081,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 11301,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 11516,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 11688,
+      "noteNumber": 3,
+      "string": 1,
+      "confidence": 1,
+      "withF": true,
+      "groupStart": 7250
+    },
+    {
+      "time": 15440,
+      "noteNumber": 1,
+      "string": 1,
+      "confidence": 0.7251431076363543,
+      "withF": true
+    },
+    {
+      "time": 16460,
+      "noteNumber": 1,
+      "string": 1,
+      "confidence": 0.6819697710254491,
+      "withF": true
+    },
+    {
+      "time": 17030,
+      "noteNumber": 14,
+      "string": 2,
+      "confidence": 0.46896785353687476
+    },
+    {
+      "time": 19180,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.573020219023622,
+      "withF": true
+    },
+    {
+      "time": 19880,
+      "noteNumber": 2,
+      "string": 1,
+      "confidence": 0.48867384665032354,
+      "withF": true
+    },
+    {
+      "time": 19880,
+      "noteNumber": 14,
+      "string": 2,
+      "confidence": 0.48867384665032354
+    },
+    {
+      "time": 20280,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.4896838641764019,
+      "withF": true
+    },
+    {
+      "time": 21110,
+      "noteNumber": 1,
+      "string": 1,
+      "confidence": 0.5334488910340236,
+      "withF": true
+    },
+    {
+      "time": 21650,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.48287105571498135,
+      "withF": true
+    },
+    {
+      "time": 22180,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.46938542617434603,
+      "withF": true
+    },
+    {
+      "time": 22880,
+      "noteNumber": 1,
+      "string": 1,
+      "confidence": 0.6121722597684847,
+      "withF": true
+    },
+    {
+      "time": 23120,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.6100269994806984,
+      "withF": true
+    },
+    {
+      "time": 24920,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.43475522946463535,
+      "withF": true
+    },
+    {
+      "time": 25850,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.4706403700259312,
+      "withF": true
+    },
+    {
+      "time": 27080,
+      "noteNumber": 1,
+      "string": 1,
+      "confidence": 0.6180137173053833,
+      "withF": true
+    },
+    {
+      "time": 27430,
+      "noteNumber": 14,
+      "string": 2,
+      "confidence": 0.42793747684756106
+    },
+    {
+      "time": 27990,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.5962550981669931,
+      "withF": true
+    },
+    {
+      "time": 29080,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.5227843621410424,
+      "withF": true
+    },
+    {
+      "time": 29380,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.6213889588839214,
+      "withF": true
+    },
+    {
+      "time": 29770,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.5375450930201628,
+      "withF": true
+    },
+    {
+      "time": 30140,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.5932985267575285,
+      "withF": true
+    },
+    {
+      "time": 34310,
+      "noteNumber": 1,
+      "string": 1,
+      "confidence": 0.5032365128607921,
+      "withF": true
+    },
+    {
+      "time": 34640,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.5185716407673893,
+      "withF": true
+    },
+    {
+      "time": 35870,
+      "noteNumber": 14,
+      "string": 2,
+      "confidence": 0.5143679791250015
+    },
+    {
+      "time": 35970,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.6016559102411452,
+      "withF": true
+    },
+    {
+      "time": 36070,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.4634221168376175,
+      "withF": true
+    },
+    {
+      "time": 36340,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.4700460099768894,
+      "withF": true
+    },
+    {
+      "time": 38910,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.5804848915886255,
+      "withF": true
+    },
+    {
+      "time": 40520,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.46082094969982046,
+      "withF": true
+    },
+    {
+      "time": 41530,
+      "noteNumber": 5,
+      "string": 1,
+      "confidence": 0.48737783185702444,
+      "withF": true
+    },
+    {
+      "time": 41530,
+      "noteNumber": 14,
+      "string": 2,
+      "confidence": 0.48737783185702444
+    },
+    {
+      "time": 42400,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.6441677884456352,
+      "withF": true
+    },
+    {
+      "time": 42760,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.5730020602005221,
+      "withF": true
+    },
+    {
+      "time": 46870,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.41854968399080816,
+      "withF": true
+    },
+    {
+      "time": 47630,
+      "noteNumber": 2,
+      "string": 1,
+      "confidence": 0.5093351370149927,
+      "withF": true
+    },
+    {
+      "time": 47630,
+      "noteNumber": 14,
+      "string": 2,
+      "confidence": 0.5093351370149927
+    },
+    {
+      "time": 47730,
+      "noteNumber": 1,
+      "string": 1,
+      "confidence": 0.7366999625371045,
+      "withF": true
+    },
+    {
+      "time": 48490,
+      "noteNumber": 1,
+      "string": 1,
+      "confidence": 0.6167249146604192,
+      "withF": true
+    },
+    {
+      "time": 52580,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.5491320621822561,
+      "withF": true
+    },
+    {
+      "time": 53300,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.4708066544345733,
+      "withF": true
+    },
+    {
+      "time": 53420,
+      "noteNumber": 1,
+      "string": 1,
+      "confidence": 0.6318034815888058,
+      "withF": true
+    },
+    {
+      "time": 53610,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.505672868609707,
+      "withF": true
+    },
+    {
+      "time": 54010,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.585150530243876,
+      "withF": true
+    },
+    {
+      "time": 54360,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.48375084259148093,
+      "withF": true
+    },
+    {
+      "time": 55230,
+      "noteNumber": 1,
+      "string": 1,
+      "confidence": 0.5630067170323374,
+      "withF": true
+    },
+    {
+      "time": 55640,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.5226423416323596,
+      "withF": true
+    },
+    {
+      "time": 56790,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.5042065031708652,
+      "withF": true
+    },
+    {
+      "time": 56790,
+      "noteNumber": 14,
+      "string": 2,
+      "confidence": 0.5042065031708652
+    },
+    {
+      "time": 57050,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.6141709766987555,
+      "withF": true
+    },
+    {
+      "time": 59050,
+      "noteNumber": 1,
+      "string": 1,
+      "confidence": 0.6693380903441483,
+      "withF": true
+    },
+    {
+      "time": 59370,
+      "noteNumber": 1,
+      "string": 1,
+      "confidence": 0.6791225059679548,
+      "withF": true
+    },
+    {
+      "time": 59760,
+      "noteNumber": 14,
+      "string": 2,
+      "confidence": 0.4766604528907683
+    },
+    {
+      "time": 60360,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.5877876494262981,
+      "withF": true
+    },
+    {
+      "time": 61040,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.5546585888584157,
+      "withF": true
+    },
+    {
+      "time": 62100,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.5297488800854449,
+      "withF": true
+    },
+    {
+      "time": 62460,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.5441488308201351,
+      "withF": true
+    },
+    {
+      "time": 63150,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.5214777601183931,
+      "withF": true
+    },
+    {
+      "time": 66250,
+      "noteNumber": 2,
+      "string": 1,
+      "confidence": 0.5078526540264089,
+      "withF": true
+    },
+    {
+      "time": 66250,
+      "noteNumber": 14,
+      "string": 2,
+      "confidence": 0.5078526540264089
+    },
+    {
+      "time": 66620,
+      "noteNumber": 1,
+      "string": 1,
+      "confidence": 0.460429268132441,
+      "withF": true
+    },
+    {
+      "time": 67450,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.5720881161671865,
+      "withF": true
+    },
+    {
+      "time": 69780,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.5075997252525627,
+      "withF": true
+    },
+    {
+      "time": 69870,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.5612107011454532,
+      "withF": true
+    },
+    {
+      "time": 70250,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.5671011715895673,
+      "withF": true
+    },
+    {
+      "time": 71090,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.604196035179693,
+      "withF": true
+    },
+    {
+      "time": 72370,
+      "noteNumber": 14,
+      "string": 2,
+      "confidence": 0.47281095472979784
+    },
+    {
+      "time": 72470,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.6322860662320601,
+      "withF": true
+    },
+    {
+      "time": 72840,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.4153887487401286,
+      "withF": true
+    },
+    {
+      "time": 75080,
+      "noteNumber": 7,
+      "string": 1,
+      "confidence": 0.5554251988187315,
+      "withF": true
+    },
+    {
+      "time": 75600,
+      "noteNumber": 8,
+      "string": 1,
+      "confidence": 0.47001956796448363,
+      "withF": true
+    },
+    {
+      "time": 76670,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 0.46470951651465364,
+      "withF": true
+    },
+    {
+      "time": 77540,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 0.45368635933028634,
+      "withF": true
+    },
+    {
+      "time": 78360,
+      "noteNumber": 4,
+      "string": 1,
+      "confidence": 0.4159346303241841,
+      "withF": true
+    }
+  ],
+  "originalAudioId": "catalog:catalog-shtat-shaljan",
+  "stanzas": [
+    {
+      "start": 0,
+      "label": "Grupi 1",
+      "color": "#e8b45a"
+    },
+    {
+      "start": 3080,
+      "label": "Grupi 2",
+      "color": "#42bdae"
+    },
+    {
+      "start": 4330,
+      "label": "Grupi 3",
+      "color": "#b894f6"
+    },
+    {
+      "start": 6190,
+      "label": "Grupi 4",
+      "color": "#f08097"
+    },
+    {
+      "start": 7250,
+      "label": "Grupi 5",
+      "color": "#79aaf0"
+    },
+    {
+      "start": 12270,
+      "label": "Grupi 6",
+      "color": "#86c870"
+    },
+    {
+      "start": 25850,
+      "label": "Grupi 7",
+      "color": "#f2a36d"
+    },
+    {
+      "start": 31940,
+      "label": "Grupi 8",
+      "color": "#57cad4"
+    },
+    {
+      "start": 33400,
+      "label": "Grupi 9",
+      "color": "#e8b45a"
+    },
+    {
+      "start": 35870,
+      "label": "Grupi 10",
+      "color": "#42bdae"
+    },
+    {
+      "start": 37270,
+      "label": "Grupi 11",
+      "color": "#b894f6"
+    },
+    {
+      "start": 38610,
+      "label": "Grupi 12",
+      "color": "#f08097"
+    },
+    {
+      "start": 40020,
+      "label": "Grupi 13",
+      "color": "#79aaf0"
+    },
+    {
+      "start": 40520,
+      "label": "Grupi 14",
+      "color": "#86c870"
+    },
+    {
+      "start": 56790,
+      "label": "Grupi 15",
+      "color": "#f2a36d"
+    },
+    {
+      "start": 58200,
+      "label": "Grupi 16",
+      "color": "#57cad4"
+    },
+    {
+      "start": 65710,
+      "label": "Grupi 17",
+      "color": "#e8b45a"
+    },
+    {
+      "start": 68190,
+      "label": "Grupi 18",
+      "color": "#42bdae"
+    },
+    {
+      "start": 69590,
+      "label": "Grupi 19",
+      "color": "#b894f6"
+    },
+    {
+      "start": 70990,
+      "label": "Grupi 20",
+      "color": "#f08097"
+    },
+    {
+      "start": 72370,
+      "label": "Grupi 21",
+      "color": "#79aaf0"
+    },
+    {
+      "start": 82120,
+      "label": "Grupi 22",
+      "color": "#86c870"
+    }
+  ]
+}

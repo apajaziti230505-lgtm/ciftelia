@@ -1,0 +1,8 @@
+[
+  {
+    "id": "catalog-shtat-shaljan",
+    "name": "Shtat shaljan kanë ra në Shtoj · Provë",
+    "json": "./songs/shtat-shaljan.json",
+    "audio": "./songs/shtat-shaljan.mp3"
+  }
+]
