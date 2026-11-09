@@ -1,13 +1,17 @@
-import { DEMO } from './constants.js';
 const KEY = 'ciftelia-studio-ts-songs-v1';
+const REMOVED_EXERCISES = new Set(['demo-fast', 'demo-scale']);
 const validNote = (n) => n && (n.string === 1 || n.string === 2) && Number.isInteger(n.noteNumber) && n.noteNumber >= 1 && n.noteNumber <= 15 && Number.isFinite(n.time) && n.time >= 0 && n.time < 3600000;
 export function loadSongs() {
     try {
         const v = JSON.parse(localStorage.getItem(KEY) || '[]');
         if (!Array.isArray(v))
             return [];
-        return v.filter((s) => s && typeof s.id === 'string' && typeof s.name === 'string' && Array.isArray(s.notes))
+        const songs = v.filter((s) => s && typeof s.id === 'string' && typeof s.name === 'string' && Array.isArray(s.notes))
             .map((s) => ({ ...s, notes: s.notes.filter(validNote).slice(0, 10000) }));
+        const retained = songs.filter(song => !REMOVED_EXERCISES.has(song.id));
+        if (retained.length !== songs.length)
+            saveSongs(retained);
+        return retained;
     }
     catch {
         return [];
@@ -23,17 +27,13 @@ export function saveSongs(songs) {
     }
 }
 export function allSongs(userSongs, catalog = []) {
-    const defaults = [...DEMO, ...catalog], ids = new Set(defaults.map(s => s.id));
-    const overrides = new Map(userSongs.map(s => [s.id, s]));
-    return [...defaults.map(s => overrides.get(s.id) ?? s), ...userSongs.filter(s => !ids.has(s.id))];
+    const defaults = catalog.filter(s => !REMOVED_EXERCISES.has(s.id)), ids = new Set(defaults.map(s => s.id));
+    const retained = userSongs.filter(s => !REMOVED_EXERCISES.has(s.id));
+    const overrides = new Map(retained.map(s => [s.id, s]));
+    return [...defaults.map(s => overrides.get(s.id) ?? s), ...retained.filter(s => !ids.has(s.id))];
 }
 export function upsertSong(songs, song) {
     return songs.some(s => s.id === song.id) ? songs.map(s => s.id === song.id ? song : s) : [...songs, song];
-}
-export function prefersNotePlayback(song, localCatalogEdit = false) {
-    return !!song && (song.preferNotes === true || localCatalogEdit || song.notes.some(n => n.withF === false ||
-        (n.upperNoteNumber !== undefined && n.upperNoteNumber >= 1 && n.upperNoteNumber <= 13) ||
-        (n.string === 2 && n.noteNumber >= 1 && n.noteNumber <= 13)));
 }
 export function newSong(name, events) {
     const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `song-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;

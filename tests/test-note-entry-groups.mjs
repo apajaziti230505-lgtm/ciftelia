@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict';
 
-for(const directory of ['../js/','../js/v24/']){
+for(const directory of ['../js/']){
   const {manualEntryNote}=await import(`${directory}manual.js`);
   const {withOpenF}=await import(`${directory}constants.js`);
-  const {prefersNotePlayback}=await import(`${directory}songs.js`);
   const {copySongGroup,replaceSongGroup,deleteSongGroup,parseSongJSON}=await import(`${directory}song-editing.js`);
   const first=manualEntryNote(8,3516);
   assert.equal(first.string,1);assert.equal(first.withF,true);assert.equal(first.time,3516);
@@ -54,12 +53,6 @@ for(const directory of ['../js/','../js/v24/']){
   assert.throws(()=>deleteSongGroup(source,99),/Zgjidh/);
   assert.deepEqual(source,original,'paste and deletion keep the original available for undo');
 
-  const plain={...source,notes:[manualEntryNote(8,3516)],preferNotes:false};
-  assert.equal(prefersNotePlayback(plain),false,'unmodified audio can still be used for transcription');
-  assert.equal(prefersNotePlayback({...plain,preferNotes:true}),true,'edited playback survives save/reload without global controls');
-  assert.equal(prefersNotePlayback({...plain,notes:[custom]}),true);
-  assert.equal(prefersNotePlayback({...plain,notes:[alone]}),true);
-  assert.equal(prefersNotePlayback(plain,true),true,'legacy catalog overrides retain their edited playback');
   assert.throws(()=>parseSongJSON(JSON.stringify({...source,preferNotes:'false'}),source),/preferNotes/);
-  console.log(`OK ${directory}: automatic local F, target-group paste, reversible group deletion and automatic playback`);
+  console.log(`OK ${directory}: automatic local F, target-group paste and reversible group deletion`);
 }

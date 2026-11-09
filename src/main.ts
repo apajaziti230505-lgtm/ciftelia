@@ -1,6 +1,6 @@
 import {AudioEngine} from './audio-engine.js';
 import {MicrophoneRecorder,DetectedHit,FilterOptions} from './microphone.js';
-import {KEYS,HZ,DEMO,Song,NoteEvent,Stanza,labelFor,fmt,withOpenF,upperFret,noteFrequency} from './constants.js';
+import {KEYS,HZ,Song,NoteEvent,Stanza,labelFor,fmt,withOpenF,upperFret,noteFrequency} from './constants.js';
 import {allSongs,loadSongs,newSong,saveSongs,exportSong,upsertSong} from './songs.js';
 import {analyzeAudio,GuessedHit} from './analysis.js';
 import {putOriginal,getOriginal,deleteOriginal} from './local-audio.js';
@@ -23,7 +23,7 @@ const audio=new AudioEngine();
 const mic=new MicrophoneRecorder(audio);
 let savedSongs=loadSongs();
 let draft:Song|null=null;
-let selectedId=DEMO[0].id;
+let selectedId='';
 let keyboardRecordStart:number|null=null;
 let keyboardEvents:NoteEvent[]=[];
 let micHits:DetectedHit[]=[];
@@ -407,7 +407,7 @@ function renderSongs():void {
   selectSongPlayback(selectedSong);
   const isCatalogSong=!!selectedSong&&catalogSongs.some(s=>s.id===selectedSong.id);
     const isUserSong=!!selectedSong&&savedSongs.some(s=>s.id===selectedSong.id);
-  const isOverride=isUserSong&&(isCatalogSong||DEMO.some(s=>s.id===selectedSong!.id));
+  const isOverride=isUserSong&&isCatalogSong;
   $('deleteBtn').textContent=selectedId==='__draft'?'Fshi provën':isOverride?'Rikthe origjinalin':'Fshi';
   refreshAudioControls();
   $('saveBtn').toggleAttribute('disabled',!draft);
@@ -695,7 +695,7 @@ function seekToMs(target:number):void {
   $('timeLabel').textContent=`${fmt(ms)} / ${fmt(activeSeekEndMs())}`;
   setStatus(`U ndal te ${preciseTime(ms)} s. Kliko telin në tablaturë për të vendosur notën.`);
 }
-/** For synthesized demos, play only notes after the chosen cursor. */
+/** For sample playback, play only notes after the chosen cursor. */
 async function playSynthFromCursor():Promise<void>{
   const song=currentSong();if(!song||!song.notes.length)return;
   const first=Math.max(0,tabCurrentMs);
@@ -787,16 +787,16 @@ async function saveDraft():Promise<void> {
 }
 async function deleteSong():Promise<void> {
   if(selectedId==='__draft'){
-    if(confirm('Ta fshijmë këngën provë?')){if(draft)editHistories.delete(draft.id);draftBaseline=null;draft=null;editingSongId=null;importFile=null;importedHits=[];renderImportedHits();selectedId=DEMO[0].id;renderSongs();void prepareOriginalForSelection();setStatus('Prova u fshi.');}
+    if(confirm('Ta fshijmë këngën provë?')){if(draft)editHistories.delete(draft.id);draftBaseline=null;draft=null;editingSongId=null;importFile=null;importedHits=[];renderImportedHits();selectedId=catalogSongs[0]?.id??'';renderSongs();void prepareOriginalForSelection();setStatus('Prova u fshi.');}
     return;
   }
   const song=currentSong();if(!song||!savedSongs.some(s=>s.id===song.id))return;
-  const isOverride=DEMO.some(s=>s.id===song.id)||catalogSongs.some(s=>s.id===song.id);
+  const isOverride=catalogSongs.some(s=>s.id===song.id);
   if(!confirm(isOverride?'Të hiqen ndryshimet lokale dhe të rikthehet kënga origjinale?':`Ta fshijmë këngën “${song.name}”?`))return;
   const next=savedSongs.filter(s=>s.id!==song.id);if(!saveSongs(next)){setStatus('Fshirja nuk u ruajt.');return;}savedSongs=next;
   editHistories.delete(song.id);draftBaseline=null;
   if(song.originalAudioId&&(song.originalAudioId===song.id||song.originalAudioId===`local:${song.id}`)&&!next.some(s=>s.originalAudioId===song.originalAudioId))try{await deleteOriginal(song.originalAudioId);}catch{}
-  selectedId=isOverride?song.id:DEMO[0].id;renderSongs();void prepareOriginalForSelection();setStatus(isOverride?'U rikthye kënga origjinale.':'Kënga u fshi nga ky shfletues.');
+  selectedId=isOverride?song.id:(catalogSongs[0]?.id??'');renderSongs();void prepareOriginalForSelection();setStatus(isOverride?'U rikthye kënga origjinale.':'Kënga u fshi nga ky shfletues.');
 }
 const canvas=$<HTMLCanvasElement>('tabCanvas');
 function tabSongEnd(song:Song|null):number{

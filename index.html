@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=28-mp3-default-20261108">
+  <link rel="stylesheet" href="app.css?v=30-clean-20261109">
 </head>
 <body>
   <main class="container">
@@ -155,13 +155,13 @@
           <g id="highlights" pointer-events="none"></g>
           <g id="hit-zones"></g>
         </svg></div></div>
-      <div class="practice-strip" aria-label="Ushtrime pranë çiftelisë">
+      <div class="practice-strip" aria-label="Luajtja pranë çiftelisë">
         <button id="practiceAllBtn" type="button" class="btn btn-primary">▶ Gjithë kënga</button>
-        <select id="practiceGroupSelect" aria-label="Grupi për ushtrim"><option value="0">Grupi 1</option></select>
+        <select id="practiceGroupSelect" aria-label="Grupi për luajtje"><option value="0">Grupi 1</option></select>
         <button id="practiceGroupBtn" type="button" class="btn btn-group-play">▶ Grupi</button>
         <button id="practicePauseBtn" type="button" class="btn btn-minimal">⏸ Pauzë</button>
         <button id="practiceStopBtn" type="button" class="btn btn-minimal">■ Ndalo</button>
-        <select id="practiceSpeedSelect" aria-label="Shpejtësia e ushtrimit">
+        <select id="practiceSpeedSelect" aria-label="Shpejtësia e luajtjes">
           <option value="1">1.00× Normal</option><option value="0.5">0.50× Ngadalë</option><option value="0.25">0.25× Shumë ngadalë</option>
         </select>
       </div>
@@ -333,7 +333,7 @@
           }
         } catch (e) { console.warn('Pastrimi i cache nuk përfundoi:', e); }
         const url = new URL(window.location.href);
-        url.searchParams.set('version', '14-tablature');
+        url.searchParams.set('version', '30-clean');
         url.searchParams.set('r', String(Date.now()));
         window.location.replace(url.href);
       });
@@ -346,6 +346,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/v28/main.js?v=28-mp3-default"></script>
+  <script type="module" src="./js/main.js?v=30-clean"></script>
 </body>
 </html>

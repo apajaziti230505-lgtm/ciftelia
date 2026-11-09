@@ -1,6 +1,6 @@
 import { AudioEngine } from './audio-engine.js';
 import { MicrophoneRecorder } from './microphone.js';
-import { KEYS, HZ, DEMO, labelFor, fmt, withOpenF, upperFret, noteFrequency } from './constants.js';
+import { KEYS, HZ, labelFor, fmt, withOpenF, upperFret, noteFrequency } from './constants.js';
 import { allSongs, loadSongs, newSong, saveSongs, exportSong, upsertSong } from './songs.js';
 import { analyzeAudio } from './analysis.js';
 import { putOriginal, getOriginal, deleteOriginal } from './local-audio.js';
@@ -23,7 +23,7 @@ const audio = new AudioEngine();
 const mic = new MicrophoneRecorder(audio);
 let savedSongs = loadSongs();
 let draft = null;
-let selectedId = DEMO[0].id;
+let selectedId = '';
 let keyboardRecordStart = null;
 let keyboardEvents = [];
 let micHits = [];
@@ -596,7 +596,7 @@ function renderSongs() {
     selectSongPlayback(selectedSong);
     const isCatalogSong = !!selectedSong && catalogSongs.some(s => s.id === selectedSong.id);
     const isUserSong = !!selectedSong && savedSongs.some(s => s.id === selectedSong.id);
-    const isOverride = isUserSong && (isCatalogSong || DEMO.some(s => s.id === selectedSong.id));
+    const isOverride = isUserSong && isCatalogSong;
     $('deleteBtn').textContent = selectedId === '__draft' ? 'Fshi provën' : isOverride ? 'Rikthe origjinalin' : 'Fshi';
     refreshAudioControls();
     $('saveBtn').toggleAttribute('disabled', !draft);
@@ -1018,7 +1018,7 @@ function seekToMs(target) {
     $('timeLabel').textContent = `${fmt(ms)} / ${fmt(activeSeekEndMs())}`;
     setStatus(`U ndal te ${preciseTime(ms)} s. Kliko telin në tablaturë për të vendosur notën.`);
 }
-/** For synthesized demos, play only notes after the chosen cursor. */
+/** For sample playback, play only notes after the chosen cursor. */
 async function playSynthFromCursor() {
     const song = currentSong();
     if (!song || !song.notes.length)
@@ -1251,7 +1251,7 @@ async function deleteSong() {
             importFile = null;
             importedHits = [];
             renderImportedHits();
-            selectedId = DEMO[0].id;
+            selectedId = catalogSongs[0]?.id ?? '';
             renderSongs();
             void prepareOriginalForSelection();
             setStatus('Prova u fshi.');
@@ -1261,7 +1261,7 @@ async function deleteSong() {
     const song = currentSong();
     if (!song || !savedSongs.some(s => s.id === song.id))
         return;
-    const isOverride = DEMO.some(s => s.id === song.id) || catalogSongs.some(s => s.id === song.id);
+    const isOverride = catalogSongs.some(s => s.id === song.id);
     if (!confirm(isOverride ? 'Të hiqen ndryshimet lokale dhe të rikthehet kënga origjinale?' : `Ta fshijmë këngën “${song.name}”?`))
         return;
     const next = savedSongs.filter(s => s.id !== song.id);
@@ -1277,7 +1277,7 @@ async function deleteSong() {
             await deleteOriginal(song.originalAudioId);
         }
         catch { }
-    selectedId = isOverride ? song.id : DEMO[0].id;
+    selectedId = isOverride ? song.id : (catalogSongs[0]?.id ?? '');
     renderSongs();
     void prepareOriginalForSelection();
     setStatus(isOverride ? 'U rikthye kënga origjinale.' : 'Kënga u fshi nga ky shfletues.');

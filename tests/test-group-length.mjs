@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-for(const dir of ['../js/','../js/v27/']){
+for(const dir of ['../js/']){
   const {DEFAULT_GROUP_MS,groupEnd,withGroupEnd}=await import(`${dir}group-length.js`);
   const {copySongGroup,pasteSongGroup,replaceSongGroup,parseSongJSON}=await import(`${dir}song-editing.js`);
   const {EditHistory}=await import(`${dir}edit-history.js`);

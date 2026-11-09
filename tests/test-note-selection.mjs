@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-for(const dir of ['../js/','../js/v27/']){
+for(const dir of ['../js/']){
   const {moveNoteSelection}=await import(`${dir}note-selection.js`);
   const {EditHistory}=await import(`${dir}edit-history.js`);
   const notes=[{time:100,string:1,noteNumber:4,withF:false},

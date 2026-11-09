@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-for(const directory of ['../js/','../js/v23/']){
+for(const directory of ['../js/']){
   const {copySongGroup,pasteSongGroup,parseSongJSON}=await import(`${directory}song-editing.js`);
   const {allSongs,upsertSong,saveSongs,loadSongs}=await import(`${directory}songs.js`);
   const {groupForNote}=await import(`${directory}grouping.js`);
@@ -65,7 +65,7 @@ for(const directory of ['../js/','../js/v23/']){
   const merged=allSongs(usersAgain,[source]);
   assert.equal(merged.filter(s=>s.id===source.id).length,1,'catalog does not duplicate a local override');
   assert.equal(merged.find(s=>s.id===source.id).name,'Ruajtur përsëri');
-  const demo=allSongs([])[0];assert.equal(allSongs([{...demo,name:'Ushtrim i redaktuar'}])[0].name,'Ushtrim i redaktuar');
+  assert.deepEqual(allSongs([]),[],'no bundled exercises are added to the catalog');
   const state=new Map();globalThis.localStorage={getItem:key=>state.get(key)??null,setItem:(key,value)=>state.set(key,value)};
   assert.ok(saveSongs(usersAgain));
   assert.equal(allSongs(loadSongs(),[source]).find(s=>s.id===source.id).notes[0].withF,false);

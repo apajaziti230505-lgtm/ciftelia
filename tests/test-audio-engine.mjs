@@ -45,4 +45,6 @@ const duration=await engine.play(song);
 assert.ok(duration>=150);
 assert.equal(voices.length,9,'two melody + two accompanying real samples');
 assert.ok(decoded>=5);
+for(const strength of ['lehte','fort'])for(let n=1;n<=15;n++)await engine.loadNote(n,strength);
+assert.equal(decoded,30,'all 30 active recordings are available without legacy audio copies');
 console.log('OK: real 293+220 strings, soft/strong, four scheduled song events, decoded samples',decoded);

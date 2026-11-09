@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-for(const dir of ['../js/','../js/v28/']){
+for(const dir of ['../js/']){
   const {SongPlayback}=await import(`${dir}playback.js`);
   const playback=new SongPlayback();
   const song={id:'catalog-song',originalAudioId:'catalog:mp3',preferNotes:true,

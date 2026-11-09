@@ -70,14 +70,7 @@ export class AudioEngine {
   async loadNote(n:number,strength:Strength=this.strength):Promise<AudioBuffer>{
     if(!Number.isInteger(n)||n<1||n>15)throw Error('Numri i notës nuk është i vlefshëm.');
     const key=this.key(n,strength);
-    try{return await this.decode(key,`./assets/audio-real/${key}.m4a`);}
-    catch(e){
-      // Old samples remain as a last-resort compatibility fallback for 1-14.
-      if(n===15)throw Error('Mungon regjistrimi real i telit poshtë 293 Hz.');
-      const old=`nota${n}${this.mode==='short'?'_shkurt':''}`;
-      console.warn('Regjistrimi i ri nuk u ngarkua, po përdoret rezervë:',key,e);
-      return this.decode(old,`./assets/audio/${old}.m4a`);
-    }
+    return this.decode(key,`./assets/audio-real/${key}.m4a`);
   }
   /** Start downloads without unlocking audio. All 30 recordings can be used offline after being loaded once. */
   async prepare():Promise<void>{

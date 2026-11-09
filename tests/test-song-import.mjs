@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 const uploaded=JSON.parse(await fs.readFile(new URL('../songs/shtat-shaljan.json',import.meta.url),'utf8'));
-for(const dir of ['../js/','../js/v26/']){
+for(const dir of ['../js/']){
   const {importSongJSON,validateAudioFile}=await import(new URL(dir+'song-import.js',import.meta.url));
   const {upsertSong}=await import(new URL(dir+'songs.js',import.meta.url));
   const catalog={...uploaded,notes:uploaded.notes.slice(0,3)};

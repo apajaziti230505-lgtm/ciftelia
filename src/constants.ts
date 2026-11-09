@@ -10,18 +10,6 @@ export type NoteNumber = number;
 export interface NoteEvent { string: 1 | 2; noteNumber: number; time: number; measuredHz?: number; confidence?: number; velocity?: number; withF?: boolean; upperNoteNumber?: number; groupStart?: number; }
 export interface Stanza { start: number; label: string; color?: string; end?: number; }
 export interface Song { id: string; name: string; notes: NoteEvent[]; createdAt: string; originalAudioId?: string; originalAudioName?: string; stanzas?: Stanza[]; preferNotes?: boolean; }
-export const DEMO: Song[] = [
-  { id: 'demo-fast', name: 'Ushtrim i shpejtë · R–Y', createdAt: '', notes:
-    [4,5,6,7,7,7,6,5,4,14,4,5,6,7].flatMap((noteNumber,i) => [
-      {string:1 as const, noteNumber, time:i*165},
-      ...((i%2===0) ? [{string:2 as const, noteNumber:14, time:i*165}]:[])
-    ])
-  },
-  { id:'demo-scale', name:'13 perdet · ushtrim', createdAt:'', notes:
-    [...Array(13)].map((_,i)=>({string:1 as const,noteNumber:i+1,time:i*240}))
-      .concat([{string:1 as const,noteNumber:15,time:3120}])
-  }
-];
 export function hzToNote(hz: number): {noteNumber: number; target: number; error: number} | null {
   if (!Number.isFinite(hz) || hz < MIN_MIC_HZ) return null;
   let best = -1, diff = Infinity;

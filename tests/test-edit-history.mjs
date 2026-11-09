@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-for(const directory of ['../js/','../js/v25/']){
+for(const directory of ['../js/']){
   const {EditHistory}=await import(`${directory}edit-history.js`);
   const {copySongGroup,pasteSongGroup,replaceSongGroup,deleteSongGroup}=await import(`${directory}song-editing.js`);
   const song={id:'saved-song',name:'Provë',createdAt:'',originalAudioId:'catalog:recording',

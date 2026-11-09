@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import {allSongs,loadSongs} from '../js/songs.js';
+
+const catalog=JSON.parse(await fs.readFile(new URL('../songs/catalog.json',import.meta.url),'utf8'));
+assert.equal(catalog.length,1);
+assert.equal(catalog[0].id,'catalog-shtat-shaljan');
+for(const field of ['json','audio'])await fs.access(new URL('../'+catalog[0][field],import.meta.url));
+const song=JSON.parse(await fs.readFile(new URL('../'+catalog[0].json,import.meta.url),'utf8'));
+assert.equal(song.id,catalog[0].id);
+assert.deepEqual(allSongs([]),[],'there are no bundled exercise songs');
+assert.deepEqual(allSongs([],[song]),[song],'the catalog supplies the initial song');
+
+const key='ciftelia-studio-ts-songs-v1';
+const exerciseIds=['demo-fast','demo-scale'];
+const legacy=exerciseIds.map(id=>({...song,id,name:'Old exercise'}));
+const local={...song,name:'My saved edits'};
+const recording={...song,id:'my-recording',name:'My recording'};
+const state=new Map([[key,JSON.stringify([...legacy,local,recording])]]);
+globalThis.localStorage={getItem:k=>state.get(k)??null,setItem:(k,v)=>state.set(k,v)};
+assert.deepEqual(loadSongs(),[local,recording],'only the removed exercise identities are discarded');
+assert.deepEqual(JSON.parse(state.get(key)),[local,recording],'old exercise copies are removed from storage');
+assert.deepEqual(allSongs([...legacy,local,recording],[song]),[local,recording]);
+assert.deepEqual(allSongs([],legacy),[],'an old cached catalog cannot restore the removed exercises');
+state.set(key,JSON.stringify(legacy));
+assert.deepEqual(loadSongs(),[]);
+assert.deepEqual(JSON.parse(state.get(key)),[]);
+state.set(key,JSON.stringify([...legacy,recording]));
+globalThis.localStorage.setItem=()=>{throw Error('Storage is unavailable');};
+assert.deepEqual(loadSongs(),[recording],'a failed cleanup write keeps valid recordings available');
+console.log('OK: only Shtat shaljan is bundled; old exercises are removed and saved edits remain available.');

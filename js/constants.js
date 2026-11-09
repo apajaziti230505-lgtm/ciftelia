@@ -6,16 +6,6 @@ export const TOLERANCE = 15;
 // Pragu për F = 220 Hz me tolerancë ±15 Hz. Nuk ka transpozim audio.
 export const MIN_MIC_HZ = 205;
 export const FRETS = 13;
-export const DEMO = [
-    { id: 'demo-fast', name: 'Ushtrim i shpejtë · R–Y', createdAt: '', notes: [4, 5, 6, 7, 7, 7, 6, 5, 4, 14, 4, 5, 6, 7].flatMap((noteNumber, i) => [
-            { string: 1, noteNumber, time: i * 165 },
-            ...((i % 2 === 0) ? [{ string: 2, noteNumber: 14, time: i * 165 }] : [])
-        ])
-    },
-    { id: 'demo-scale', name: '13 perdet · ushtrim', createdAt: '', notes: [...Array(13)].map((_, i) => ({ string: 1, noteNumber: i + 1, time: i * 240 }))
-            .concat([{ string: 1, noteNumber: 15, time: 3120 }])
-    }
-];
 export function hzToNote(hz) {
     if (!Number.isFinite(hz) || hz < MIN_MIC_HZ)
         return null;
