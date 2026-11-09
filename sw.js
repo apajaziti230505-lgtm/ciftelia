@@ -1,4 +1,4 @@
-const CACHE='ciftelia-studio-v30-clean-20261109';
+const CACHE='ciftelia-studio-v31-controls-below-20261109';
 const CORE=['./','./index.html','./app.css','./songs/catalog.json','./songs/shtat-shaljan.json','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png',
   './js/main.js','./js/constants.js','./js/audio-engine.js','./js/pitch.js',
   './js/microphone.js','./js/mic-onset-worklet.js','./js/songs.js',

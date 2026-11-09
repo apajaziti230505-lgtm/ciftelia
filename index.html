@@ -7,7 +7,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <title>Çiftelia Studio — 2 tela, 13 perde</title>
-  <link rel="stylesheet" href="app.css?v=30-clean-20261109">
+  <link rel="stylesheet" href="app.css?v=31-controls-below-20261109">
 </head>
 <body>
   <main class="container">
@@ -175,21 +175,6 @@
 
     <section class="tab-section" aria-labelledby="tabTitle">
       <div class="tab-heading"><div><h2 id="tabTitle">Tablatura</h2></div><div class="tab-state"><span id="studioState">GATI</span><strong id="timeLabel">00:00.00 / 00:00.00</strong></div></div>
-      <div class="tab-nav" role="group" aria-label="Lëviz nëpër tablaturë dhe korrigjo kufijtë e grupeve">
-        <div class="tab-nav-set"><button id="tabFollowBtn" class="btn btn-minimal" type="button" title="Ndiq muzikën gjatë luajtjes">◎ Ndiq muzikën</button></div>
-        <div class="tab-nav-set"><span>VIJA E GRUPIT</span><button id="tabMarkLeftBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms majtas">−50 ms</button><button id="tabMarkRightBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms djathtas">+50 ms</button></div>
-        <strong id="tabViewRange" aria-live="polite">00:00 – 00:00</strong>
-      </div>
-      <div class="group-copy-toolbar" role="group" aria-label="Menaxho grupet në tablaturë">
-        <div class="group-action-row"><strong id="groupActiveLabel">Grupi 1</strong><label class="group-length-label" for="groupLengthSeconds">Gjatësia (s)<input id="groupLengthSeconds" type="number" value="1.000" min="0.1" step="0.1" inputmode="decimal" aria-label="Gjatësia e grupit në sekonda"></label><button id="groupCopyBtn" type="button" class="btn">⧉ Kopjo</button><button id="groupDuplicateBtn" type="button" class="btn">＋ Dyfisho grupin</button><button id="groupDeleteBtn" type="button" class="btn btn-danger">Fshi grupin</button></div>
-        <div class="group-action-row group-paste-row">
-          <label for="groupPasteTarget">Ngjite te <select id="groupPasteTarget" disabled><option value="">Zgjidh grupin pritës…</option></select></label>
-          <label for="groupPasteMode">Mënyra <select id="groupPasteMode" disabled><option value="insert">Shto grup të ri</option><option value="replace">Zëvendëso notat</option></select></label>
-          <button id="groupPasteBtn" type="button" class="btn" disabled>＋ Ngjit kopjen</button>
-        </div>
-        <span id="groupClipboardStatus" role="status">Zgjidh grupin që dëshiron të kopjosh.</span>
-        <div class="group-action-row group-history-row" aria-label="Kthimi i veprimeve"><button id="groupUndoBtn" type="button" class="btn btn-minimal" disabled>↶ Zhbëj</button><button id="groupRedoBtn" type="button" class="btn btn-minimal" disabled>↷ Ribëj</button><span id="groupHistoryStatus" role="status" title="Deri në 50 hapa gjatë kësaj hapjeje të faqes.">Ctrl+Z: zhbëj · Ctrl+Y: ribëj</span></div>
-      </div>
       <div class="tab-audio-transport" role="group" aria-label="Kontrollet e këngës te tablatura">
         <div class="tab-audio-buttons">
           <button type="button" id="tabBackBtn" class="btn btn-minimal" title="Kthehu 1 sekondë">⟲ −1 s</button>
@@ -251,6 +236,21 @@
         <small class="manual-upper-hint">F shoqëron automatikisht; këtu mund të zgjedhësh një perde tjetër lart ose Pa telin lart.</small>
       </div>
       <p class="tab-help" id="tabHelp">Zgjidh një grup. Në mënyrën Redakto këngën, tërhiq vijën e tij me ngjyrë në tablaturë për të ndryshuar kufirin; shigjetat lëvizin pamjen.</p>
+      <div class="tab-nav" role="group" aria-label="Lëviz nëpër tablaturë dhe korrigjo kufijtë e grupeve">
+        <div class="tab-nav-set"><button id="tabFollowBtn" class="btn btn-minimal" type="button" title="Ndiq muzikën gjatë luajtjes">◎ Ndiq muzikën</button></div>
+        <div class="tab-nav-set"><span>VIJA E GRUPIT</span><button id="tabMarkLeftBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms majtas">−50 ms</button><button id="tabMarkRightBtn" class="btn btn-minimal" type="button" title="Lëviz vijën e grupit 50 ms djathtas">+50 ms</button></div>
+        <strong id="tabViewRange" aria-live="polite">00:00 – 00:00</strong>
+      </div>
+      <div class="group-copy-toolbar" role="group" aria-label="Menaxho grupet në tablaturë">
+        <div class="group-action-row"><strong id="groupActiveLabel">Grupi 1</strong><label class="group-length-label" for="groupLengthSeconds">Gjatësia (s)<input id="groupLengthSeconds" type="number" value="1.000" min="0.1" step="0.1" inputmode="decimal" aria-label="Gjatësia e grupit në sekonda"></label><button id="groupCopyBtn" type="button" class="btn">⧉ Kopjo</button><button id="groupDuplicateBtn" type="button" class="btn">＋ Dyfisho grupin</button><button id="groupDeleteBtn" type="button" class="btn btn-danger">Fshi grupin</button></div>
+        <div class="group-action-row group-paste-row">
+          <label for="groupPasteTarget">Ngjite te <select id="groupPasteTarget" disabled><option value="">Zgjidh grupin pritës…</option></select></label>
+          <label for="groupPasteMode">Mënyra <select id="groupPasteMode" disabled><option value="insert">Shto grup të ri</option><option value="replace">Zëvendëso notat</option></select></label>
+          <button id="groupPasteBtn" type="button" class="btn" disabled>＋ Ngjit kopjen</button>
+        </div>
+        <span id="groupClipboardStatus" role="status">Zgjidh grupin që dëshiron të kopjosh.</span>
+        <div class="group-action-row group-history-row" aria-label="Kthimi i veprimeve"><button id="groupUndoBtn" type="button" class="btn btn-minimal" disabled>↶ Zhbëj</button><button id="groupRedoBtn" type="button" class="btn btn-minimal" disabled>↷ Ribëj</button><span id="groupHistoryStatus" role="status" title="Deri në 50 hapa gjatë kësaj hapjeje të faqes.">Ctrl+Z: zhbëj · Ctrl+Y: ribëj</span></div>
+      </div>
       
     </section>
 
@@ -333,7 +333,7 @@
           }
         } catch (e) { console.warn('Pastrimi i cache nuk përfundoi:', e); }
         const url = new URL(window.location.href);
-        url.searchParams.set('version', '30-clean');
+        url.searchParams.set('version', '31-controls-below');
         url.searchParams.set('r', String(Date.now()));
         window.location.replace(url.href);
       });
@@ -346,6 +346,6 @@
     window.setTimeout(showRecovery, 3000);
   })();
   </script>
-  <script type="module" src="./js/main.js?v=30-clean"></script>
+  <script type="module" src="./js/main.js?v=31-controls-below"></script>
 </body>
 </html>
